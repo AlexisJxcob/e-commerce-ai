@@ -1,7 +1,5 @@
 package org.alexis.ecommerceai.exception;
 
-import org.alexis.ecommerceai.exception.ProductoNotFoundException;
-import org.alexis.ecommerceai.exception.StockUpdateConflictException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -44,6 +42,25 @@ public class GlobalExceptionHandler {
                 ex.getMessage()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(OpenRouterRateLimitException.class)
+    public ResponseEntity<ErrorResponse> handleOpenRouterRateLimit(OpenRouterRateLimitException ex) {
+        var errorResponse = new ErrorResponse(
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errorResponse);
+    }
+
+    @ExceptionHandler(OpenRouterException.class)
+    public ResponseEntity<ErrorResponse> handleOpenRouter(OpenRouterException ex) {
+        HttpStatus status = HttpStatus.resolve(ex.getStatus());
+        if (status == null || status.is2xxSuccessful()) {
+            status = HttpStatus.BAD_GATEWAY;
+        }
+        var errorResponse = new ErrorResponse(status.value(), ex.getMessage());
+        return ResponseEntity.status(status).body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)

@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ProductoService {
@@ -52,6 +54,27 @@ public class ProductoService {
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
+    }
+
+    /**
+     * Búsqueda textual a partir de palabras clave, herramientas y repuestos extraídos por OpenRouter.
+     */
+    @Transactional(readOnly = true)
+    public List<ProductoResponseDTO> buscarPorPalabrasClave(List<String> palabrasClave) {
+        if (palabrasClave == null || palabrasClave.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, ProductoResponseDTO> unicos = new LinkedHashMap<>();
+        for (String palabra : palabrasClave) {
+            if (palabra == null || palabra.isBlank()) {
+                continue;
+            }
+            productoRepository.buscarPorPalabraClave(palabra.trim()).stream()
+                    .map(this::toResponseDTO)
+                    .forEach(dto -> unicos.putIfAbsent(dto.id(), dto));
+        }
+        return List.copyOf(unicos.values());
     }
 
     @Transactional

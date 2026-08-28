@@ -17,4 +17,13 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
         LIMIT :limit
         """, nativeQuery = true)
     List<Producto> buscarPorSimilitudVectorial(@Param("embedding") String embedding, @Param("limit") int limit);
+
+    @Query("""
+            SELECT p FROM Producto p
+            WHERE LOWER(p.nombre) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(p.descripcionTecnica) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(p.descripcionColoquial) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            """)
+    List<Producto> buscarPorPalabraClave(@Param("keyword") String keyword);
 }

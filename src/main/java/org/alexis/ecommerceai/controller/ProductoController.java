@@ -3,6 +3,7 @@ package org.alexis.ecommerceai.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import org.alexis.ecommerceai.dto.BusquedaInteligenteResponse;
 import org.alexis.ecommerceai.dto.ProductoRequestDTO;
 import org.alexis.ecommerceai.dto.ProductoResponseDTO;
 import org.alexis.ecommerceai.ai.AsistenteIAService;
@@ -45,9 +46,9 @@ public class ProductoController {
         return ResponseEntity.ok(productoService.buscarPorSimilitud(query, limite));
     }
 
-    // Búsqueda asistida por IA (RAG)
+    // Búsqueda inteligente: OpenRouter extrae palabras clave y se buscan productos en BD
     @GetMapping("/asistente")
-    public ResponseEntity<String> consultarAsistente(@RequestParam("q") String query) {
+    public ResponseEntity<BusquedaInteligenteResponse> consultarAsistente(@RequestParam("q") String query) {
         return ResponseEntity.ok(asistenteIAService.buscarRecomendacion(query));
     }
 
