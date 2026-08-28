@@ -19,5 +19,11 @@ public record ProductoRequestDTO(
 
         @NotNull(message = "El stock inicial es obligatorio")
         @Min(value = 0, message = "El stock no puede ser negativo")
-        Integer stock
+        Integer stock,
+
+        @NotBlank(message = "La descripción técnica es obligatoria")
+        String descripcionTecnica,
+
+        @NotBlank(message = "La descripción coloquial es obligatoria para el buscador de IA")
+        String descripcionColoquial
 ) {}
