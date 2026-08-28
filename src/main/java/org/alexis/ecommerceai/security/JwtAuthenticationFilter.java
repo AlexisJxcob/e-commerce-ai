@@ -1,4 +1,4 @@
-package security;
+package org.alexis.ecommerceai.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
