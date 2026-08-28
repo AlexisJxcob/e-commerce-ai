@@ -1,7 +1,5 @@
 package org.alexis.ecommerceai.ai;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.alexis.ecommerceai.config.OpenRouterProperties;
 import org.alexis.ecommerceai.dto.SugerenciaFerreteriaDTO;
 import org.alexis.ecommerceai.dto.openrouter.ChatCompletionRequest;
@@ -12,10 +10,13 @@ import org.alexis.ecommerceai.exception.OpenRouterRateLimitException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -57,21 +58,31 @@ public class OpenRouterService {
     }
 
     public SugerenciaFerreteriaDTO analizarConsulta(String consultaUsuario) {
-        if (properties.getKey() == null || properties.getKey().isBlank()) {
+        if (!StringUtils.hasText(properties.getKey())) {
             throw new OpenRouterException("Falta configurar openrouter.api.key (o la variable OPENROUTER_API_KEY).");
+        }
+        if (!StringUtils.hasText(properties.getModel())) {
+            throw new OpenRouterException("Falta configurar openrouter.api.model.");
+        }
+        if (!StringUtils.hasText(consultaUsuario)) {
+            throw new OpenRouterException("La consulta del usuario no puede estar vacía.", 400);
         }
 
         var request = new ChatCompletionRequest(
                 properties.getModel(),
                 List.of(
                         new ChatMessage("system", SYSTEM_PROMPT),
-                        new ChatMessage("user", consultaUsuario)
+                        new ChatMessage("user", consultaUsuario.trim())
                 )
         );
 
-        ChatCompletionResponse response;
+        ChatCompletionResponse response = invocarChatCompletions(request);
+        return parsearSugerencia(extraerContenido(response));
+    }
+
+    private ChatCompletionResponse invocarChatCompletions(ChatCompletionRequest request) {
         try {
-            response = openRouterRestClient.post()
+            return openRouterRestClient.post()
                     .uri("/chat/completions")
                     .body(request)
                     .retrieve()
@@ -101,16 +112,12 @@ public class OpenRouterService {
         } catch (RestClientException ex) {
             throw new OpenRouterException("Fallo al invocar la API de OpenRouter.", ex);
         }
-
-        String content = extraerContenido(response);
-        return parsearSugerencia(content);
     }
 
     private String extraerContenido(ChatCompletionResponse response) {
         if (response == null || response.choices() == null || response.choices().isEmpty()
                 || response.choices().getFirst().message() == null
-                || response.choices().getFirst().message().content() == null
-                || response.choices().getFirst().message().content().isBlank()) {
+                || !StringUtils.hasText(response.choices().getFirst().message().content())) {
             throw new OpenRouterException("OpenRouter devolvió una respuesta vacía.");
         }
         return response.choices().getFirst().message().content();
@@ -120,7 +127,7 @@ public class OpenRouterService {
         String json = extraerJson(content);
         try {
             return objectMapper.readValue(json, SugerenciaFerreteriaDTO.class);
-        } catch (JsonProcessingException ex) {
+        } catch (JacksonException ex) {
             throw new OpenRouterException("No se pudo interpretar el JSON devuelto por el modelo.", ex);
         }
     }

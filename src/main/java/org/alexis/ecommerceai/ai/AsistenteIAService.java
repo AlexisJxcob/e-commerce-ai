@@ -6,8 +6,8 @@ import org.alexis.ecommerceai.dto.SugerenciaFerreteriaDTO;
 import org.alexis.ecommerceai.service.ProductoService;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 public class AsistenteIAService {
@@ -22,12 +22,15 @@ public class AsistenteIAService {
 
     public BusquedaInteligenteResponse buscarRecomendacion(String preferenciaUsuario) {
         SugerenciaFerreteriaDTO sugerencia = openRouterService.analizarConsulta(preferenciaUsuario);
-
-        List<String> terminos = new ArrayList<>();
-        terminos.addAll(sugerencia.palabrasClave());
-        terminos.addAll(sugerencia.herramientas());
-        terminos.addAll(sugerencia.repuestos());
-
+        List<String> terminos = Stream.of(
+                        sugerencia.palabrasClave(),
+                        sugerencia.herramientas(),
+                        sugerencia.repuestos())
+                .flatMap(List::stream)
+                .filter(termino -> termino != null && !termino.isBlank())
+                .map(String::trim)
+                .distinct()
+                .toList();
         List<ProductoResponseDTO> productos = productoService.buscarPorPalabrasClave(terminos);
         return new BusquedaInteligenteResponse(sugerencia, productos);
     }
