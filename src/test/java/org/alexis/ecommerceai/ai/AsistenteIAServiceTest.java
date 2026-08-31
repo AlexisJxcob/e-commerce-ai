@@ -31,7 +31,7 @@ class AsistenteIAServiceTest {
 
     @BeforeEach
     void setUp() {
-        asistenteIAService = new AsistenteIAService(huggingFaceChatService, productoService);
+        asistenteIAService = new AsistenteIAService(productoService);
     }
 
     private static ProductoResponseDTO producto(Long id, String sku) {

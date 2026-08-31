@@ -17,14 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Implementación de {@link EmbeddingModel} sobre la Inference API de Hugging Face
- * (pipeline feature-extraction). La API de embeddings de HF NO es
- * OpenAI-compatible, por eso se usa un cliente RestClient dedicado apuntando a:
- * <p>{base-url}/{model}/pipeline/feature-extraction</p>
- * <p>Modelo configurado: sentence-transformers/all-MiniLM-L6-v2 → 384 dimensiones
- * (debe coincidir con la columna vector(384) de la tabla productos).</p>
- */
 public class HuggingFaceEmbeddingModel implements EmbeddingModel {
 
     public static final int DIMENSION = 384;
@@ -46,36 +38,55 @@ public class HuggingFaceEmbeddingModel implements EmbeddingModel {
         validarConfiguracion();
 
         String url = properties.getBaseUrl() + "/" + properties.getModel() + "/pipeline/feature-extraction";
+
+        // Si es un solo texto, enviamos String directo; si son varios, enviamos la lista.
+        Object inputBody = inputs.size() == 1 ? inputs.get(0) : inputs;
+
         Map<String, Object> body = Map.of(
-                "inputs", inputs,
+                "inputs", inputBody,
                 "options", Map.of("wait_for_model", true)
         );
 
-        List<List<Double>> resultados;
+        List<Embedding> embeddings = new ArrayList<>();
+
         try {
-            resultados = restClient.post()
-                    .uri(url)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(body)
-                    .retrieve()
-                    .body(new ParameterizedTypeReference<>() {
-                    });
+            if (inputs.size() == 1) {
+                // Respuesta esperada para 1 elemento: List<Double> (384 flotantes)
+                List<Double> vector = restClient.post()
+                        .uri(url)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(body)
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<List<Double>>() {});
+
+                if (vector != null) {
+                    embeddings.add(new Embedding(toFloatArray(vector), 0));
+                }
+            } else {
+                // Respuesta esperada para batch: List<List<Double>>
+                List<List<Double>> resultados = restClient.post()
+                        .uri(url)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(body)
+                        .retrieve()
+                        .body(new ParameterizedTypeReference<List<List<Double>>>() {});
+
+                if (resultados != null) {
+                    for (int i = 0; i < resultados.size(); i++) {
+                        embeddings.add(new Embedding(toFloatArray(resultados.get(i)), i));
+                    }
+                }
+            }
         } catch (RestClientResponseException e) {
             throw traducirErrorHttp(e);
         } catch (ResourceAccessException e) {
             throw new HuggingFaceException("No se pudo conectar con la API de Hugging Face: " + e.getMessage(), e);
         }
 
-        if (resultados == null || resultados.size() != inputs.size()) {
-            String cantidad = (resultados == null) ? "null" : String.valueOf(resultados.size());
-            throw new HuggingFaceException(
-                    "La API de Hugging Face devolvió una respuesta inesperada (" + cantidad + " vectores)");
+        if (embeddings.isEmpty()) {
+            throw new HuggingFaceException("La API de Hugging Face devolvió una respuesta vacía o inesperada.");
         }
 
-        List<Embedding> embeddings = new ArrayList<>(resultados.size());
-        for (int i = 0; i < resultados.size(); i++) {
-            embeddings.add(new Embedding(toFloatArray(resultados.get(i)), i));
-        }
         return new EmbeddingResponse(embeddings);
     }
 
