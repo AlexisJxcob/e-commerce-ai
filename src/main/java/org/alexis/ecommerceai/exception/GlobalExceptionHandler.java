@@ -97,8 +97,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
-    @ExceptionHandler(OpenRouterRateLimitException.class)
-    public ResponseEntity<ErrorResponse> handleOpenRouterRateLimit(OpenRouterRateLimitException ex) {
+    @ExceptionHandler(GroqRateLimitException.class)
+    public ResponseEntity<ErrorResponse> handleGroqRateLimit(GroqRateLimitException ex) {
         var errorResponse = new ErrorResponse(
                 HttpStatus.TOO_MANY_REQUESTS.value(),
                 ex.getMessage()
@@ -106,8 +106,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errorResponse);
     }
 
-    @ExceptionHandler(OpenRouterException.class)
-    public ResponseEntity<ErrorResponse> handleOpenRouter(OpenRouterException ex) {
+    @ExceptionHandler(GroqException.class)
+    public ResponseEntity<ErrorResponse> handleGroq(GroqException ex) {
         HttpStatus status = HttpStatus.resolve(ex.getStatus());
         if (status == null || status.is2xxSuccessful()) {
             status = HttpStatus.BAD_GATEWAY;

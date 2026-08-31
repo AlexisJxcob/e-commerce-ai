@@ -1,10 +1,10 @@
 package org.alexis.ecommerceai.ai;
 
-import org.alexis.ecommerceai.config.OpenRouterConfig;
-import org.alexis.ecommerceai.config.OpenRouterProperties;
+import org.alexis.ecommerceai.config.GroqConfig;
+import org.alexis.ecommerceai.config.GroqProperties;
 import org.alexis.ecommerceai.dto.SugerenciaFerreteriaDTO;
-import org.alexis.ecommerceai.exception.OpenRouterException;
-import org.alexis.ecommerceai.exception.OpenRouterRateLimitException;
+import org.alexis.ecommerceai.exception.GroqException;
+import org.alexis.ecommerceai.exception.GroqRateLimitException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -25,21 +25,21 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 /**
- * Tests unitarios de {@link OpenRouterService} con el cliente HTTP mockeado
- * (MockRestServiceServer): nunca se hacen llamadas reales a la API de OpenRouter.
+ * Tests unitarios de {@link GroqService} con el cliente HTTP mockeado
+ * (MockRestServiceServer): nunca se hacen llamadas reales a la API de Groq.
  */
-class OpenRouterServiceTest {
+class GroqServiceTest {
 
-    private static final String BASE_URL = "https://openrouter.ai/api/v1";
+    private static final String BASE_URL = "https://api.groq.com/openai/v1";
 
-    private OpenRouterProperties properties;
+    private GroqProperties properties;
     private MockRestServiceServer server;
-    private OpenRouterService service;
+    private GroqService service;
 
     @BeforeEach
     void setUp() {
-        properties = new OpenRouterProperties();
-        properties.setKey("test-openrouter-key");
+        properties = new GroqProperties();
+        properties.setKey("test-groq-key");
         properties.setModel("test-model");
         properties.setBaseUrl(BASE_URL);
 
@@ -47,15 +47,15 @@ class OpenRouterServiceTest {
         // pero con el request factory interceptado por MockRestServiceServer.
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        RestClient client = new OpenRouterConfig().openRouterRestClient(builder, properties);
+        RestClient client = new GroqConfig().groqRestClient(builder, properties);
 
-        service = new OpenRouterService(client, properties, JsonMapper.builder().build());
+        service = new GroqService(client, properties, JsonMapper.builder().build());
     }
 
     private void expectChatCompletion(HttpStatus status, String responseBody) {
         server.expect(method(HttpMethod.POST))
                 .andExpect(requestTo(BASE_URL + "/chat/completions"))
-                .andExpect(header("Authorization", "Bearer test-openrouter-key"))
+                .andExpect(header("Authorization", "Bearer test-groq-key"))
                 .andRespond(withStatus(status)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(responseBody));
@@ -67,23 +67,23 @@ class OpenRouterServiceTest {
     void analizarConsulta_lanzaErrorSiFaltaLaApiKey() {
         properties.setKey("");
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(OpenRouterException.class)
-                .hasMessageContaining("openrouter.api.key");
+                .isInstanceOf(GroqException.class)
+                .hasMessageContaining("groq.api.key");
     }
 
     @Test
     void analizarConsulta_lanzaErrorSiFaltaElModelo() {
         properties.setModel("");
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(OpenRouterException.class)
-                .hasMessageContaining("openrouter.api.model");
+                .isInstanceOf(GroqException.class)
+                .hasMessageContaining("groq.api.model");
     }
 
     @Test
     void analizarConsulta_lanzaError400SiLaConsultaEstaVacia() {
         assertThatThrownBy(() -> service.analizarConsulta("   "))
-                .isInstanceOf(OpenRouterException.class)
-                .satisfies(ex -> assertThat(((OpenRouterException) ex).getStatus()).isEqualTo(400));
+                .isInstanceOf(GroqException.class)
+                .satisfies(ex -> assertThat(((GroqException) ex).getStatus()).isEqualTo(400));
     }
 
     // ---------- casos de éxito ----------
@@ -98,7 +98,7 @@ class OpenRouterServiceTest {
                 "\"finish_reason\":\"stop\"}]}";
         server.expect(method(HttpMethod.POST))
                 .andExpect(requestTo(BASE_URL + "/chat/completions"))
-                .andExpect(header("Authorization", "Bearer test-openrouter-key"))
+                .andExpect(header("Authorization", "Bearer test-groq-key"))
                 .andRespond(withSuccess(respuesta, MediaType.APPLICATION_JSON));
 
         SugerenciaFerreteriaDTO resultado = service.analizarConsulta("tengo una fuga en una tuberia");
@@ -112,7 +112,7 @@ class OpenRouterServiceTest {
     void analizarConsulta_enviaElModeloYLaConsultaEnElBody() {
         server.expect(method(HttpMethod.POST))
                 .andExpect(requestTo(BASE_URL + "/chat/completions"))
-                .andExpect(header("Authorization", "Bearer test-openrouter-key"))
+                .andExpect(header("Authorization", "Bearer test-groq-key"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("\"model\":\"test-model\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("fuga en la tuberia")))
                 .andRespond(withSuccess(
@@ -128,26 +128,26 @@ class OpenRouterServiceTest {
         server.verify();
     }
 
-    // ---------- errores de OpenRouter ----------
+    // ---------- errores de Groq ----------
 
     @Test
     void analizarConsulta_lanzaRateLimitAnteHttp429() {
         expectChatCompletion(HttpStatus.TOO_MANY_REQUESTS, "{\"error\":\"rate limit exceeded\"}");
 
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(OpenRouterRateLimitException.class)
+                .isInstanceOf(GroqRateLimitException.class)
                 .hasMessageContaining("rate limit");
     }
 
     @Test
-    void analizarConsulta_lanzaOpenRouterExceptionAnteHttp500() {
+    void analizarConsulta_lanzaGroqExceptionAnteHttp500() {
         server.expect(method(HttpMethod.POST))
                 .andExpect(requestTo(BASE_URL + "/chat/completions"))
                 .andRespond(withServerError());
 
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(OpenRouterException.class)
-                .satisfies(ex -> assertThat(((OpenRouterException) ex).getStatus()).isEqualTo(500));
+                .isInstanceOf(GroqException.class)
+                .satisfies(ex -> assertThat(((GroqException) ex).getStatus()).isEqualTo(500));
     }
 
     @Test
@@ -155,7 +155,7 @@ class OpenRouterServiceTest {
         expectChatCompletion(HttpStatus.OK, "{}");
 
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(OpenRouterException.class)
+                .isInstanceOf(GroqException.class)
                 .hasMessageContaining("vacía");
     }
 
@@ -167,7 +167,7 @@ class OpenRouterServiceTest {
         expectChatCompletion(HttpStatus.OK, respuesta);
 
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(OpenRouterException.class)
+                .isInstanceOf(GroqException.class)
                 .hasMessageContaining("interpretar");
     }
 
@@ -175,19 +175,19 @@ class OpenRouterServiceTest {
 
     @Test
     void extraerJson_quitaFencesDeMarkdown() {
-        assertThat(OpenRouterService.extraerJson("```json\n{\"a\":1}\n```"))
+        assertThat(GroqService.extraerJson("```json\n{\"a\":1}\n```"))
                 .isEqualTo("{\"a\":1}");
     }
 
     @Test
     void extraerJson_extraeObjetoDeTextoConPrefijo() {
-        assertThat(OpenRouterService.extraerJson("Aquí va el JSON: {\"a\":1} fin"))
+        assertThat(GroqService.extraerJson("Aquí va el JSON: {\"a\":1} fin"))
                 .isEqualTo("{\"a\":1}");
     }
 
     @Test
     void extraerJson_devuelveContenidoPlanoSinObjeto() {
-        assertThat(OpenRouterService.extraerJson("no hay objeto")).isEqualTo("no hay objeto");
+        assertThat(GroqService.extraerJson("no hay objeto")).isEqualTo("no hay objeto");
     }
 
     private static String escaparJson(String texto) {

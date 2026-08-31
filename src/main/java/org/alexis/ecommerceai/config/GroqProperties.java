@@ -8,20 +8,19 @@ import org.springframework.validation.annotation.Validated;
 @Getter
 @Setter
 @Validated
-@ConfigurationProperties(prefix = "openrouter.api")
-public class OpenRouterProperties {
+@ConfigurationProperties(prefix = "groq.api")
+public class GroqProperties {
 
-    public static final String DEFAULT_MODEL = "openrouter/free";
-    public static final String DEFAULT_BASE_URL = "https://openrouter.ai/api/v1";
+    public static final String DEFAULT_MODEL = "qwen/qwen3.8-27b";
+    public static final String DEFAULT_BASE_URL = "https://api.groq.com/openai/v1";
 
     /**
-     * API key de OpenRouter. Preferir variable de entorno OPENROUTER_API_KEY.
+     * API key de Groq. Preferir variable de entorno GROQ_API_KEY.
      */
     private String key = "";
 
     /**
-     * Identificador del modelo en OpenRouter (p. ej. meta-llama/llama-3.3-70b-instruct:free
-     * o openrouter/free).
+     * Identificador del modelo de chat en Groq (p. ej. qwen/qwen3.8-27b).
      */
     private String model = DEFAULT_MODEL;
 
