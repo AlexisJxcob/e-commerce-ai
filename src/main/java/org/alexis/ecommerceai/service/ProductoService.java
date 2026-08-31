@@ -86,11 +86,7 @@ public class ProductoService {
         producto.setDescripcionColoquial(request.descripcionColoquial());
         producto.setPrecio(request.precio());
         producto.setStock(request.stock());
-
-        // Generar embedding a partir de la descripción coloquial/técnica combinada
-        String textoParaVector = request.nombre() + " " + request.descripcionColoquial();
-        float[] vector = embeddingModel.embed(textoParaVector);
-        producto.setEmbedding(Arrays.toString(vector));
+        producto.setEmbedding(generarEmbedding(request.nombre(), request.descripcionColoquial()));
 
         producto = productoRepository.save(producto);
         return toResponseDTO(producto);
@@ -109,9 +105,7 @@ public class ProductoService {
         producto.setStock(request.stock());
 
         // Regenerar el embedding si la descripción cambia
-        String textoParaVector = request.nombre() + " " + request.descripcionColoquial();
-        float[] vector = embeddingModel.embed(textoParaVector);
-        producto.setEmbedding(Arrays.toString(vector));
+        producto.setEmbedding(generarEmbedding(request.nombre(), request.descripcionColoquial()));
 
         producto = productoRepository.save(producto);
         return toResponseDTO(producto);
@@ -136,6 +130,15 @@ public class ProductoService {
             throw new ProductoNotFoundException("Producto no encontrado con id: " + id);
         }
         productoRepository.deleteById(id);
+    }
+
+    /**
+     * Genera el vector de búsqueda a partir del nombre y la descripción coloquial del producto.
+     */
+    private String generarEmbedding(String nombre, String descripcionColoquial) {
+        String textoParaVector = nombre + " " + descripcionColoquial;
+        float[] vector = embeddingModel.embed(textoParaVector);
+        return Arrays.toString(vector);
     }
 
     private ProductoResponseDTO toResponseDTO(Producto producto) {
