@@ -40,17 +40,17 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/rle")
         public void rateLimit() {
-            throw new GroqRateLimitException("rate limit alcanzado");
+            throw new HuggingFaceRateLimitException("rate limit alcanzado");
         }
 
         @GetMapping("/ore")
         public void groqError() {
-            throw new GroqException("error de openrouter", 503);
+            throw new HuggingFaceException("error de openrouter", 503);
         }
 
         @GetMapping("/ore-2xx")
         public void groqError2xx() {
-            throw new GroqException("estado anomalo", 200);
+            throw new HuggingFaceException("estado anomalo", 200);
         }
 
         @GetMapping("/cve")
@@ -110,14 +110,14 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void groqError_devuelveElStatusDeLaExcepcion() throws Exception {
+    void huggingFaceError_devuelveElStatusDeLaExcepcion() throws Exception {
         mockMvc.perform(get("/ore"))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.status").value(503));
     }
 
     @Test
-    void groqError_conStatus2xxSeCoercionaA502() throws Exception {
+    void huggingFaceError_conStatus2xxSeCoercionaA502() throws Exception {
         mockMvc.perform(get("/ore-2xx"))
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.status").value(502));

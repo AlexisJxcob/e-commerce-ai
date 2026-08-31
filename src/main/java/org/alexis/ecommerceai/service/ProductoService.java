@@ -58,7 +58,7 @@ public class ProductoService {
     }
 
     /**
-     * Búsqueda textual a partir de palabras clave, herramientas y repuestos extraídos por Groq.
+     * Búsqueda textual a partir de palabras clave, herramientas y repuestos extraídos por el LLM.
      */
     @Transactional(readOnly = true)
     public List<ProductoResponseDTO> buscarPorPalabrasClave(List<String> palabrasClave) {

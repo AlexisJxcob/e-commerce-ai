@@ -1,12 +1,12 @@
 package org.alexis.ecommerceai.ai;
 
-import org.alexis.ecommerceai.config.GroqProperties;
+import org.alexis.ecommerceai.config.HuggingFaceChatProperties;
 import org.alexis.ecommerceai.dto.SugerenciaFerreteriaDTO;
 import org.alexis.ecommerceai.dto.groq.ChatCompletionRequest;
 import org.alexis.ecommerceai.dto.groq.ChatCompletionResponse;
 import org.alexis.ecommerceai.dto.groq.ChatMessage;
-import org.alexis.ecommerceai.exception.GroqException;
-import org.alexis.ecommerceai.exception.GroqRateLimitException;
+import org.alexis.ecommerceai.exception.HuggingFaceException;
+import org.alexis.ecommerceai.exception.HuggingFaceRateLimitException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Service
-public class GroqService {
+public class HuggingFaceChatService {
 
     static final String SYSTEM_PROMPT = """
             Eres el asistente técnico de una ferretería. El cliente describe un problema en lenguaje coloquial \
@@ -44,28 +44,28 @@ public class GroqService {
             5. Si el mensaje no es de ferretería, igual responde el mismo JSON con listas vacías.
             """;
 
-    private final RestClient groqRestClient;
-    private final GroqProperties properties;
+    private final RestClient huggingFaceChatRestClient;
+    private final HuggingFaceChatProperties properties;
     private final ObjectMapper objectMapper;
 
-    public GroqService(
-            @Qualifier("groqRestClient") RestClient groqRestClient,
-            GroqProperties properties,
+    public HuggingFaceChatService(
+            @Qualifier("huggingFaceChatRestClient") RestClient huggingFaceChatRestClient,
+            HuggingFaceChatProperties properties,
             ObjectMapper objectMapper) {
-        this.groqRestClient = groqRestClient;
+        this.huggingFaceChatRestClient = huggingFaceChatRestClient;
         this.properties = properties;
         this.objectMapper = objectMapper;
     }
 
     public SugerenciaFerreteriaDTO analizarConsulta(String consultaUsuario) {
         if (!StringUtils.hasText(properties.getKey())) {
-            throw new GroqException("Falta configurar groq.api.key (o la variable GROQ_API_KEY).");
+            throw new HuggingFaceException("Falta configurar huggingface.chat.key (o la variable HUGGINGFACE_API_KEY).");
         }
         if (!StringUtils.hasText(properties.getModel())) {
-            throw new GroqException("Falta configurar groq.api.model.");
+            throw new HuggingFaceException("Falta configurar huggingface.chat.model.");
         }
         if (!StringUtils.hasText(consultaUsuario)) {
-            throw new GroqException("La consulta del usuario no puede estar vacía.", 400);
+            throw new HuggingFaceException("La consulta del usuario no puede estar vacía.", 400);
         }
 
         var request = new ChatCompletionRequest(
@@ -82,35 +82,35 @@ public class GroqService {
 
     private ChatCompletionResponse invocarChatCompletions(ChatCompletionRequest request) {
         try {
-            return groqRestClient.post()
+            return huggingFaceChatRestClient.post()
                     .uri("/chat/completions")
                     .body(request)
                     .retrieve()
                     .onStatus(status -> status.value() == 429, (req, res) -> {
-                        throw new GroqRateLimitException(
-                                "Groq alcanzó el límite de peticiones (rate limit). Intente más tarde.");
+                        throw new HuggingFaceRateLimitException(
+                                "Hugging Face alcanzó el límite de peticiones (rate limit). Intente más tarde.");
                     })
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
                         String body = new String(res.getBody().readAllBytes(), StandardCharsets.UTF_8);
-                        throw new GroqException(
-                                "Error al consultar Groq (" + res.getStatusCode().value() + "): " + body,
+                        throw new HuggingFaceException(
+                                "Error al consultar Hugging Face (" + res.getStatusCode().value() + "): " + body,
                                 res.getStatusCode().value());
                     })
                     .body(ChatCompletionResponse.class);
-        } catch (GroqException ex) {
+        } catch (HuggingFaceException ex) {
             throw ex;
         } catch (ResourceAccessException ex) {
-            throw new GroqException("No se pudo conectar con Groq.", ex);
+            throw new HuggingFaceException("No se pudo conectar con Hugging Face.", ex);
         } catch (RestClientResponseException ex) {
             if (ex.getStatusCode().value() == 429) {
-                throw new GroqRateLimitException(
-                        "Groq alcanzó el límite de peticiones (rate limit). Intente más tarde.");
+                throw new HuggingFaceRateLimitException(
+                        "Hugging Face alcanzó el límite de peticiones (rate limit). Intente más tarde.");
             }
-            throw new GroqException(
-                    "Error al consultar Groq (" + ex.getStatusCode().value() + ").",
+            throw new HuggingFaceException(
+                    "Error al consultar Hugging Face (" + ex.getStatusCode().value() + ").",
                     ex.getStatusCode().value());
         } catch (RestClientException ex) {
-            throw new GroqException("Fallo al invocar la API de Groq.", ex);
+            throw new HuggingFaceException("Fallo al invocar la API de Hugging Face.", ex);
         }
     }
 
@@ -118,7 +118,7 @@ public class GroqService {
         if (response == null || response.choices() == null || response.choices().isEmpty()
                 || response.choices().getFirst().message() == null
                 || !StringUtils.hasText(response.choices().getFirst().message().content())) {
-            throw new GroqException("Groq devolvió una respuesta vacía.");
+            throw new HuggingFaceException("Hugging Face devolvió una respuesta vacía.");
         }
         return response.choices().getFirst().message().content();
     }
@@ -128,7 +128,7 @@ public class GroqService {
         try {
             return objectMapper.readValue(json, SugerenciaFerreteriaDTO.class);
         } catch (JacksonException ex) {
-            throw new GroqException("No se pudo interpretar el JSON devuelto por el modelo.", ex);
+            throw new HuggingFaceException("No se pudo interpretar el JSON devuelto por el modelo.", ex);
         }
     }
 

@@ -1,10 +1,10 @@
 package org.alexis.ecommerceai.ai;
 
-import org.alexis.ecommerceai.config.GroqConfig;
-import org.alexis.ecommerceai.config.GroqProperties;
+import org.alexis.ecommerceai.config.HuggingFaceChatConfig;
+import org.alexis.ecommerceai.config.HuggingFaceChatProperties;
 import org.alexis.ecommerceai.dto.SugerenciaFerreteriaDTO;
-import org.alexis.ecommerceai.exception.GroqException;
-import org.alexis.ecommerceai.exception.GroqRateLimitException;
+import org.alexis.ecommerceai.exception.HuggingFaceException;
+import org.alexis.ecommerceai.exception.HuggingFaceRateLimitException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -25,21 +25,21 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 /**
- * Tests unitarios de {@link GroqService} con el cliente HTTP mockeado
- * (MockRestServiceServer): nunca se hacen llamadas reales a la API de Groq.
+ * Tests unitarios de {@link HuggingFaceChatService} con el cliente HTTP mockeado
+ * (MockRestServiceServer): nunca se hacen llamadas reales a la API de Hugging Face.
  */
-class GroqServiceTest {
+class HuggingFaceChatServiceTest {
 
-    private static final String BASE_URL = "https://api.groq.com/openai/v1";
+    private static final String BASE_URL = "https://router.huggingface.co/v1";
 
-    private GroqProperties properties;
+    private HuggingFaceChatProperties properties;
     private MockRestServiceServer server;
-    private GroqService service;
+    private HuggingFaceChatService service;
 
     @BeforeEach
     void setUp() {
-        properties = new GroqProperties();
-        properties.setKey("test-groq-key");
+        properties = new HuggingFaceChatProperties();
+        properties.setKey("test-huggingface-key");
         properties.setModel("test-model");
         properties.setBaseUrl(BASE_URL);
 
@@ -47,15 +47,15 @@ class GroqServiceTest {
         // pero con el request factory interceptado por MockRestServiceServer.
         RestClient.Builder builder = RestClient.builder();
         server = MockRestServiceServer.bindTo(builder).build();
-        RestClient client = new GroqConfig().groqRestClient(builder, properties);
+        RestClient client = new HuggingFaceChatConfig().huggingFaceChatRestClient(builder, properties);
 
-        service = new GroqService(client, properties, JsonMapper.builder().build());
+        service = new HuggingFaceChatService(client, properties, JsonMapper.builder().build());
     }
 
     private void expectChatCompletion(HttpStatus status, String responseBody) {
         server.expect(method(HttpMethod.POST))
                 .andExpect(requestTo(BASE_URL + "/chat/completions"))
-                .andExpect(header("Authorization", "Bearer test-groq-key"))
+                .andExpect(header("Authorization", "Bearer test-huggingface-key"))
                 .andRespond(withStatus(status)
                         .contentType(MediaType.APPLICATION_JSON)
                         .body(responseBody));
@@ -67,23 +67,23 @@ class GroqServiceTest {
     void analizarConsulta_lanzaErrorSiFaltaLaApiKey() {
         properties.setKey("");
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(GroqException.class)
-                .hasMessageContaining("groq.api.key");
+                .isInstanceOf(HuggingFaceException.class)
+                .hasMessageContaining("huggingface.chat.key");
     }
 
     @Test
     void analizarConsulta_lanzaErrorSiFaltaElModelo() {
         properties.setModel("");
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(GroqException.class)
-                .hasMessageContaining("groq.api.model");
+                .isInstanceOf(HuggingFaceException.class)
+                .hasMessageContaining("huggingface.chat.model");
     }
 
     @Test
     void analizarConsulta_lanzaError400SiLaConsultaEstaVacia() {
         assertThatThrownBy(() -> service.analizarConsulta("   "))
-                .isInstanceOf(GroqException.class)
-                .satisfies(ex -> assertThat(((GroqException) ex).getStatus()).isEqualTo(400));
+                .isInstanceOf(HuggingFaceException.class)
+                .satisfies(ex -> assertThat(((HuggingFaceException) ex).getStatus()).isEqualTo(400));
     }
 
     // ---------- casos de éxito ----------
@@ -98,7 +98,7 @@ class GroqServiceTest {
                 "\"finish_reason\":\"stop\"}]}";
         server.expect(method(HttpMethod.POST))
                 .andExpect(requestTo(BASE_URL + "/chat/completions"))
-                .andExpect(header("Authorization", "Bearer test-groq-key"))
+                .andExpect(header("Authorization", "Bearer test-huggingface-key"))
                 .andRespond(withSuccess(respuesta, MediaType.APPLICATION_JSON));
 
         SugerenciaFerreteriaDTO resultado = service.analizarConsulta("tengo una fuga en una tuberia");
@@ -112,7 +112,7 @@ class GroqServiceTest {
     void analizarConsulta_enviaElModeloYLaConsultaEnElBody() {
         server.expect(method(HttpMethod.POST))
                 .andExpect(requestTo(BASE_URL + "/chat/completions"))
-                .andExpect(header("Authorization", "Bearer test-groq-key"))
+                .andExpect(header("Authorization", "Bearer test-huggingface-key"))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("\"model\":\"test-model\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("fuga en la tuberia")))
                 .andRespond(withSuccess(
@@ -128,26 +128,26 @@ class GroqServiceTest {
         server.verify();
     }
 
-    // ---------- errores de Groq ----------
+    // ---------- errores de Hugging Face ----------
 
     @Test
     void analizarConsulta_lanzaRateLimitAnteHttp429() {
         expectChatCompletion(HttpStatus.TOO_MANY_REQUESTS, "{\"error\":\"rate limit exceeded\"}");
 
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(GroqRateLimitException.class)
+                .isInstanceOf(HuggingFaceRateLimitException.class)
                 .hasMessageContaining("rate limit");
     }
 
     @Test
-    void analizarConsulta_lanzaGroqExceptionAnteHttp500() {
+    void analizarConsulta_lanzaHuggingFaceExceptionAnteHttp500() {
         server.expect(method(HttpMethod.POST))
                 .andExpect(requestTo(BASE_URL + "/chat/completions"))
                 .andRespond(withServerError());
 
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(GroqException.class)
-                .satisfies(ex -> assertThat(((GroqException) ex).getStatus()).isEqualTo(500));
+                .isInstanceOf(HuggingFaceException.class)
+                .satisfies(ex -> assertThat(((HuggingFaceException) ex).getStatus()).isEqualTo(500));
     }
 
     @Test
@@ -155,7 +155,7 @@ class GroqServiceTest {
         expectChatCompletion(HttpStatus.OK, "{}");
 
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(GroqException.class)
+                .isInstanceOf(HuggingFaceException.class)
                 .hasMessageContaining("vacía");
     }
 
@@ -167,7 +167,7 @@ class GroqServiceTest {
         expectChatCompletion(HttpStatus.OK, respuesta);
 
         assertThatThrownBy(() -> service.analizarConsulta("fuga"))
-                .isInstanceOf(GroqException.class)
+                .isInstanceOf(HuggingFaceException.class)
                 .hasMessageContaining("interpretar");
     }
 
@@ -175,19 +175,19 @@ class GroqServiceTest {
 
     @Test
     void extraerJson_quitaFencesDeMarkdown() {
-        assertThat(GroqService.extraerJson("```json\n{\"a\":1}\n```"))
+        assertThat(HuggingFaceChatService.extraerJson("```json\n{\"a\":1}\n```"))
                 .isEqualTo("{\"a\":1}");
     }
 
     @Test
     void extraerJson_extraeObjetoDeTextoConPrefijo() {
-        assertThat(GroqService.extraerJson("Aquí va el JSON: {\"a\":1} fin"))
+        assertThat(HuggingFaceChatService.extraerJson("Aquí va el JSON: {\"a\":1} fin"))
                 .isEqualTo("{\"a\":1}");
     }
 
     @Test
     void extraerJson_devuelveContenidoPlanoSinObjeto() {
-        assertThat(GroqService.extraerJson("no hay objeto")).isEqualTo("no hay objeto");
+        assertThat(HuggingFaceChatService.extraerJson("no hay objeto")).isEqualTo("no hay objeto");
     }
 
     private static String escaparJson(String texto) {
