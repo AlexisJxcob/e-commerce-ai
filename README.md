@@ -2,7 +2,7 @@
 
 Backend REST de un e-commerce de **ferretería impulsado por IA**. El cliente
 describe un problema en lenguaje coloquial (*"tengo una fuga en una tubería de
-PVC"*) y la API, gracias a un LLM vía **OpenRouter**, lo traduce a términos
+PVC"*) y la API, gracias a un LLM vía **Groq**, lo traduce a términos
 técnicos, herramientas y repuestos, y busca productos en el catálogo usando
 **PostgreSQL + pgvector** (búsqueda por similitud de vectores) y coincidencias
 por palabras clave.
@@ -28,7 +28,8 @@ por palabras clave.
 ![Spring AI](https://img.shields.io/badge/Spring%20AI-2.0.1-6DB33F?style=flat&logo=spring&logoColor=white)
 ![Spring Security](https://img.shields.io/badge/Spring%20Security-JWT-6DB33F?style=flat&logo=springsecurity&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=flat&logo=postgresql&logoColor=white)
-![OpenRouter](https://img.shields.io/badge/OpenRouter-API-ff6b35?style=flat)
+![OpenRouter](https://img.shields.io/badge/OpenRouter-Embeddings-ff6b35?style=flat)
+![Groq](https://img.shields.io/badge/Groq-Chat-f55036?style=flat&logo=groq&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.9.16-C71A36?style=flat&logo=apachemaven&logoColor=white)
 ![SpringDoc](https://img.shields.io/badge/SpringDoc-OpenAPI-85EA2D?style=flat)
 
@@ -37,7 +38,8 @@ por palabras clave.
 | **Java 21** | Lenguaje y runtime |
 | **Spring Boot 4.1.1** | Framework (starters modulares `webmvc`, `restclient`, `data-jpa`) |
 | **Spring AI 2.0.1** | `EmbeddingModel` para generar/consultar vectores (cliente OpenAI-compatible → OpenRouter) |
-| **OpenRouter** | LLM (chat completions) y embeddings para el asistente de ferretería |
+| **Groq** | LLM (chat completions) del asistente de ferretería (API OpenAI-compatible) |
+| **OpenRouter** | Embeddings para la búsqueda vectorial (`/embeddings`) |
 | **PostgreSQL + pgvector** | Persistencia y búsqueda por similitud vectorial |
 | **Spring Security + JWT** | Autenticación stateless con tokens HS256 |
 | **SpringDoc OpenAPI 3.1.0** | Swagger UI / OpenAPI |
@@ -50,7 +52,10 @@ por palabras clave.
 - **PostgreSQL 14+** con la extensión **pgvector** instalada
   ([guía oficial](https://github.com/pgvector/pgvector))
 - **Maven 3.9+** (opcional si usas el wrapper `./mvnw`)
+- Una **API key de Groq** (gratuita en [console.groq.com](https://console.groq.com))
+  para el chat del asistente
 - Una **API key de OpenRouter** (gratuita en [openrouter.ai](https://openrouter.ai))
+  para los embeddings
 
 ## ⚙️ Configuración
 
@@ -70,7 +75,8 @@ CREATE EXTENSION IF NOT EXISTS vector;
 ### 2. Variables de entorno
 
 ```bash
-export OPENROUTER_API_KEY="sk-or-v1-TU_API_KEY_AQUI"   # ← placeholder
+export GROQ_API_KEY="gsk_TU_API_KEY_AQUI"        # ← placeholder (chat)
+export OPENROUTER_API_KEY="sk-or-v1-TU_API_KEY_AQUI"  # ← placeholder (embeddings)
 export DB_USERNAME="postgres"      # opcional: usuario de tu base de datos
 export DB_PASSWORD="TU_CONTRASENA" # opcional: nunca comitees valores reales
 ```
@@ -93,12 +99,12 @@ spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
-# OpenRouter (https://openrouter.ai/docs)
-openrouter.api.key=${OPENROUTER_API_KEY}
-openrouter.api.base-url=https://openrouter.ai/api/v1
-openrouter.api.model=openrouter/free   # o p. ej. meta-llama/llama-3.3-70b-instruct:free
+# Groq (https://console.groq.com) — chat del asistente (API OpenAI-compatible)
+groq.api.key=${GROQ_API_KEY}
+groq.api.base-url=https://api.groq.com/openai/v1
+groq.api.model=qwen/qwen3.8-27b
 
-# Embeddings vía OpenRouter (cliente OpenAI-compatible de Spring AI)
+# Embeddings (cliente OpenAI-compatible de Spring AI) — vía OpenRouter
 spring.ai.openai.api-key=${OPENROUTER_API_KEY}
 spring.ai.openai.base-url=https://openrouter.ai/api
 spring.ai.openai.embedding.options.model=openai/text-embedding-3-small
@@ -129,7 +135,7 @@ curl http://localhost:8080/api/v1/productos
 # Búsqueda vectorial (público)
 curl "http://localhost:8080/api/v1/productos/buscar?q=pegamento%20para%20pvc&limite=5"
 
-# Asistente IA (público; requiere OPENROUTER_API_KEY configurada)
+# Asistente IA (público; requiere GROQ_API_KEY configurada)
 curl "http://localhost:8080/api/v1/productos/asistente?q=tengo%20una%20fuga%20en%20una%20tuber%C3%ADa%20de%20PVC"
 ```
 
@@ -154,7 +160,7 @@ Con SpringDoc integrado, la documentación interactiva está en:
 | `GET` | `/api/v1/productos` | Público | Lista todos los productos |
 | `GET` | `/api/v1/productos/{id}` | Público | Obtiene un producto por id |
 | `GET` | `/api/v1/productos/buscar?q=…&limite=5` | Público | Búsqueda por similitud vectorial (pgvector) |
-| `GET` | `/api/v1/productos/asistente?q=…` | Público | Recomendación IA (OpenRouter + palabras clave) |
+| `GET` | `/api/v1/productos/asistente?q=…` | Público | Recomendación IA (Groq + palabras clave) |
 | `POST` | `/api/v1/productos/diagnose` | `ADMIN` | Body `{ "problema": "…" }` → recomendación IA |
 | `POST` | `/api/v1/productos` | `ADMIN` | Crea un producto |
 | `PUT` | `/api/v1/productos/{id}` | `ADMIN` | Actualiza un producto |
@@ -203,7 +209,22 @@ curl -X POST http://localhost:8080/api/v1/productos \
   ejemplo) — en producción debe inyectarse de forma segura (variable de
   entorno).
 
-## 🔑 Configuración de la API Key de OpenRouter
+## 🔑 Configuración de API Keys (Groq y OpenRouter)
+
+**Groq — chat del asistente:**
+
+1. Crea una cuenta en [console.groq.com](https://console.groq.com) y genera una
+   API key (sección *API Keys*).
+2. Defínela en tu entorno:
+
+   ```bash
+   export GROQ_API_KEY="gsk_TU_API_KEY_AQUI"
+   ```
+
+3. (Opcional) Cambia el modelo en `groq.api.model` (default
+   `qwen/qwen3.8-27b`).
+
+**OpenRouter — embeddings:**
 
 1. Crea una cuenta en [openrouter.ai](https://openrouter.ai) y genera una API
    key en el panel (sección *Keys*).
@@ -213,21 +234,24 @@ curl -X POST http://localhost:8080/api/v1/productos \
    export OPENROUTER_API_KEY="sk-or-v1-TU_API_KEY_AQUI"
    ```
 
-3. (Opcional) Cambia el modelo en `openrouter.api.model`. Los gratuitos como
-   `openrouter/free` son ideales para desarrollo.
-4. El servicio `OpenRouterService` responde:
-   - **429** si superas el rate limit de OpenRouter.
-   - **502** si el modelo no responde con JSON válido o falla la conexión.
+3. El modelo de embeddings se configura en
+   `spring.ai.openai.embedding.options.model` (default
+   `openai/text-embedding-3-small`, 1536 dimensiones).
+
+**Errores del servicio de chat (`GroqService`):**
+
+- **429** si superas el rate limit de Groq.
+- **502** si el modelo no responde con JSON válido o falla la conexión.
 
 ## 🗂️ Estructura del Proyecto
 
 ```
 src/main/java/org/alexis/ecommerceai/
 ├── ECommerceAiApplication.java      # Punto de entrada (@SpringBootApplication)
-├── ai/                              # Lógica de IA (OpenRouter + orquestación)
-├── config/                          # Seguridad, RestClient y propiedades OpenRouter
+├── ai/                              # Lógica de IA (Groq + orquestación)
+├── config/                          # Seguridad, RestClient y propiedades Groq
 ├── controller/                      # API REST (/api/v1/productos)
-├── dto/                             # Records de request/response + DTOs de OpenRouter
+├── dto/                             # Records de request/response + DTOs de chat (groq/)
 ├── exception/                       # Errores de dominio y manejo global (@RestControllerAdvice)
 ├── model/                           # Entidad JPA Producto (incl. columna vector)
 ├── repository/                      # JPA + consulta nativa de similitud vectorial
@@ -243,8 +267,8 @@ src/main/java/org/alexis/ecommerceai/
   `spring.ai.openai.embedding.options.model` y `columnDefinition` en
   `Producto.java` para que la dimensión coincida.
 - **Los embeddings usan OpenRouter**: crear/actualizar productos y la búsqueda
-  vectorial requieren `OPENROUTER_API_KEY` configurada (misma key del
-  asistente).
+  vectorial requieren `OPENROUTER_API_KEY` configurada (el chat del asistente
+  usa `GROQ_API_KEY`).
 - **Spring Boot 4 / Jackson 3**: el proyecto usa los starters modulares nuevos
   y `tools.jackson.*` (Jackson 3). No "corrijas" esos imports a
   `com.fasterxml.*`: romperías la compilación.

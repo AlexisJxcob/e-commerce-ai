@@ -14,7 +14,7 @@ A Spring Boot 4 REST API for an AI-powered hardware store ("ferretería")
 e-commerce backend. Users describe a problem in **colloquial Spanish**
 (e.g. *"tengo una fuga en una tubería de PVC"*) and the API:
 
-1. Sends the query to **OpenRouter** (LLM chat completions) which returns a
+1. Sends the query to **Groq** (LLM chat completions, OpenAI-compatible) which returns a
    structured JSON suggestion (keywords, tools, spare parts).
 2. Uses the extracted terms for keyword search over the product catalog.
 3. Independently supports **vector similarity search** over product embeddings
@@ -35,7 +35,7 @@ messages, and the LLM system prompt are all in Spanish.
 | Spring Boot (parent) | **4.1.1** | `pom.xml` |
 | Spring AI | **2.0.1** (BOM `spring-ai-bom`) | `pom.xml` |
 | Web layer | `spring-boot-starter-webmvc` (modular starter, not `starter-web`) | `pom.xml` |
-| HTTP client | `spring-boot-starter-restclient` (Spring `RestClient`) | `pom.xml`, `OpenRouterConfig` |
+| HTTP client | `spring-boot-starter-restclient` (Spring `RestClient`) | `pom.xml`, `GroqConfig` |
 | Persistence | `spring-boot-starter-data-jpa` + `org.postgresql:postgresql` (runtime) | `pom.xml` |
 | Security | `spring-boot-starter-security` + OAuth2 authorization-server, client, resource-server starters | `pom.xml`, `SecurityConfig` |
 | Validation | `spring-boot-starter-validation` (Jakarta Validation) | `pom.xml`, `ProductoRequestDTO` |
@@ -43,8 +43,8 @@ messages, and the LLM system prompt are all in Spanish.
 | Spring AI — Embeddings | `spring-ai-starter-model-openai` (OpenAI-compatible client → OpenRouter `/embeddings`) | `pom.xml`, `ProductoService`, `application.properties` |
 | Spring AI — Vector store | `spring-ai-starter-vector-store-pgvector` (dependency present; direct SQL used in repo) | `pom.xml`, `ProductoRepository` |
 | Spring AI — ETL | `spring-ai-tika-document-reader`, `spring-ai-vector-store-advisor` (declared, no usage found in code) | `pom.xml` |
-| JSON | Jackson 3 (`tools.jackson.*` — `ObjectMapper`, `JacksonException`) | `OpenRouterService` |
-| Codegen | Lombok (`@Getter/@Setter/@NoArgsConstructor/@AllArgsConstructor`) | `pom.xml`, `Producto`, `OpenRouterProperties` |
+| JSON | Jackson 3 (`tools.jackson.*` — `ObjectMapper`, `JacksonException`) | `GroqService` |
+| Codegen | Lombok (`@Getter/@Setter/@NoArgsConstructor/@AllArgsConstructor`) | `pom.xml`, `Producto`, `GroqProperties` |
 | Build | Maven Wrapper 3.9.16 (`mvnw`) | `.mvn/wrapper/maven-wrapper.properties` |
 | Tests | `spring-boot-starter-*-test` starters + Testcontainers; 69 tests (unit + integration) | `pom.xml`, `src/test` |
 
@@ -62,11 +62,11 @@ src/main/java/org/alexis/ecommerceai/
 ├── ECommerceAiApplication.java        # @SpringBootApplication entry point
 ├── ai/
 │   ├── AsistenteIAService.java        # Orchestrates LLM analysis → product search
-│   └── OpenRouterService.java         # OpenRouter /chat/completions client + JSON parsing
+│   └── GroqService.java         # Groq /chat/completions client + JSON parsing
 ├── config/
 │   ├── SecurityConfig.java            # Filter chain, JWT decoder bean
-│   ├── OpenRouterConfig.java          # RestClient bean ("openRouterRestClient")
-│   └── OpenRouterProperties.java      # @ConfigurationProperties("openrouter.api")
+│   ├── GroqConfig.java          # RestClient bean ("groqRestClient")
+│   └── GroqProperties.java      # @ConfigurationProperties("groq.api")
 ├── controller/
 │   └── ProductoController.java        # /api/v1/productos (REST + AI endpoints)
 ├── dto/
@@ -75,11 +75,11 @@ src/main/java/org/alexis/ecommerceai/
 │   ├── BusquedaInteligenteResponse.java
 │   ├── DiagnoseRequestDTO.java        # POST /diagnose body { "problema": "..." }
 │   ├── SugerenciaFerreteriaDTO.java   # LLM JSON contract (keywords/tools/spare parts)
-│   └── openrouter/                    # ChatCompletion{Request,Response}, ChatMessage
+│   └── groq/                    # ChatCompletion{Request,Response}, ChatMessage
 ├── exception/
 │   ├── ErrorResponse.java             # Unified error body (record)
 │   ├── GlobalExceptionHandler.java    # @RestControllerAdvice
-│   └── (OpenRouterException, OpenRouterRateLimitException,
+│   └── (GroqException, GroqRateLimitException,
 │        ProductoNotFoundException, StockUpdateConflictException)
 ├── model/
 │   └── Producto.java                  # JPA entity "productos" incl. vector(1536) column
@@ -96,7 +96,7 @@ src/test/java/.../ECommerceAiApplicationTests.java
 
 **Request flow (AI recommendation):**
 `ProductoController` → `AsistenteIAService.buscarRecomendacion()` →
-`OpenRouterService.analizarConsulta()` (LLM) → flatten keywords/tools/parts →
+`GroqService.analizarConsulta()` (LLM) → flatten keywords/tools/parts →
 `ProductoService.buscarPorPalabrasClave()` → `ProductoRepository.buscarPorPalabraClave()`
 (LIKE across `nombre`, `descripcionTecnica`, `descripcionColoquial`, `sku`).
 
@@ -150,7 +150,7 @@ pgvector facts verified from code:
 | GET | `/api/v1/productos` | Public | List all products |
 | GET | `/api/v1/productos/{id}` | Public | Get one product |
 | GET | `/api/v1/productos/buscar?q=...&limite=5` | Public | pgvector similarity search (top-N) |
-| GET | `/api/v1/productos/asistente?q=...` | Public | AI recommendation (OpenRouter + keyword search) |
+| GET | `/api/v1/productos/asistente?q=...` | Public | AI recommendation (Groq + keyword search) |
 | POST | `/api/v1/productos/diagnose` | **ADMIN** | Body `{"problema": "..."}` → AI recommendation |
 | POST | `/api/v1/productos` | **ADMIN** | Create product (validated) |
 | PUT | `/api/v1/productos/{id}` | **ADMIN** | Update product (validated) |
@@ -206,7 +206,7 @@ Verified from `SecurityConfig.java` and `JwtAuthenticationFilter.java`:
   (`ProductoResponseDTO`, `BusquedaInteligenteResponse`).
 - **Model/LLM-facing DTOs** use `@JsonIgnoreProperties(ignoreUnknown = true)`
   to tolerate extra JSON fields (`SugerenciaFerreteriaDTO`,
-  `openrouter/ChatCompletionResponse`, `ChatMessage`). `SugerenciaFerreteriaDTO`
+  `groq/ChatCompletionResponse`, `ChatMessage`). `SugerenciaFerreteriaDTO`
   also null-safe-accessors returning `List.of()`.
 - **Mutating DTOs** (`DiagnoseRequestDTO`) may be simple classes with
   getters/setters instead of records.
@@ -226,8 +226,8 @@ Verified from `SecurityConfig.java` and `JwtAuthenticationFilter.java`:
 | `MethodArgumentNotValidException` | 400, with per-field messages map |
 | `ProductoNotFoundException` | 404 |
 | `StockUpdateConflictException` (from `OptimisticLockingFailureException` on stock update) | 409 |
-| `OpenRouterRateLimitException` (HTTP 429 from OpenRouter) | 429 |
-| `OpenRouterException` | exception's `status` (default 502 → `BAD_GATEWAY`; non-error codes are coerced to 502) |
+| `GroqRateLimitException` (HTTP 429 from Groq) | 429 |
+| `GroqException` | exception's `status` (default 502 → `BAD_GATEWAY`; non-error codes are coerced to 502) |
 | any other `Exception` | 500, generic message (details hidden) |
 
 Rules when adding exceptions: extend `RuntimeException`, add a `@ExceptionHandler`
@@ -246,26 +246,26 @@ Spanish.
   `spring.ai.openai.embedding.options.model=openai/text-embedding-3-small`.
   Used for: product embeddings on create/update, and query embedding for
   vector search.
-- **OpenRouter** is called via a dedicated `RestClient` bean
-  (`openRouterRestClient`) built in `OpenRouterConfig` with headers:
+- **Groq** (chat del asistente) is called via a dedicated `RestClient` bean
+  (`groqRestClient`) built in `GroqConfig` with headers:
   `Authorization: Bearer <key>`, `HTTP-Referer`, `X-Title`, `Content-Type:
   application/json`.
-- `OpenRouterProperties` (`prefix = "openrouter.api"`): `key`, `model`
-  (default `openrouter/free`), `baseUrl` (default
-  `https://openrouter.ai/api/v1`), `httpReferer` (default
+- `GroqProperties` (`prefix = "groq.api"`): `key`, `model`
+  (default `qwen/qwen3.8-27b`), `baseUrl` (default
+  `https://api.groq.com/openai/v1`), `httpReferer` (default
   `http://localhost:8080`), `appTitle` (default `Ferreteria IA App`).
-- `OpenRouterService.analizarConsulta()`:
+- `GroqService.analizarConsulta()`:
   - Validates key/model/query presence (Spanish error messages).
   - Sends `POST {baseUrl}/chat/completions` with `{model, messages:[system, user]}`
     using a fixed `SYSTEM_PROMPT` that instructs the model to answer **only**
     valid JSON `{palabrasClave[], herramientas[], repuestos[]}` — 3–8 keywords,
     no brands/product codes, empty lists for non-hardware queries.
-  - Maps HTTP 429 → `OpenRouterRateLimitException`; other HTTP errors →
-    `OpenRouterException`; connection/rest failures wrapped accordingly.
+  - Maps HTTP 429 → `GroqRateLimitException`; other HTTP errors →
+    `GroqException`; connection/rest failures wrapped accordingly.
   - Parses the model's text: strips markdown fences and extracts the first
     `{...}` block (`extraerJson`), then deserializes with Jackson 3
     `ObjectMapper` into `SugerenciaFerreteriaDTO`. Parse failure →
-    `OpenRouterException`.
+    `GroqException`.
 
 ---
 
@@ -283,16 +283,16 @@ YAML**):
 | `spring.jpa.hibernate.ddl-auto` | `update` | — |
 | `spring.jpa.show-sql` | `true` | — |
 | `spring.jpa.properties.hibernate.dialect` | `org.hibernate.dialect.PostgreSQLDialect` | — |
-| `openrouter.api.key` | `${OPENROUTER_API_KEY}` | **`OPENROUTER_API_KEY`** |
-| `openrouter.api.base-url` | `https://openrouter.ai/api/v1` | — |
-| `openrouter.api.model` | `openrouter/free` | — |
+| `groq.api.key` | `${GROQ_API_KEY}` | **`GROQ_API_KEY`** (chat) |
+| `groq.api.base-url` | `https://api.groq.com/openai/v1` | — |
+| `groq.api.model` | `qwen/qwen3.8-27b` | — |
 | `spring.ai.openai.api-key` | `${OPENROUTER_API_KEY}` | **`OPENROUTER_API_KEY`** (embeddings) |
 | `spring.ai.openai.base-url` | `https://openrouter.ai/api` | — |
 | `spring.ai.openai.embedding.options.model` | `openai/text-embedding-3-small` | — |
 
-- **Never commit real keys.** `OPENROUTER_API_KEY` is resolved from the
-  environment; the repo's `.gitignore` already excludes `.env`, `.env.local`
-  and `application-local.properties/yml`.
+- **Never commit real keys.** `GROQ_API_KEY` (chat) and `OPENROUTER_API_KEY`
+  (embeddings) are resolved from the environment; the repo's `.gitignore`
+  already excludes `.env`, `.env.local` and `application-local.properties/yml`.
 - PostgreSQL must have the **pgvector extension installed**
   (`CREATE EXTENSION IF NOT EXISTS vector;`) and a database matching
   `spring.datasource.url`.
@@ -309,7 +309,7 @@ YAML**):
    Lombok usage minimal (entities/`@ConfigurationProperties`).
 2. **Spanish** for user-facing strings: validation messages, exception messages,
    the LLM system prompt, and this domain's DTO field semantics.
-3. Never change the OpenRouter `SYSTEM_PROMPT` JSON contract without updating
+3. Never change the Groq `SYSTEM_PROMPT` JSON contract without updating
    `SugerenciaFerreteriaDTO` in the same change.
 4. When adding endpoints: update `SecurityConfig` rules, keep `GET` read-only
    endpoints public only if intended (current policy), and document them in
@@ -341,8 +341,11 @@ them as facts:
   the database is assumed to already have it.
 - **Embedding model & dimensions:** the repo configures
   `spring.ai.openai.embedding.options.model=openai/text-embedding-3-small`
-  (1536 dims, matches `vector(1536)`); whether OpenRouter serves that exact
-  model id was not end-to-end verified without a live API key.
+  (1536 dims, matches `vector(1536)`). Verified live against OpenRouter: the
+  endpoint accepts the model id, but the current API key returns
+  **403 "Key limit exceeded (daily limit)"** for embeddings until the quota
+  resets. **Groq does not expose embedding models to this key** (`model_not_found`),
+  which is why embeddings remain on OpenRouter while chat uses Groq.
 - **Swagger/OpenAPI reachability:** springdoc is present, but
   `anyRequest().authenticated()` in `SecurityConfig` does not exempt
   `/swagger-ui/**` or `/v3/api-docs` — verified: **403 without a JWT, 200 with**.
@@ -361,12 +364,12 @@ them as facts:
 
 `pom.xml`, `src/main/resources/application.properties`,
 `src/main/java/org/alexis/ecommerceai/ECommerceAiApplication.java`,
-`config/{SecurityConfig,OpenRouterConfig,OpenRouterProperties}.java`,
+`config/{SecurityConfig,GroqConfig,GroqProperties}.java`,
 `security/JwtAuthenticationFilter.java`, `controller/ProductoController.java`,
-`ai/{AsistenteIAService,OpenRouterService}.java`, `service/ProductoService.java`,
+`ai/{AsistenteIAService,GroqService}.java`, `service/ProductoService.java`,
 `repository/ProductoRepository.java`, `model/Producto.java`,
 `dto/{ProductoRequestDTO,ProductoResponseDTO,BusquedaInteligenteResponse,DiagnoseRequestDTO,SugerenciaFerreteriaDTO}.java`,
-`dto/openrouter/{ChatCompletionRequest,ChatCompletionResponse,ChatMessage}.java`,
-`exception/{ErrorResponse,GlobalExceptionHandler,OpenRouterException,OpenRouterRateLimitException,ProductoNotFoundException,StockUpdateConflictException}.java`,
+`dto/groq/{ChatCompletionRequest,ChatCompletionResponse,ChatMessage}.java`,
+`exception/{ErrorResponse,GlobalExceptionHandler,GroqException,GroqRateLimitException,ProductoNotFoundException,StockUpdateConflictException}.java`,
 `src/test/java/org/alexis/ecommerceai/ECommerceAiApplicationTests.java`,
 `.gitignore`, `.mvn/wrapper/maven-wrapper.properties`.

@@ -1,4 +1,4 @@
-package org.alexis.ecommerceai.dto.openrouter;
+package org.alexis.ecommerceai.dto.groq;
 
 import java.util.List;
 

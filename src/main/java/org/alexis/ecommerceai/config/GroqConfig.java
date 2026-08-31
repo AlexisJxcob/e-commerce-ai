@@ -1,4 +1,3 @@
-
 package org.alexis.ecommerceai.config;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -9,11 +8,11 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 
 @Configuration
-@EnableConfigurationProperties(OpenRouterProperties.class)
-public class OpenRouterConfig {
+@EnableConfigurationProperties(GroqProperties.class)
+public class GroqConfig {
 
-    @Bean(name = "openRouterRestClient")
-    public RestClient openRouterRestClient(RestClient.Builder builder, OpenRouterProperties properties) {
+    @Bean(name = "groqRestClient")
+    public RestClient groqRestClient(RestClient.Builder builder, GroqProperties properties) {
         String key = properties.getKey() == null ? "" : properties.getKey();
         return builder.clone()
                 .baseUrl(properties.getBaseUrl())

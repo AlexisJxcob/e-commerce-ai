@@ -6,10 +6,10 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import org.alexis.ecommerceai.ai.OpenRouterService;
+import org.alexis.ecommerceai.ai.GroqService;
 import org.alexis.ecommerceai.dto.SugerenciaFerreteriaDTO;
-import org.alexis.ecommerceai.exception.OpenRouterException;
-import org.alexis.ecommerceai.exception.OpenRouterRateLimitException;
+import org.alexis.ecommerceai.exception.GroqException;
+import org.alexis.ecommerceai.exception.GroqRateLimitException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Tests de integración de {@code ProductoController} con contexto Spring completo
  * (MockMvc + @SpringBootTest), base PostgreSQL+pgvector real vía Testcontainers y
- * OpenRouter mockeado a nivel de servicio (sin llamadas HTTP reales).
+ * Groq mockeado a nivel de servicio (sin llamadas HTTP reales).
  */
 @Transactional
 class ProductoControllerIntegrationTest extends AbstractIntegrationTest {
@@ -49,7 +49,7 @@ class ProductoControllerIntegrationTest extends AbstractIntegrationTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private OpenRouterService openRouterService;
+    private GroqService groqService;
 
     // ---------- helpers ----------
 
@@ -206,14 +206,14 @@ class ProductoControllerIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.length()").value(2));
     }
 
-    // ---------- flujo IA (OpenRouter mockeado) ----------
+    // ---------- flujo IA (Groq mockeado) ----------
 
     @Test
-    void diagnose_flujoCompletoConOpenRouterMockeado() throws Exception {
+    void diagnose_flujoCompletoConGroqMockeado() throws Exception {
         crearProducto("SKU-TEFLON", "Cinta teflon 12m");
         SugerenciaFerreteriaDTO sugerencia = new SugerenciaFerreteriaDTO(
                 List.of("teflon", "cinta"), List.of("llave"), List.of("cinta teflon"));
-        when(openRouterService.analizarConsulta("tengo una fuga en una tuberia"))
+        when(groqService.analizarConsulta("tengo una fuga en una tuberia"))
                 .thenReturn(sugerencia);
 
         mockMvc.perform(post("/api/v1/productos/diagnose")
@@ -230,7 +230,7 @@ class ProductoControllerIntegrationTest extends AbstractIntegrationTest {
     void asistente_devuelveRecomendacionSinAutenticacion() throws Exception {
         SugerenciaFerreteriaDTO sugerencia = new SugerenciaFerreteriaDTO(
                 List.of("cinta"), List.of(), List.of());
-        when(openRouterService.analizarConsulta("fuga")).thenReturn(sugerencia);
+        when(groqService.analizarConsulta("fuga")).thenReturn(sugerencia);
 
         mockMvc.perform(get("/api/v1/productos/asistente").param("q", "fuga"))
                 .andExpect(status().isOk())
@@ -239,8 +239,8 @@ class ProductoControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void asistente_rateLimit_devuelve429() throws Exception {
-        when(openRouterService.analizarConsulta("fuga"))
-                .thenThrow(new OpenRouterRateLimitException("rate limit alcanzado"));
+        when(groqService.analizarConsulta("fuga"))
+                .thenThrow(new GroqRateLimitException("rate limit alcanzado"));
 
         mockMvc.perform(get("/api/v1/productos/asistente").param("q", "fuga"))
                 .andExpect(status().isTooManyRequests())
@@ -248,9 +248,9 @@ class ProductoControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void asistente_errorDeOpenRouter_devuelve502() throws Exception {
-        when(openRouterService.analizarConsulta("fuga"))
-                .thenThrow(new OpenRouterException("fallo del modelo"));
+    void asistente_errorDeGroq_devuelve502() throws Exception {
+        when(groqService.analizarConsulta("fuga"))
+                .thenThrow(new GroqException("fallo del modelo"));
 
         mockMvc.perform(get("/api/v1/productos/asistente").param("q", "fuga"))
                 .andExpect(status().isBadGateway())

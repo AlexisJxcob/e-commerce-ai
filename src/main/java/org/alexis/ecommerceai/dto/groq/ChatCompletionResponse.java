@@ -1,4 +1,4 @@
-package org.alexis.ecommerceai.dto.openrouter;
+package org.alexis.ecommerceai.dto.groq;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
