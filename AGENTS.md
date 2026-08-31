@@ -19,7 +19,8 @@ e-commerce backend. Users describe a problem in **colloquial Spanish**
 2. Uses the extracted terms for keyword search over the product catalog.
 3. Independently supports **vector similarity search** over product embeddings
    stored in **PostgreSQL + pgvector** (`<=>` operator), with embeddings
-   generated through Spring AI's `EmbeddingModel` (Ollama starter).
+   generated through Spring AI's `EmbeddingModel` (OpenAI-compatible client
+   pointed at OpenRouter's `/embeddings` endpoint).
 
 The domain is Spanish-language: entity names, validation messages, exception
 messages, and the LLM system prompt are all in Spanish.
@@ -39,13 +40,13 @@ messages, and the LLM system prompt are all in Spanish.
 | Security | `spring-boot-starter-security` + OAuth2 authorization-server, client, resource-server starters | `pom.xml`, `SecurityConfig` |
 | Validation | `spring-boot-starter-validation` (Jakarta Validation) | `pom.xml`, `ProductoRequestDTO` |
 | OpenAPI/Swagger | `springdoc-openapi-starter-webmvc-ui` **3.1.0** | `pom.xml` |
-| Spring AI — LLM | `spring-ai-starter-model-ollama` (used for embeddings via `EmbeddingModel`) | `pom.xml`, `ProductoService` |
+| Spring AI — Embeddings | `spring-ai-starter-model-openai` (OpenAI-compatible client → OpenRouter `/embeddings`) | `pom.xml`, `ProductoService`, `application.properties` |
 | Spring AI — Vector store | `spring-ai-starter-vector-store-pgvector` (dependency present; direct SQL used in repo) | `pom.xml`, `ProductoRepository` |
 | Spring AI — ETL | `spring-ai-tika-document-reader`, `spring-ai-vector-store-advisor` (declared, no usage found in code) | `pom.xml` |
 | JSON | Jackson 3 (`tools.jackson.*` — `ObjectMapper`, `JacksonException`) | `OpenRouterService` |
 | Codegen | Lombok (`@Getter/@Setter/@NoArgsConstructor/@AllArgsConstructor`) | `pom.xml`, `Producto`, `OpenRouterProperties` |
 | Build | Maven Wrapper 3.9.16 (`mvnw`) | `.mvn/wrapper/maven-wrapper.properties` |
-| Tests | `spring-boot-starter-*-test` starters; single `contextLoads` test | `pom.xml`, `src/test` |
+| Tests | `spring-boot-starter-*-test` starters + Testcontainers; 69 tests (unit + integration) | `pom.xml`, `src/test` |
 
 > **Note:** Spring Boot 4 / Spring Framework 7 use modular starters
 > (`spring-boot-starter-webmvc`, `spring-boot-starter-restclient`) and ship
@@ -127,12 +128,10 @@ pgvector facts verified from code:
 - The `embedding` column requires the **pgvector extension** to exist in the
   database (`CREATE EXTENSION IF NOT EXISTS vector;`). **No migration/SQL file
   creating the extension exists in the repo** — it must be created manually.
-- Dimension is hardcoded to **1536** in the column definition. A comment in
-  `Producto.java` states the dimension must match the embedding model used
-  (e.g. 1536 for OpenAI, 768 for Ollama `nomic-embed-text`). The repo currently
-  has **no** OpenAI starter and **no** `spring.ai.*` embedding configuration, so
-  the active `EmbeddingModel` defaults to Ollama — a dimension mismatch with
-  `vector(1536)` is a real risk (see caveats).
+- Dimension is hardcoded to **1536** in the column definition, matching the
+  configured embedding model `openai/text-embedding-3-small` (served by
+  OpenRouter's `/embeddings` endpoint). If you change embedding model, the
+  dimension must match `vector(1536)` (see caveats).
 - Similarity query (`ProductoRepository.buscarPorSimilitudVectorial`):
   `ORDER BY p.embedding <=> CAST(:embedding AS vector) LIMIT :limit`
   (cosine distance). The embedding string passed in is
@@ -239,11 +238,14 @@ Spanish.
 
 ## 9. Spring AI Integration
 
-- **`EmbeddingModel`** (Spring AI, Ollama starter) is injected into
-  `ProductoService`. Used for: product embeddings on create/update, and query
-  embedding for vector search. No `spring.ai.*` properties are configured in
-  `application.properties`, so Spring AI defaults apply (Ollama at
-  `http://localhost:11434`).
+- **`EmbeddingModel`** (Spring AI, OpenAI-compatible client via
+  `spring-ai-starter-model-openai`) is injected into `ProductoService`.
+  Configured to hit **OpenRouter's `/embeddings`** endpoint:
+  `spring.ai.openai.api-key=${OPENROUTER_API_KEY}`,
+  `spring.ai.openai.base-url=https://openrouter.ai/api`,
+  `spring.ai.openai.embedding.options.model=openai/text-embedding-3-small`.
+  Used for: product embeddings on create/update, and query embedding for
+  vector search.
 - **OpenRouter** is called via a dedicated `RestClient` bean
   (`openRouterRestClient`) built in `OpenRouterConfig` with headers:
   `Authorization: Bearer <key>`, `HTTP-Referer`, `X-Title`, `Content-Type:
@@ -284,6 +286,9 @@ YAML**):
 | `openrouter.api.key` | `${OPENROUTER_API_KEY}` | **`OPENROUTER_API_KEY`** |
 | `openrouter.api.base-url` | `https://openrouter.ai/api/v1` | — |
 | `openrouter.api.model` | `openrouter/free` | — |
+| `spring.ai.openai.api-key` | `${OPENROUTER_API_KEY}` | **`OPENROUTER_API_KEY`** (embeddings) |
+| `spring.ai.openai.base-url` | `https://openrouter.ai/api` | — |
+| `spring.ai.openai.embedding.options.model` | `openai/text-embedding-3-small` | — |
 
 - **Never commit real keys.** `OPENROUTER_API_KEY` is resolved from the
   environment; the repo's `.gitignore` already excludes `.env`, `.env.local`
@@ -292,9 +297,9 @@ YAML**):
   (`CREATE EXTENSION IF NOT EXISTS vector;`) and a database matching
   `spring.datasource.url`.
 - If the embedding model changes dimension, update the
-  `columnDefinition = "vector(N)"` in `Producto.java` and (optionally) add
-  `spring.ai.ollama.*` properties; without this, `<=>` casts can fail at query
-  time.
+  `columnDefinition = "vector(N)"` in `Producto.java` and
+  `spring.ai.openai.embedding.options.model`; without this, `<=>` casts can
+  fail at query time.
 
 ---
 
@@ -334,15 +339,16 @@ them as facts:
   How tokens are minted in production is unknown.
 - **pgvector extension bootstrap:** no SQL migration creates the extension;
   the database is assumed to already have it.
-- **Embedding model & dimensions:** no `spring.ai.*` configuration exists, so
-  the concrete embedding model (and its dimensions vs. `vector(1536)`) is
-  assumed (Ollama defaults), not verified.
+- **Embedding model & dimensions:** the repo configures
+  `spring.ai.openai.embedding.options.model=openai/text-embedding-3-small`
+  (1536 dims, matches `vector(1536)`); whether OpenRouter serves that exact
+  model id was not end-to-end verified without a live API key.
 - **Swagger/OpenAPI reachability:** springdoc is present, but
   `anyRequest().authenticated()` in `SecurityConfig` does not exempt
-  `/swagger-ui/**` or `/v3/api-docs` — whether the UI is reachable without a
-  token was not tested.
-- **Tests:** the only test is `ECommerceAiApplicationTests.contextLoads`; no
-  controller/service/security tests exist.
+  `/swagger-ui/**` or `/v3/api-docs` — verified: **403 without a JWT, 200 with**.
+- **Tests:** 69 tests across unit (services, controller, exceptions) and
+  integration (`@SpringBootTest` + MockMvc + Testcontainers pgvector); the
+  old "contextLoads-only" state no longer applies.
 - **Frontend:** the repo contains no frontend; `@CrossOrigin` hints at a client
   on `http://localhost:3001` and `ProductoController` comments reference an
   `apiClient.ts` ("Antigravity"), but no such project is in this repository.

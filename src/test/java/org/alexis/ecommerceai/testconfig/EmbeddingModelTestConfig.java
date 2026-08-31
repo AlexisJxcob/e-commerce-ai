@@ -8,9 +8,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
 /**
- * Sustituye el EmbeddingModel real (Ollama) por un stub determinista que
+ * Sustituye el EmbeddingModel real (OpenRouter) por un stub determinista que
  * devuelve un vector de 1536 dimensiones (coincide con la columna
- * vector(1536) de la entidad Producto). Los tests no dependen de Ollama.
+ * vector(1536) de la entidad Producto). Los tests no dependen de servicios externos.
  */
 @TestConfiguration
 public class EmbeddingModelTestConfig {
