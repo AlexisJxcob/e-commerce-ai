@@ -186,6 +186,9 @@ class OpenRouterServiceTest {
     }
 
     private static String escaparJson(String texto) {
-        return texto.replace("\\", "\\\\").replace("\"", "\\\"");
+        return texto.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
     }
 }
