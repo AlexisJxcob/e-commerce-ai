@@ -69,7 +69,7 @@ class GlobalExceptionHandlerTest {
         }
 
         @GetMapping("/missing-param")
-        public void missingParam() {
+        public void missingParam() throws Exception {
             throw mock(MissingServletRequestParameterException.class);
         }
 
