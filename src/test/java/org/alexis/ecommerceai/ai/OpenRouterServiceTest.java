@@ -56,7 +56,9 @@ class OpenRouterServiceTest {
         server.expect(method(HttpMethod.POST))
                 .andExpect(requestTo(BASE_URL + "/chat/completions"))
                 .andExpect(header("Authorization", "Bearer test-openrouter-key"))
-                .andRespond(withStatus(status).body(responseBody));
+                .andRespond(withStatus(status)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(responseBody));
     }
 
     // ---------- validaciones de configuración ----------
