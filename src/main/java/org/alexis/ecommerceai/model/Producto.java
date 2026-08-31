@@ -42,12 +42,13 @@ public class Producto {
     private Integer stock;
 
     // Mapeo directo del tipo vector para PostgreSQL.
-    // Cambia 1536 a las dimensiones de tu modelo de embedding
+    // Dimensiones del modelo sentence-transformers/all-MiniLM-L6-v2 = 384.
+    // Si cambias de modelo de embedding, actualiza también este valor
     // (p. ej. openai/text-embedding-3-small = 1536).
     // @ColumnTransformer aplica el cast explicito ?::vector en INSERT/UPDATE:
     // sin él, PostgreSQL rechaza el parametro varchar (String de Java).
     @ColumnTransformer(write = "?::vector")
-    @Column(columnDefinition = "vector(1536)")
+    @Column(columnDefinition = "vector(384)")
     private String embedding;
 
     @Version
