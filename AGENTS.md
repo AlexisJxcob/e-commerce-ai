@@ -19,8 +19,9 @@ e-commerce backend. Users describe a problem in **colloquial Spanish**
 2. Uses the extracted terms for keyword search over the product catalog.
 3. Independently supports **vector similarity search** over product embeddings
    stored in **PostgreSQL + pgvector** (`<=>` operator), with embeddings
-   generated through Spring AI's `EmbeddingModel` (OpenAI-compatible client
-   pointed at OpenRouter's `/embeddings` endpoint).
+   generated through a dedicated `RestClient` against the **Hugging Face
+   Inference API** (model `sentence-transformers/all-MiniLM-L6-v2`, 384
+   dimensions).
 
 The domain is Spanish-language: entity names, validation messages, exception
 messages, and the LLM system prompt are all in Spanish.
@@ -40,7 +41,7 @@ messages, and the LLM system prompt are all in Spanish.
 | Security | `spring-boot-starter-security` + OAuth2 authorization-server, client, resource-server starters | `pom.xml`, `SecurityConfig` |
 | Validation | `spring-boot-starter-validation` (Jakarta Validation) | `pom.xml`, `ProductoRequestDTO` |
 | OpenAPI/Swagger | `springdoc-openapi-starter-webmvc-ui` **3.1.0** | `pom.xml` |
-| Spring AI — Embeddings | `spring-ai-starter-model-openai` (OpenAI-compatible client → OpenRouter `/embeddings`) | `pom.xml`, `ProductoService`, `application.properties` |
+| Spring AI — Embeddings | **no starter** — custom `HuggingFaceEmbeddingModel` (`RestClient`) → HF Inference API `feature-extraction`; `spring-ai-starter-model-openai` was **removed** | `pom.xml`, `HuggingFaceConfig`, `HuggingFaceEmbeddingModel`, `application.properties` |
 | Spring AI — Vector store | `spring-ai-starter-vector-store-pgvector` (dependency present; direct SQL used in repo) | `pom.xml`, `ProductoRepository` |
 | Spring AI — ETL | `spring-ai-tika-document-reader`, `spring-ai-vector-store-advisor` (declared, no usage found in code) | `pom.xml` |
 | JSON | Jackson 3 (`tools.jackson.*` — `ObjectMapper`, `JacksonException`) | `GroqService` |
@@ -66,29 +67,34 @@ src/main/java/org/alexis/ecommerceai/
 ├── config/
 │   ├── SecurityConfig.java            # Filter chain, JWT decoder bean
 │   ├── GroqConfig.java          # RestClient bean ("groqRestClient")
-│   └── GroqProperties.java      # @ConfigurationProperties("groq.api")
+│   ├── GroqProperties.java      # @ConfigurationProperties("groq.api")
+│   ├── HuggingFaceConfig.java         # RestClient bean ("huggingFaceRestClient") + EmbeddingModel bean
+│   ├── HuggingFaceProperties.java     # @ConfigurationProperties("huggingface.api") (key/model/baseUrl)
+│   └── HuggingFaceEmbeddingModel.java # EmbeddingModel impl → HF Inference API (feature-extraction, 384 dims)
 ├── controller/
-│   └── ProductoController.java        # /api/v1/productos (REST + AI endpoints)
+│   └── ProductoController.java        # /api/v1/productos (REST + AI endpoints, incl. reindexar)
 ├── dto/
 │   ├── ProductoRequestDTO.java        # Create/update payload (record + validation)
 │   ├── ProductoResponseDTO.java       # API response (record)
 │   ├── BusquedaInteligenteResponse.java
 │   ├── DiagnoseRequestDTO.java        # POST /diagnose body { "problema": "..." }
+│   ├── ReindexacionResponse.java      # record(procesados, pendientes) for POST /reindexar
 │   ├── SugerenciaFerreteriaDTO.java   # LLM JSON contract (keywords/tools/spare parts)
 │   └── groq/                    # ChatCompletion{Request,Response}, ChatMessage
 ├── exception/
 │   ├── ErrorResponse.java             # Unified error body (record)
 │   ├── GlobalExceptionHandler.java    # @RestControllerAdvice
-│   └── (GroqException, GroqRateLimitException,
-│        ProductoNotFoundException, StockUpdateConflictException)
+│   └── (GroqException, GroqRateLimitException, HuggingFaceException,
+│        HuggingFaceRateLimitException, ProductoNotFoundException,
+│        StockUpdateConflictException)
 ├── model/
-│   └── Producto.java                  # JPA entity "productos" incl. vector(1536) column
+│   └── Producto.java                  # JPA entity "productos" incl. vector(384) column
 ├── repository/
-│   └── ProductoRepository.java        # JPA + native vector similarity query
+│   └── ProductoRepository.java        # JPA + native vector similarity query + pendientes de embedding
 ├── security/
 │   └── JwtAuthenticationFilter.java   # Custom Bearer-JWT filter
 └── service/
-    └── ProductoService.java           # CRUD, stock, keyword & vector search
+    └── ProductoService.java           # CRUD, stock, keyword & vector search, reindexación
 src/main/resources/
 └── application.properties             # The only config file (no YAML)
 src/test/java/.../ECommerceAiApplicationTests.java
@@ -102,8 +108,14 @@ src/test/java/.../ECommerceAiApplicationTests.java
 
 **Vector search flow:**
 `ProductoController GET /buscar` → `ProductoService.buscarPorSimilitud()` →
-`EmbeddingModel.embed(query)` → native SQL
-`ORDER BY p.embedding <=> CAST(:embedding AS vector) LIMIT :limit`.
+`EmbeddingModel.embed(query)` (HuggingFaceEmbeddingModel) → native SQL
+`WHERE p.embedding IS NOT NULL ORDER BY p.embedding <=> CAST(:embedding AS vector) LIMIT :limit`.
+
+**Reindexing flow (pending embeddings):**
+`ProductoController POST /reindexar` (ADMIN) →
+`ProductoService.reindexarPendientes()` → `ProductoRepository.findPendientesDeEmbedding()`
+(products with `embedding IS NULL`) → generates each vector via HF → saves →
+`ProductoRepository.countByEmbeddingIsNull()` → `ReindexacionResponse(procesados, pendientes)`.
 
 ---
 
@@ -120,7 +132,7 @@ src/test/java/.../ECommerceAiApplicationTests.java
 | `descripcion_coloquial` | `TEXT` | nullable — colloquial terms for the AI search |
 | `precio` | `BigDecimal`, `precision=10, scale=2` | `nullable=false` |
 | `stock` | `Integer` | `nullable=false` |
-| `embedding` | `columnDefinition = "vector(1536)"`, stored as `String` | direct pgvector column mapping |
+| `embedding` | `columnDefinition = "vector(384)"`, stored as `String`, `@ColumnTransformer(write="?::vector")` | direct pgvector column mapping |
 | `version` | `Long`, `@Version` | optimistic locking, default 0 |
 
 pgvector facts verified from code:
@@ -128,17 +140,25 @@ pgvector facts verified from code:
 - The `embedding` column requires the **pgvector extension** to exist in the
   database (`CREATE EXTENSION IF NOT EXISTS vector;`). **No migration/SQL file
   creating the extension exists in the repo** — it must be created manually.
-- Dimension is hardcoded to **1536** in the column definition, matching the
-  configured embedding model `openai/text-embedding-3-small` (served by
-  OpenRouter's `/embeddings` endpoint). If you change embedding model, the
-  dimension must match `vector(1536)` (see caveats).
+- Dimension is **384**, matching the configured embedding model
+  `sentence-transformers/all-MiniLM-L6-v2` (exposed as
+  `HuggingFaceEmbeddingModel.DIMENSION` / `dimensions()`), and hardcoded in the
+  column `vector(384)`. `@ColumnTransformer(write = "?::vector")` applies an
+  explicit `?::vector` cast on INSERT/UPDATE: without it PostgreSQL rejects the
+  `varchar` parameter (a Java `String`). If you change embedding model, both the
+  column definition and `HuggingFaceEmbeddingModel.DIMENSION` must match (see
+  caveats).
 - Similarity query (`ProductoRepository.buscarPorSimilitudVectorial`):
-  `ORDER BY p.embedding <=> CAST(:embedding AS vector) LIMIT :limit`
-  (cosine distance). The embedding string passed in is
-  `Arrays.toString(float[])` — Java array syntax that PostgreSQL accepts when
-  cast to `vector`.
-- Embeddings are generated in `ProductoService.create()` / `update()` from
-  `nombre + " " + descripcionColoquial` and persisted as a `String`.
+  `WHERE p.embedding IS NOT NULL
+   ORDER BY p.embedding <=> CAST(:embedding AS vector) LIMIT :limit`
+  (cosine distance; only products that already have an embedding are returned).
+  The embedding string passed in is `Arrays.toString(float[])` — Java array
+  syntax that PostgreSQL accepts when cast to `vector`.
+- Embeddings are generated in `ProductoService.create()` / `update()` (and in
+  `reindexarPendientes()`) from `nombre + " " + descripcionColoquial` and
+  persisted as a `String`.
+- `ProductoRepository.findPendientesDeEmbedding()` (`embedding IS NULL`) and
+  `countByEmbeddingIsNull()` back the reindexación-masiva (seed/reindex) flow.
 - `ddl-auto=update` (Hibernate) creates/updates tables; `show-sql=true`.
 
 ---
@@ -152,6 +172,7 @@ pgvector facts verified from code:
 | GET | `/api/v1/productos/buscar?q=...&limite=5` | Public | pgvector similarity search (top-N) |
 | GET | `/api/v1/productos/asistente?q=...` | Public | AI recommendation (Groq + keyword search) |
 | POST | `/api/v1/productos/diagnose` | **ADMIN** | Body `{"problema": "..."}` → AI recommendation |
+| POST | `/api/v1/productos/reindexar` | **ADMIN** | Re-genera embeddings de productos pendientes → `ReindexacionResponse(procesados, pendientes)` |
 | POST | `/api/v1/productos` | **ADMIN** | Create product (validated) |
 | PUT | `/api/v1/productos/{id}` | **ADMIN** | Update product (validated) |
 | PATCH | `/api/v1/productos/{id}/stock?stock=0` | **ADMIN** | Update stock only (query param, `@Min(0)`) |
@@ -228,6 +249,8 @@ Verified from `SecurityConfig.java` and `JwtAuthenticationFilter.java`:
 | `StockUpdateConflictException` (from `OptimisticLockingFailureException` on stock update) | 409 |
 | `GroqRateLimitException` (HTTP 429 from Groq) | 429 |
 | `GroqException` | exception's `status` (default 502 → `BAD_GATEWAY`; non-error codes are coerced to 502) |
+| `HuggingFaceRateLimitException` (HTTP 429 from HF) | 429 |
+| `HuggingFaceException` | exception's `status` (default 502 → `BAD_GATEWAY`; 401/403 → `UNAUTHORIZED`-style message, non-error codes coerced to 502) |
 | any other `Exception` | 500, generic message (details hidden) |
 
 Rules when adding exceptions: extend `RuntimeException`, add a `@ExceptionHandler`
@@ -238,14 +261,20 @@ Spanish.
 
 ## 9. Spring AI Integration
 
-- **`EmbeddingModel`** (Spring AI, OpenAI-compatible client via
-  `spring-ai-starter-model-openai`) is injected into `ProductoService`.
-  Configured to hit **OpenRouter's `/embeddings`** endpoint:
-  `spring.ai.openai.api-key=${OPENROUTER_API_KEY}`,
-  `spring.ai.openai.base-url=https://openrouter.ai/api`,
-  `spring.ai.openai.embedding.options.model=openai/text-embedding-3-small`.
-  Used for: product embeddings on create/update, and query embedding for
-  vector search.
+- **`EmbeddingModel`** (Spring AI) is injected into `ProductoService`. It is a
+  **custom `HuggingFaceEmbeddingModel`** (implements Spring AI's
+  `EmbeddingModel`) backed by a dedicated `RestClient` bean
+  (`huggingFaceRestClient`) defined in `HuggingFaceConfig` with headers
+  `Authorization: Bearer <key>` and `Content-Type: application/json`, plus a
+  120s read timeout. The HF embeddings API is **not** OpenAI-compatible, so it
+  posts to `{baseUrl}/{model}/pipeline/feature-extraction` with
+  `{"inputs": [...], "options": {"wait_for_model": true}}` (model
+  `sentence-transformers/all-MiniLM-L6-v2`, **384** dims). Used for: product
+  embeddings on create/update/reindex, and query embedding for vector search.
+  HTTP 429 → `HuggingFaceRateLimitException`; 401/403 → `HuggingFaceException`
+  (auth); other HTTP errors → `HuggingFaceException`; connection failures →
+  `HuggingFaceException`. `spring-ai-starter-model-openai` was **removed** from
+  `pom.xml` (its auto-configuration required the OpenRouter/OpenAI key).
 - **Groq** (chat del asistente) is called via a dedicated `RestClient` bean
   (`groqRestClient`) built in `GroqConfig` with headers:
   `Authorization: Bearer <key>`, `HTTP-Referer`, `X-Title`, `Content-Type:
@@ -286,20 +315,25 @@ YAML**):
 | `groq.api.key` | `${GROQ_API_KEY}` | **`GROQ_API_KEY`** (chat) |
 | `groq.api.base-url` | `https://api.groq.com/openai/v1` | — |
 | `groq.api.model` | `qwen/qwen3.8-27b` | — |
-| `spring.ai.openai.api-key` | `${OPENROUTER_API_KEY}` | **`OPENROUTER_API_KEY`** (embeddings) |
-| `spring.ai.openai.base-url` | `https://openrouter.ai/api` | — |
-| `spring.ai.openai.embedding.options.model` | `openai/text-embedding-3-small` | — |
+| `huggingface.api.key` | `${HUGGINGFACE_API_KEY}` | **`HUGGINGFACE_API_KEY`** (embeddings) |
+| `huggingface.api.model` | `sentence-transformers/all-MiniLM-L6-v2` (default, 384 dims) | — |
+| `huggingface.api.base-url` | `https://router.huggingface.co/hf-inference/models` | — |
 
-- **Never commit real keys.** `GROQ_API_KEY` (chat) and `OPENROUTER_API_KEY`
+- **Never commit real keys.** `GROQ_API_KEY` (chat) and `HUGGINGFACE_API_KEY`
   (embeddings) are resolved from the environment; the repo's `.gitignore`
   already excludes `.env`, `.env.local` and `application-local.properties/yml`.
+  (`OPENROUTER_API_KEY` is no longer used — the OpenAI/OpenRouter embedding
+  config was removed.)
 - PostgreSQL must have the **pgvector extension installed**
   (`CREATE EXTENSION IF NOT EXISTS vector;`) and a database matching
   `spring.datasource.url`.
 - If the embedding model changes dimension, update the
-  `columnDefinition = "vector(N)"` in `Producto.java` and
-  `spring.ai.openai.embedding.options.model`; without this, `<=>` casts can
-  fail at query time.
+  `columnDefinition = "vector(N)"` in `Producto.java`,
+  `HuggingFaceEmbeddingModel.DIMENSION`, and
+  `huggingface.api.model`; without this, `<=>` casts can fail at query time.
+- To (re)index products that still have `embedding IS NULL`, call the ADMIN
+  endpoint `POST /api/v1/productos/reindexar` (returns
+  `ReindexacionResponse(procesados, pendientes)`).
 
 ---
 
@@ -317,7 +351,8 @@ YAML**):
 5. Any new exception type must be mapped in `GlobalExceptionHandler` with an
    explicit HTTP status.
 6. Embeddings are derived from `nombre + descripcionColoquial`; if the formula
-   changes, existing rows' embeddings become stale — plan a re-index.
+   changes, existing rows' embeddings become stale — run `POST
+   /api/v1/productos/reindexar` (ADMIN) or plan a re-index.
 7. `ddl-auto=update` is for dev; do not rely on it for schema migrations in
    production (no Flyway/Liquibase exists in the repo).
 8. `RestClient` is the HTTP client of choice (Spring Boot 4 modular starter) —
@@ -340,18 +375,19 @@ them as facts:
 - **pgvector extension bootstrap:** no SQL migration creates the extension;
   the database is assumed to already have it.
 - **Embedding model & dimensions:** the repo configures
-  `spring.ai.openai.embedding.options.model=openai/text-embedding-3-small`
-  (1536 dims, matches `vector(1536)`). Verified live against OpenRouter: the
-  endpoint accepts the model id, but the current API key returns
-  **403 "Key limit exceeded (daily limit)"** for embeddings until the quota
-  resets. **Groq does not expose embedding models to this key** (`model_not_found`),
-  which is why embeddings remain on OpenRouter while chat uses Groq.
+  `sentence-transformers/all-MiniLM-L6-v2` (384 dims, matches `vector(384)` and
+  `HuggingFaceEmbeddingModel.DIMENSION`). This is the live configuration after
+  the migration from OpenRouter; the HF key is required (`HUGGINGFACE_API_KEY`)
+  for embeddings to be generated — a missing key throws `HuggingFaceException`.
+- **Tests & data:** 69 tests pass across unit (services, controller, exceptions)
+  and integration (`@SpringBootTest` + MockMvc + Testcontainers pgvector); the
+  old "contextLoads-only" state no longer applies. Per the migration commit,
+  the 23 products in PostgreSQL were successfully vectorized (embeddings
+  generated) — this is asserted in the commit message, not re-verified live here
+  from code alone.
 - **Swagger/OpenAPI reachability:** springdoc is present, but
   `anyRequest().authenticated()` in `SecurityConfig` does not exempt
   `/swagger-ui/**` or `/v3/api-docs` — verified: **403 without a JWT, 200 with**.
-- **Tests:** 69 tests across unit (services, controller, exceptions) and
-  integration (`@SpringBootTest` + MockMvc + Testcontainers pgvector); the
-  old "contextLoads-only" state no longer applies.
 - **Frontend:** the repo contains no frontend; `@CrossOrigin` hints at a client
   on `http://localhost:3001` and `ProductoController` comments reference an
   `apiClient.ts` ("Antigravity"), but no such project is in this repository.
@@ -364,12 +400,12 @@ them as facts:
 
 `pom.xml`, `src/main/resources/application.properties`,
 `src/main/java/org/alexis/ecommerceai/ECommerceAiApplication.java`,
-`config/{SecurityConfig,GroqConfig,GroqProperties}.java`,
+`config/{SecurityConfig,GroqConfig,GroqProperties,HuggingFaceConfig,HuggingFaceProperties,HuggingFaceEmbeddingModel}.java`,
 `security/JwtAuthenticationFilter.java`, `controller/ProductoController.java`,
 `ai/{AsistenteIAService,GroqService}.java`, `service/ProductoService.java`,
 `repository/ProductoRepository.java`, `model/Producto.java`,
-`dto/{ProductoRequestDTO,ProductoResponseDTO,BusquedaInteligenteResponse,DiagnoseRequestDTO,SugerenciaFerreteriaDTO}.java`,
+`dto/{ProductoRequestDTO,ProductoResponseDTO,BusquedaInteligenteResponse,DiagnoseRequestDTO,ReindexacionResponse,SugerenciaFerreteriaDTO}.java`,
 `dto/groq/{ChatCompletionRequest,ChatCompletionResponse,ChatMessage}.java`,
-`exception/{ErrorResponse,GlobalExceptionHandler,GroqException,GroqRateLimitException,ProductoNotFoundException,StockUpdateConflictException}.java`,
+`exception/{ErrorResponse,GlobalExceptionHandler,GroqException,GroqRateLimitException,HuggingFaceException,HuggingFaceRateLimitException,ProductoNotFoundException,StockUpdateConflictException}.java`,
 `src/test/java/org/alexis/ecommerceai/ECommerceAiApplicationTests.java`,
 `.gitignore`, `.mvn/wrapper/maven-wrapper.properties`.
