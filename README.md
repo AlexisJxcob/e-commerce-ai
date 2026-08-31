@@ -36,8 +36,8 @@ por palabras clave.
 |---|---|
 | **Java 21** | Lenguaje y runtime |
 | **Spring Boot 4.1.1** | Framework (starters modulares `webmvc`, `restclient`, `data-jpa`) |
-| **Spring AI 2.0.1** | `EmbeddingModel` para generar/consultar vectores (Ollama) |
-| **OpenRouter** | LLM (chat completions) para el asistente de ferretería |
+| **Spring AI 2.0.1** | `EmbeddingModel` para generar/consultar vectores (cliente OpenAI-compatible → OpenRouter) |
+| **OpenRouter** | LLM (chat completions) y embeddings para el asistente de ferretería |
 | **PostgreSQL + pgvector** | Persistencia y búsqueda por similitud vectorial |
 | **Spring Security + JWT** | Autenticación stateless con tokens HS256 |
 | **SpringDoc OpenAPI 3.1.0** | Swagger UI / OpenAPI |
@@ -50,8 +50,6 @@ por palabras clave.
 - **PostgreSQL 14+** con la extensión **pgvector** instalada
   ([guía oficial](https://github.com/pgvector/pgvector))
 - **Maven 3.9+** (opcional si usas el wrapper `./mvnw`)
-- **Ollama** en ejecución en `http://localhost:11434` con un modelo de
-  embeddings compatible (ver [Notas importantes](#notas-importantes))
 - Una **API key de OpenRouter** (gratuita en [openrouter.ai](https://openrouter.ai))
 
 ## ⚙️ Configuración
@@ -99,6 +97,11 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 openrouter.api.key=${OPENROUTER_API_KEY}
 openrouter.api.base-url=https://openrouter.ai/api/v1
 openrouter.api.model=openrouter/free   # o p. ej. meta-llama/llama-3.3-70b-instruct:free
+
+# Embeddings vía OpenRouter (cliente OpenAI-compatible de Spring AI)
+spring.ai.openai.api-key=${OPENROUTER_API_KEY}
+spring.ai.openai.base-url=https://openrouter.ai/api
+spring.ai.openai.embedding.options.model=openai/text-embedding-3-small
 ```
 
 ## ▶️ Puesta en Marcha
@@ -168,6 +171,7 @@ curl -X POST http://localhost:8080/api/v1/productos \
     "sku": "CINTA-TEFLON-12",
     "nombre": "Cinta de teflón 12 m",
     "precio": 15.50,
+    
     "stock": 100,
     "descripcionTecnica": "Cinta selladora de roscas de 12 metros, 1/2 pulgada",
     "descripcionColoquial": "la cinta blanca para que no gotee la llave de agua"
@@ -234,12 +238,13 @@ src/main/java/org/alexis/ecommerceai/
 ## ⚠️ Notas Importantes
 
 - **Dimensión del vector**: la columna `embedding` está definida como
-  `vector(1536)`. Si tu modelo de embeddings genera otra dimensión (p. ej.
-  768 para `nomic-embed-text` de Ollama), ajusta `columnDefinition` en
-  `Producto.java`. Actualmente no hay configuración `spring.ai.*` explícita;
-  Spring AI usa los valores por defecto de Ollama (`http://localhost:11434`).
-- **Ollama debe estar corriendo** para crear/actualizar productos y para la
-  búsqueda vectorial, ya que el `EmbeddingModel` se usa en esas operaciones.
+  `vector(1536)`, que coincide con `openai/text-embedding-3-small` servido por
+  OpenRouter. Si cambias de modelo de embeddings, ajusta
+  `spring.ai.openai.embedding.options.model` y `columnDefinition` en
+  `Producto.java` para que la dimensión coincida.
+- **Los embeddings usan OpenRouter**: crear/actualizar productos y la búsqueda
+  vectorial requieren `OPENROUTER_API_KEY` configurada (misma key del
+  asistente).
 - **Spring Boot 4 / Jackson 3**: el proyecto usa los starters modulares nuevos
   y `tools.jackson.*` (Jackson 3). No "corrijas" esos imports a
   `com.fasterxml.*`: romperías la compilación.
@@ -247,8 +252,7 @@ src/main/java/org/alexis/ecommerceai/
   desarrollo).
 - **Sin migraciones de esquema**: `ddl-auto=update` está pensado para
   desarrollo; para producción se recomienda migraciones (Flyway/Liquibase).
-- **Cobertura de tests mínima**: actualmente solo existe el test de contexto
-  (`contextLoads`).
+- **Cobertura de tests**: 69 tests (unitarios + integración con Testcontainers).
 
 ## 📄 Licencia
 

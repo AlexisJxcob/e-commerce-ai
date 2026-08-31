@@ -42,8 +42,8 @@ public class Producto {
     private Integer stock;
 
     // Mapeo directo del tipo vector para PostgreSQL.
-    // Cambia 1536 a las dimensiones de tu modelo de embedding (ej. 1536 para
-    // OpenAI, 768 para Ollama/nomic-embed-text).
+    // Cambia 1536 a las dimensiones de tu modelo de embedding
+    // (p. ej. openai/text-embedding-3-small = 1536).
     // @ColumnTransformer aplica el cast explicito ?::vector en INSERT/UPDATE:
     // sin él, PostgreSQL rechaza el parametro varchar (String de Java).
     @ColumnTransformer(write = "?::vector")
