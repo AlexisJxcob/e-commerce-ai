@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class AsistenteIAServiceTest {
 
     @Mock
-    private GroqService groqService;
+    private HuggingFaceChatService huggingFaceChatService;
 
     @Mock
     private ProductoService productoService;
@@ -31,7 +31,7 @@ class AsistenteIAServiceTest {
 
     @BeforeEach
     void setUp() {
-        asistenteIAService = new AsistenteIAService(groqService, productoService);
+        asistenteIAService = new AsistenteIAService(huggingFaceChatService, productoService);
     }
 
     private static ProductoResponseDTO producto(Long id, String sku) {
@@ -46,7 +46,7 @@ class AsistenteIAServiceTest {
                 List.of("llave", "cinta"),
                 List.of("cinta teflon"));
         ProductoResponseDTO producto = producto(1L, "SKU-1");
-        when(groqService.analizarConsulta("fuga en tuberia")).thenReturn(sugerencia);
+        when(huggingFaceChatService.analizarConsulta("fuga en tuberia")).thenReturn(sugerencia);
         when(productoService.buscarPorPalabrasClave(
                 List.of("cinta", "teflon", "llave", "cinta teflon")))
                 .thenReturn(List.of(producto));
@@ -55,7 +55,7 @@ class AsistenteIAServiceTest {
 
         assertThat(response.sugerencia()).isSameAs(sugerencia);
         assertThat(response.productos()).containsExactly(producto);
-        verify(groqService).analizarConsulta("fuga en tuberia");
+        verify(huggingFaceChatService).analizarConsulta("fuga en tuberia");
     }
 
     @Test
@@ -64,7 +64,7 @@ class AsistenteIAServiceTest {
                 List.of("cinta", " ", "teflon"),
                 Arrays.asList("", null, "llave"),
                 List.of());
-        when(groqService.analizarConsulta("consulta")).thenReturn(sugerencia);
+        when(huggingFaceChatService.analizarConsulta("consulta")).thenReturn(sugerencia);
         when(productoService.buscarPorPalabrasClave(List.of("cinta", "teflon", "llave")))
                 .thenReturn(List.of());
 
@@ -77,7 +77,7 @@ class AsistenteIAServiceTest {
     @Test
     void buscarRecomendacion_aceptaListasNulas() {
         SugerenciaFerreteriaDTO sugerencia = new SugerenciaFerreteriaDTO(null, null, null);
-        when(groqService.analizarConsulta("consulta")).thenReturn(sugerencia);
+        when(huggingFaceChatService.analizarConsulta("consulta")).thenReturn(sugerencia);
         when(productoService.buscarPorPalabrasClave(List.of())).thenReturn(List.of());
 
         BusquedaInteligenteResponse response = asistenteIAService.buscarRecomendacion("consulta");

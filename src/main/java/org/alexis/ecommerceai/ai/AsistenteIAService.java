@@ -12,16 +12,16 @@ import java.util.stream.Stream;
 @Service
 public class AsistenteIAService {
 
-    private final GroqService groqService;
+    private final HuggingFaceChatService huggingFaceChatService;
     private final ProductoService productoService;
 
-    public AsistenteIAService(GroqService groqService, ProductoService productoService) {
-        this.groqService = groqService;
+    public AsistenteIAService(HuggingFaceChatService huggingFaceChatService, ProductoService productoService) {
+        this.huggingFaceChatService = huggingFaceChatService;
         this.productoService = productoService;
     }
 
     public BusquedaInteligenteResponse buscarRecomendacion(String preferenciaUsuario) {
-        SugerenciaFerreteriaDTO sugerencia = groqService.analizarConsulta(preferenciaUsuario);
+        SugerenciaFerreteriaDTO sugerencia = huggingFaceChatService.analizarConsulta(preferenciaUsuario);
         List<String> terminos = Stream.of(
                         sugerencia.palabrasClave(),
                         sugerencia.herramientas(),
