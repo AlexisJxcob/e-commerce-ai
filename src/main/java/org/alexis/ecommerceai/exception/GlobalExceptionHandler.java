@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
@@ -35,6 +36,27 @@ public class GlobalExceptionHandler {
         Map<String, String> errors = new HashMap<>();
         ex.getConstraintViolations().forEach(violation ->
                 errors.put(violation.getPropertyPath().toString(), violation.getMessage())
+        );
+        var errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "Error de validación de parámetros",
+                errors
+        );
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleHandlerMethodValidation(HandlerMethodValidationException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getParameterValidationResults().forEach(result ->
+                result.getResolvableErrors().forEach(error -> {
+                    String campo = result.getMethodParameter().getParameterName();
+                    String mensaje = error.getDefaultMessage() != null
+                            ? error.getDefaultMessage()
+                            : (error.getCodes() != null && error.getCodes().length > 0
+                                    ? error.getCodes()[0] : "Valor inválido");
+                    errors.put(campo != null ? campo : "parametro", mensaje);
+                })
         );
         var errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
