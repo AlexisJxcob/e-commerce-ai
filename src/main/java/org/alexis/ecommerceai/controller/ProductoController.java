@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.alexis.ecommerceai.dto.BusquedaInteligenteResponse;
+import org.alexis.ecommerceai.dto.DiagnoseRequestDTO; // DTO para el body { "problema": "..." }
 import org.alexis.ecommerceai.dto.ProductoRequestDTO;
 import org.alexis.ecommerceai.dto.ProductoResponseDTO;
 import org.alexis.ecommerceai.ai.AsistenteIAService;
@@ -17,7 +18,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/productos")
-@Validated // Permite validar parámetros individuales como @RequestParam
+@CrossOrigin(origins = {"http://localhost:3001"}) // Habilita CORS para el frontend
+@Validated
 public class ProductoController {
 
     private final ProductoService productoService;
@@ -46,10 +48,16 @@ public class ProductoController {
         return ResponseEntity.ok(productoService.buscarPorSimilitud(query, limite));
     }
 
-    // Búsqueda inteligente: OpenRouter extrae palabras clave y se buscan productos en BD
+    // Búsqueda inteligente vía GET (?q=...)
     @GetMapping("/asistente")
     public ResponseEntity<BusquedaInteligenteResponse> consultarAsistente(@RequestParam("q") String query) {
         return ResponseEntity.ok(asistenteIAService.buscarRecomendacion(query));
+    }
+
+    // Endpoint POST para conectar directamente con apiClient.ts de Antigravity
+    @PostMapping("/diagnose")
+    public ResponseEntity<BusquedaInteligenteResponse> diagnosticarProblema(@RequestBody DiagnoseRequestDTO request) {
+        return ResponseEntity.ok(asistenteIAService.buscarRecomendacion(request.getProblema()));
     }
 
     @PostMapping
