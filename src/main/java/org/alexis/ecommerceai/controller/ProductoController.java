@@ -7,6 +7,7 @@ import org.alexis.ecommerceai.dto.BusquedaInteligenteResponse;
 import org.alexis.ecommerceai.dto.DiagnoseRequestDTO; // DTO para el body { "problema": "..." }
 import org.alexis.ecommerceai.dto.ProductoRequestDTO;
 import org.alexis.ecommerceai.dto.ProductoResponseDTO;
+import org.alexis.ecommerceai.dto.ReindexacionResponse;
 import org.alexis.ecommerceai.ai.AsistenteIAService;
 import org.alexis.ecommerceai.service.ProductoService;
 import org.springframework.http.HttpStatus;
@@ -58,6 +59,11 @@ public class ProductoController {
     @PostMapping("/diagnose")
     public ResponseEntity<BusquedaInteligenteResponse> diagnosticarProblema(@RequestBody DiagnoseRequestDTO request) {
         return ResponseEntity.ok(asistenteIAService.buscarRecomendacion(request.problema()));
+    }
+
+    @PostMapping("/reindexar")
+    public ResponseEntity<ReindexacionResponse> reindexarEmbeddings() {
+        return ResponseEntity.ok(productoService.reindexarPendientes());
     }
 
     @PostMapping

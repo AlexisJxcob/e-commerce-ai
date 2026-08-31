@@ -116,6 +116,25 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(errorResponse);
     }
 
+    @ExceptionHandler(HuggingFaceRateLimitException.class)
+    public ResponseEntity<ErrorResponse> handleHuggingFaceRateLimit(HuggingFaceRateLimitException ex) {
+        var errorResponse = new ErrorResponse(
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                ex.getMessage()
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errorResponse);
+    }
+
+    @ExceptionHandler(HuggingFaceException.class)
+    public ResponseEntity<ErrorResponse> handleHuggingFace(HuggingFaceException ex) {
+        HttpStatus status = HttpStatus.resolve(ex.getStatus());
+        if (status == null || status.is2xxSuccessful()) {
+            status = HttpStatus.BAD_GATEWAY;
+        }
+        var errorResponse = new ErrorResponse(status.value(), ex.getMessage());
+        return ResponseEntity.status(status).body(errorResponse);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         var errorResponse = new ErrorResponse(

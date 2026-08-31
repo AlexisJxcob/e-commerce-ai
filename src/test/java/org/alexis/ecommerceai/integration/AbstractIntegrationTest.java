@@ -14,7 +14,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 /**
  * Base común para tests de integración con contexto Spring completo.
  * Usa Testcontainers con la imagen oficial de PostgreSQL + pgvector
- * (en lugar de una base en memoria), para que la columna vector(1536)
+ * (en lugar de una base en memoria), para que la columna vector(384)
  * y la búsqueda con el operador <=> funcionen igual que en producción.
  */
 @Testcontainers(disabledWithoutDocker = true)

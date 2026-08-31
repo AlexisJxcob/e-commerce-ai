@@ -11,12 +11,30 @@ import java.util.List;
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
+    /**
+     * Búsqueda semántica por similitud de coseno (distancia <=>, ascendente =
+     * más similar primero). Filtra productos sin embedding (NULL) para que la
+     * intención del cliente (problema → solución) solo considere productos
+     * ya indexados.
+     */
     @Query(value = """
-        SELECT * FROM productos p 
-        ORDER BY p.embedding <=> CAST(:embedding AS vector) 
+        SELECT * FROM productos p
+        WHERE p.embedding IS NOT NULL
+        ORDER BY p.embedding <=> CAST(:embedding AS vector)
         LIMIT :limit
         """, nativeQuery = true)
     List<Producto> buscarPorSimilitudVectorial(@Param("embedding") String embedding, @Param("limit") int limit);
+
+    /**
+     * Productos que aún no tienen vector de embedding (seeder/reindexación).
+     */
+    @Query("SELECT p FROM Producto p WHERE p.embedding IS NULL")
+    List<Producto> findPendientesDeEmbedding();
+
+    /**
+     * Cuenta los productos que aún no tienen vector de embedding.
+     */
+    long countByEmbeddingIsNull();
 
     @Query("""
             SELECT p FROM Producto p

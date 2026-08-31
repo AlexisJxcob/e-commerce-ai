@@ -2,6 +2,7 @@ package org.alexis.ecommerceai.service;
 
 import org.alexis.ecommerceai.dto.ProductoRequestDTO;
 import org.alexis.ecommerceai.dto.ProductoResponseDTO;
+import org.alexis.ecommerceai.dto.ReindexacionResponse;
 import org.alexis.ecommerceai.exception.ProductoNotFoundException;
 import org.alexis.ecommerceai.exception.StockUpdateConflictException;
 import org.alexis.ecommerceai.model.Producto;
@@ -75,6 +76,28 @@ public class ProductoService {
                     .forEach(dto -> unicos.putIfAbsent(dto.id(), dto));
         }
         return List.copyOf(unicos.values());
+    }
+
+    /**
+     * Reindexación masiva (seeder): procesa todos los productos que tienen la
+     * columna embedding en NULL, generando su vector con el modelo de Hugging Face
+     * (sentence-transformers/all-MiniLM-L6-v2, 384 dimensiones).
+     *
+     * @return resumen con la cantidad de productos procesados y los pendientes restantes
+     */
+    @Transactional
+    public ReindexacionResponse reindexarPendientes() {
+        List<Producto> pendientes = productoRepository.findPendientesDeEmbedding();
+        int procesados = 0;
+
+        for (Producto producto : pendientes) {
+            producto.setEmbedding(generarEmbedding(producto.getNombre(), producto.getDescripcionColoquial()));
+            productoRepository.save(producto);
+            procesados++;
+        }
+
+        long restantes = productoRepository.countByEmbeddingIsNull();
+        return new ReindexacionResponse(procesados, (int) restantes);
     }
 
     @Transactional

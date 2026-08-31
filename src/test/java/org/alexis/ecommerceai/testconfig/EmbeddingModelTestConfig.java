@@ -8,14 +8,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 
 /**
- * Sustituye el EmbeddingModel real (OpenRouter) por un stub determinista que
- * devuelve un vector de 1536 dimensiones (coincide con la columna
- * vector(1536) de la entidad Producto). Los tests no dependen de servicios externos.
+ * Sustituye el EmbeddingModel real (Hugging Face) por un stub determinista que
+ * devuelve un vector de 384 dimensiones (coincide con la columna
+ * vector(384) de la entidad Producto). Los tests no dependen de servicios externos.
  */
 @TestConfiguration
 public class EmbeddingModelTestConfig {
 
-    public static final int DIMENSION = 1536;
+    public static final int DIMENSION = 384;
 
     @Bean
     @Primary
