@@ -1,5 +1,6 @@
 package org.alexis.ecommerceai.ai;
 
+import org.alexis.ecommerceai.config.OpenRouterConfig;
 import org.alexis.ecommerceai.config.OpenRouterProperties;
 import org.alexis.ecommerceai.dto.SugerenciaFerreteriaDTO;
 import org.alexis.ecommerceai.exception.OpenRouterException;
@@ -37,14 +38,16 @@ class OpenRouterServiceTest {
 
     @BeforeEach
     void setUp() {
-        RestClient.Builder builder = RestClient.builder().baseUrl(BASE_URL);
-        server = MockRestServiceServer.bindTo(builder).build();
-        RestClient client = builder.build();
-
         properties = new OpenRouterProperties();
         properties.setKey("test-openrouter-key");
         properties.setModel("test-model");
         properties.setBaseUrl(BASE_URL);
+
+        // Construir el cliente con la configuracion real (headers, baseUrl),
+        // pero con el request factory interceptado por MockRestServiceServer.
+        RestClient.Builder builder = RestClient.builder();
+        server = MockRestServiceServer.bindTo(builder).build();
+        RestClient client = new OpenRouterConfig().openRouterRestClient(builder, properties);
 
         service = new OpenRouterService(client, properties, JsonMapper.builder().build());
     }

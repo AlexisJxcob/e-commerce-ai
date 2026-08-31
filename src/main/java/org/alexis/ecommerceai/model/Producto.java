@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnTransformer;
 
 import java.math.BigDecimal;
 
@@ -40,9 +41,12 @@ public class Producto {
     @Column(nullable = false)
     private Integer stock;
 
-    // Mapeo directo del tipo vector para PostgreSQL
+    // Mapeo directo del tipo vector para PostgreSQL.
     // Cambia 1536 a las dimensiones de tu modelo de embedding (ej. 1536 para
-    // OpenAI, 768 para Ollama/nomic-embed-text)
+    // OpenAI, 768 para Ollama/nomic-embed-text).
+    // @ColumnTransformer aplica el cast explicito ?::vector en INSERT/UPDATE:
+    // sin él, PostgreSQL rechaza el parametro varchar (String de Java).
+    @ColumnTransformer(write = "?::vector")
     @Column(columnDefinition = "vector(1536)")
     private String embedding;
 
