@@ -57,7 +57,7 @@ public class ProductoController {
     // Endpoint POST para conectar directamente con apiClient.ts de Antigravity
     @PostMapping("/diagnose")
     public ResponseEntity<BusquedaInteligenteResponse> diagnosticarProblema(@RequestBody DiagnoseRequestDTO request) {
-        return ResponseEntity.ok(asistenteIAService.buscarRecomendacion(request.getProblema()));
+        return ResponseEntity.ok(asistenteIAService.buscarRecomendacion(request.problema()));
     }
 
     @PostMapping

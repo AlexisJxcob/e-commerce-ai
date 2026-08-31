@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +19,12 @@ import java.nio.charset.StandardCharsets;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final String jwtSecret;
+
+    public SecurityConfig(@Value("${app.jwt.secret:clave-secreta-de-256-bits-para-jwt}") String jwtSecret) {
+        this.jwtSecret = jwtSecret;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
@@ -39,9 +46,9 @@ public class SecurityConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
-        // Secreto de ejemplo; en producción debe inyectarse de forma segura
-        String secret = "clave-secreta-de-256-bits-para-jwt";
-        var key = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        // El secreto se inyecta desde la propiedad app.jwt.secret (o variable de entorno).
+        // El valor por defecto es solo para desarrollo; en producción debe inyectarse de forma segura.
+        var key = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         return NimbusJwtDecoder.withSecretKey(key).build();
     }
 }
