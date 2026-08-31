@@ -15,6 +15,7 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -239,7 +240,7 @@ class ProductoServiceTest {
         when(productoRepository.buscarPorPalabraClave("cinta")).thenReturn(List.of());
 
         List<ProductoResponseDTO> result =
-                productoService.buscarPorPalabrasClave(List.of("  ", "cinta", "", null));
+                productoService.buscarPorPalabrasClave(Arrays.asList("  ", "cinta", "", null));
 
         assertThat(result).isEmpty();
         verify(productoRepository).buscarPorPalabraClave("cinta");

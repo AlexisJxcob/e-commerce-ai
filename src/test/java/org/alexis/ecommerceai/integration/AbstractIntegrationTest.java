@@ -28,7 +28,8 @@ public abstract class AbstractIntegrationTest {
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("pgvector/pgvector:pg16")
             .withDatabaseName("ecommerce_test")
             .withUsername("test")
-            .withPassword("test");
+            .withPassword("test")
+            .withInitScript("pgvector-init.sql");
 
     @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {

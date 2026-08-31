@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,7 +62,7 @@ class AsistenteIAServiceTest {
     void buscarRecomendacion_filtraTerminosNulosYEnBlanco() {
         SugerenciaFerreteriaDTO sugerencia = new SugerenciaFerreteriaDTO(
                 List.of("cinta", " ", "teflon"),
-                List.of("", null, "llave"),
+                Arrays.asList("", null, "llave"),
                 List.of());
         when(openRouterService.analizarConsulta("consulta")).thenReturn(sugerencia);
         when(productoService.buscarPorPalabrasClave(List.of("cinta", "teflon", "llave")))
