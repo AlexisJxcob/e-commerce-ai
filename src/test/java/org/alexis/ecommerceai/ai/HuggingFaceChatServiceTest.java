@@ -43,11 +43,10 @@ class HuggingFaceChatServiceTest {
         properties.setModel("test-model");
         properties.setBaseUrl(BASE_URL);
 
-        // Construir el cliente con la configuracion real (headers, baseUrl),
-        // pero con el request factory interceptado por MockRestServiceServer.
+        // Construir el cliente e interinterceptarlo correctamente con MockRestServiceServer
         RestClient.Builder builder = RestClient.builder();
-        server = MockRestServiceServer.bindTo(builder).build();
         RestClient client = new HuggingFaceChatConfig().huggingFaceChatRestClient(builder, properties);
+        server = MockRestServiceServer.bindTo(builder).build();
 
         service = new HuggingFaceChatService(client, properties, JsonMapper.builder().build());
     }

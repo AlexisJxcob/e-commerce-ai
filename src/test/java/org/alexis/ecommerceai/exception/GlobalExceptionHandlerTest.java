@@ -44,12 +44,12 @@ class GlobalExceptionHandlerTest {
         }
 
         @GetMapping("/ore")
-        public void groqError() {
-            throw new HuggingFaceException("error de openrouter", 503);
+        public void huggingFaceError() {
+            throw new HuggingFaceException("error de huggingface", 503);
         }
 
         @GetMapping("/ore-2xx")
-        public void groqError2xx() {
+        public void huggingFaceError2xx() {
             throw new HuggingFaceException("estado anomalo", 200);
         }
 

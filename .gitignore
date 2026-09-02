@@ -50,8 +50,12 @@ Thumbs.db
 ### Variables de entorno y secretos locales ###
 .env
 .env.local
-application-local.properties
-application-local.yml
+.env.*
+application-*.properties
+application-*.yml
+!application-dev.properties
+!application-test.properties
+!application-prod.properties
 
 ### Artefactos generados localmente ###
 openapi-bruno.json

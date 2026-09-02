@@ -1,5 +1,6 @@
 package org.alexis.ecommerceai.config;
 
+import org.alexis.ecommerceai.config.HuggingFaceEmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -20,9 +21,12 @@ public class HuggingFaceConfig {
         var requestFactory = new JdkClientHttpRequestFactory();
         requestFactory.setReadTimeout(Duration.ofSeconds(120));
 
+        String key = properties.getKey() == null ? "" : properties.getKey();
+
         return builder.clone()
                 .requestFactory(requestFactory)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + (properties.getKey() == null ? "" : properties.getKey()))
+                .baseUrl(properties.getBaseUrl())
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + key)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
