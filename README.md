@@ -37,9 +37,8 @@ por palabras clave.
 |---|---|
 | **Java 21** | Lenguaje y runtime |
 | **Spring Boot 4.1.1** | Framework (starters modulares `webmvc`, `restclient`, `data-jpa`) |
-| **Spring AI 2.0.1** | `EmbeddingModel` para generar/consultar vectores (cliente OpenAI-compatible → OpenRouter) |
-| **Groq** | LLM (chat completions) del asistente de ferretería (API OpenAI-compatible) |
-| **OpenRouter** | Embeddings para la búsqueda vectorial (`/embeddings`) |
+| **Spring AI 2.0.1** | `EmbeddingModel` para generar/consultar vectores |
+| **Hugging Face** | LLM (chat completions) y embeddings para la búsqueda vectorial |
 | **PostgreSQL + pgvector** | Persistencia y búsqueda por similitud vectorial |
 | **Spring Security + JWT** | Autenticación stateless con tokens HS256 |
 | **SpringDoc OpenAPI 3.1.0** | Swagger UI / OpenAPI |
@@ -52,10 +51,8 @@ por palabras clave.
 - **PostgreSQL 14+** con la extensión **pgvector** instalada
   ([guía oficial](https://github.com/pgvector/pgvector))
 - **Maven 3.9+** (opcional si usas el wrapper `./mvnw`)
-- Una **API key de Groq** (gratuita en [console.groq.com](https://console.groq.com))
-  para el chat del asistente
-- Una **API key de OpenRouter** (gratuita en [openrouter.ai](https://openrouter.ai))
-  para los embeddings
+- Una **API key de Hugging Face** (gratuita en [huggingface.co](https://huggingface.co))
+  para el chat del asistente y los embeddings
 
 ## ⚙️ Configuración
 
@@ -67,47 +64,71 @@ CREATE DATABASE ecommerce_db;
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-> El proyecto usa `spring.jpa.hibernate.ddl-auto=update`, por lo que las tablas
-> se crean automáticamente al arrancar. La columna `embedding` es de tipo
-> `vector(1536)` — debe coincidir con la dimensión del modelo de embeddings
-> utilizado.
+> El proyecto usa `spring.jpa.hibernate.ddl-auto=update` en desarrollo, pero se recomienda
+> usar `validate` en producción. La columna `embedding` es de tipo `vector(384)` — 
+> debe coincidir con la dimensión del modelo de embeddings utilizado 
+> (`sentence-transformers/all-MiniLM-L6-v2`).
+
+> **Importante**: Asegúrate de que la extensión pgvector esté instalada en tu base de datos
+> antes de iniciar la aplicación.
 
 ### 2. Variables de entorno
 
 ```bash
-export GROQ_API_KEY="gsk_TU_API_KEY_AQUI"        # ← placeholder (chat)
-export OPENROUTER_API_KEY="sk-or-v1-TU_API_KEY_AQUI"  # ← placeholder (embeddings)
-export DB_USERNAME="postgres"      # opcional: usuario de tu base de datos
-export DB_PASSWORD="TU_CONTRASENA" # opcional: nunca comitees valores reales
+# Base de datos
+export DB_URL="jdbc:postgresql://localhost:5432/ecommerce_db"
+export DB_USERNAME="postgres"
+export DB_PASSWORD="TU_CONTRASENA" 
+
+# JWT Security
+export JWT_SECRET="tu_secret_jwt_de_256_bits_seguro"
+
+# Hugging Face API (para embeddings y chat)
+export HUGGINGFACE_API_KEY="hf_TU_API_KEY_AQUI"
+
+# Opcional: Configuración específica para chat
+export HUGGINGFACE_CHAT_API_KEY="hf_TU_API_KEY_AQUI"
+export HUGGINGFACE_CHAT_MODEL="Meta-Llama/Llama-3.2-3B-Instruct"
+
+# Opcional: Configuración específica para embeddings  
+export HUGGINGFACE_EMBEDDING_MODEL="sentence-transformers/all-MiniLM-L6-v2"
+
+# CORS
+export CORS_ORIGINS="http://localhost:3001,http://localhost:3000"
 ```
 
 > ⚠️ **Nunca** comitees API keys ni contraseñas. El repositorio ya ignora
-> `.env`, `.env.local` y `application-local.properties/yml`.
-> Si quieres sobreescribir la conexión sin tocar `application.properties`, crea
-> un `application-local.properties` (ignorado por git).
+> `.env`, `.env.local` y `application-*.properties`.
+> Puedes usar el archivo `.env.example` como plantilla.
 
 ### 3. Propiedades relevantes (`src/main/resources/application.properties`)
 
 ```properties
-spring.application.name=e-commerce-ai
-
-spring.datasource.url=jdbc:postgresql://localhost:5432/ecommerce_db
+# Base de datos
+spring.datasource.url=${DB_URL:jdbc:postgresql://localhost:5432/ecommerce_db}
 spring.datasource.username=${DB_USERNAME:postgres}
 spring.datasource.password=${DB_PASSWORD:postgres}
 
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+# JPA
+spring.jpa.hibernate.ddl-auto=${JPA_DDL_AUTO:update}
+spring.jpa.show-sql=${JPA_SHOW_SQL:true}
 
-# Groq (https://console.groq.com) — chat del asistente (API OpenAI-compatible)
-groq.api.key=${GROQ_API_KEY}
-groq.api.base-url=https://api.groq.com/openai/v1
-groq.api.model=qwen/qwen3.8-27b
+# JWT Security
+app.jwt.secret=${JWT_SECRET:clave-secreta-de-256-bits-para-jwt-cambiar-en-produccion}
 
-# Embeddings (cliente OpenAI-compatible de Spring AI) — vía OpenRouter
-spring.ai.openai.api-key=${OPENROUTER_API_KEY}
-spring.ai.openai.base-url=https://openrouter.ai/api
-spring.ai.openai.embedding.options.model=openai/text-embedding-3-small
+# Hugging Face - Embeddings
+huggingface.api.key=${HUGGINGFACE_API_KEY}
+huggingface.api.model=${HUGGINGFACE_EMBEDDING_MODEL:sentence-transformers/all-MiniLM-L6-v2}
+huggingface.api.base-url=${HUGGINGFACE_EMBEDDING_BASE_URL:https://router.huggingface.co/hf-inference/models}
+
+# Hugging Face - Chat
+huggingface.chat.key=${HUGGINGFACE_CHAT_API_KEY:${HUGGINGFACE_API_KEY}}
+huggingface.chat.model=${HUGGINGFACE_CHAT_MODEL:Meta-Llama/Llama-3.2-3B-Instruct}
+huggingface.chat.base-url=${HUGGINGFACE_CHAT_BASE_URL:https://router.huggingface.co/v1}
+
+# Server
+server.port=${SERVER_PORT:8080}
+server.servlet.context-path=/api
 ```
 
 ## ▶️ Puesta en Marcha

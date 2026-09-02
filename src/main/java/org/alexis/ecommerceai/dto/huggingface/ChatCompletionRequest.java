@@ -1,4 +1,4 @@
-package org.alexis.ecommerceai.dto.groq;
+package org.alexis.ecommerceai.dto.huggingface;
 
 import java.util.List;
 

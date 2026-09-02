@@ -14,7 +14,7 @@ A Spring Boot 4 REST API for an AI-powered hardware store ("ferretería")
 e-commerce backend. Users describe a problem in **colloquial Spanish**
 (e.g. *"tengo una fuga en una tubería de PVC"*) and the API:
 
-1. Sends the query to **Groq** (LLM chat completions, OpenAI-compatible) which returns a
+1. Sends the query to **Hugging Face Chat** (LLM chat completions) which returns a
    structured JSON suggestion (keywords, tools, spare parts).
 2. Uses the extracted terms for keyword search over the product catalog.
 3. Independently supports **vector similarity search** over product embeddings
@@ -36,7 +36,7 @@ messages, and the LLM system prompt are all in Spanish.
 | Spring Boot (parent) | **4.1.1** | `pom.xml` |
 | Spring AI | **2.0.1** (BOM `spring-ai-bom`) | `pom.xml` |
 | Web layer | `spring-boot-starter-webmvc` (modular starter, not `starter-web`) | `pom.xml` |
-| HTTP client | `spring-boot-starter-restclient` (Spring `RestClient`) | `pom.xml`, `GroqConfig` |
+| HTTP client | `spring-boot-starter-restclient` (Spring `RestClient`) | `pom.xml`, `HuggingFaceChatConfig` |
 | Persistence | `spring-boot-starter-data-jpa` + `org.postgresql:postgresql` (runtime) | `pom.xml` |
 | Security | `spring-boot-starter-security` + OAuth2 authorization-server, client, resource-server starters | `pom.xml`, `SecurityConfig` |
 | Validation | `spring-boot-starter-validation` (Jakarta Validation) | `pom.xml`, `ProductoRequestDTO` |
@@ -44,8 +44,8 @@ messages, and the LLM system prompt are all in Spanish.
 | Spring AI — Embeddings | **no starter** — custom `HuggingFaceEmbeddingModel` (`RestClient`) → HF Inference API `feature-extraction`; `spring-ai-starter-model-openai` was **removed** | `pom.xml`, `HuggingFaceConfig`, `HuggingFaceEmbeddingModel`, `application.properties` |
 | Spring AI — Vector store | `spring-ai-starter-vector-store-pgvector` (dependency present; direct SQL used in repo) | `pom.xml`, `ProductoRepository` |
 | Spring AI — ETL | `spring-ai-tika-document-reader`, `spring-ai-vector-store-advisor` (declared, no usage found in code) | `pom.xml` |
-| JSON | Jackson 3 (`tools.jackson.*` — `ObjectMapper`, `JacksonException`) | `GroqService` |
-| Codegen | Lombok (`@Getter/@Setter/@NoArgsConstructor/@AllArgsConstructor`) | `pom.xml`, `Producto`, `GroqProperties` |
+| JSON | Jackson 3 (`tools.jackson.*` — `ObjectMapper`, `JacksonException`) | `HuggingFaceChatService` |
+| Codegen | Lombok (`@Getter/@Setter/@NoArgsConstructor/@AllArgsConstructor`) | `pom.xml`, `Producto`, `HuggingFaceChatProperties` |
 | Build | Maven Wrapper 3.9.16 (`mvnw`) | `.mvn/wrapper/maven-wrapper.properties` |
 | Tests | `spring-boot-starter-*-test` starters + Testcontainers; 69 tests (unit + integration) | `pom.xml`, `src/test` |
 
@@ -63,11 +63,11 @@ src/main/java/org/alexis/ecommerceai/
 ├── ECommerceAiApplication.java        # @SpringBootApplication entry point
 ├── ai/
 │   ├── AsistenteIAService.java        # Orchestrates LLM analysis → product search
-│   └── GroqService.java         # Groq /chat/completions client + JSON parsing
+│   └── HuggingFaceChatService.java    # Hugging Face Chat client + JSON parsing
 ├── config/
 │   ├── SecurityConfig.java            # Filter chain, JWT decoder bean
-│   ├── GroqConfig.java          # RestClient bean ("groqRestClient")
-│   ├── GroqProperties.java      # @ConfigurationProperties("groq.api")
+│   ├── HuggingFaceChatConfig.java     # RestClient bean ("huggingFaceChatRestClient")
+│   ├── HuggingFaceChatProperties.java # @ConfigurationProperties("huggingface.chat")
 │   ├── HuggingFaceConfig.java         # RestClient bean ("huggingFaceRestClient") + EmbeddingModel bean
 │   ├── HuggingFaceProperties.java     # @ConfigurationProperties("huggingface.api") (key/model/baseUrl)
 │   └── HuggingFaceEmbeddingModel.java # EmbeddingModel impl → HF Inference API (feature-extraction, 384 dims)
@@ -80,11 +80,11 @@ src/main/java/org/alexis/ecommerceai/
 │   ├── DiagnoseRequestDTO.java        # POST /diagnose body { "problema": "..." }
 │   ├── ReindexacionResponse.java      # record(procesados, pendientes) for POST /reindexar
 │   ├── SugerenciaFerreteriaDTO.java   # LLM JSON contract (keywords/tools/spare parts)
-│   └── groq/                    # ChatCompletion{Request,Response}, ChatMessage
+│   └── huggingface/                    # ChatCompletion{Request,Response}, ChatMessage
 ├── exception/
 │   ├── ErrorResponse.java             # Unified error body (record)
 │   ├── GlobalExceptionHandler.java    # @RestControllerAdvice
-│   └── (GroqException, GroqRateLimitException, HuggingFaceException,
+│   └── (HuggingFaceException,
 │        HuggingFaceRateLimitException, ProductoNotFoundException,
 │        StockUpdateConflictException)
 ├── model/
@@ -102,7 +102,7 @@ src/test/java/.../ECommerceAiApplicationTests.java
 
 **Request flow (AI recommendation):**
 `ProductoController` → `AsistenteIAService.buscarRecomendacion()` →
-`GroqService.analizarConsulta()` (LLM) → flatten keywords/tools/parts →
+`HuggingFaceChatService.analizarConsulta()` (LLM) → flatten keywords/tools/parts →
 `ProductoService.buscarPorPalabrasClave()` → `ProductoRepository.buscarPorPalabraClave()`
 (LIKE across `nombre`, `descripcionTecnica`, `descripcionColoquial`, `sku`).
 
@@ -170,7 +170,7 @@ pgvector facts verified from code:
 | GET | `/api/v1/productos` | Public | List all products |
 | GET | `/api/v1/productos/{id}` | Public | Get one product |
 | GET | `/api/v1/productos/buscar?q=...&limite=5` | Public | pgvector similarity search (top-N) |
-| GET | `/api/v1/productos/asistente?q=...` | Public | AI recommendation (Groq + keyword search) |
+| GET | `/api/v1/productos/asistente?q=...` | Public | AI recommendation (Hugging Face Chat + keyword search) |
 | POST | `/api/v1/productos/diagnose` | **ADMIN** | Body `{"problema": "..."}` → AI recommendation |
 | POST | `/api/v1/productos/reindexar` | **ADMIN** | Re-genera embeddings de productos pendientes → `ReindexacionResponse(procesados, pendientes)` |
 | POST | `/api/v1/productos` | **ADMIN** | Create product (validated) |
@@ -227,7 +227,7 @@ Verified from `SecurityConfig.java` and `JwtAuthenticationFilter.java`:
   (`ProductoResponseDTO`, `BusquedaInteligenteResponse`).
 - **Model/LLM-facing DTOs** use `@JsonIgnoreProperties(ignoreUnknown = true)`
   to tolerate extra JSON fields (`SugerenciaFerreteriaDTO`,
-  `groq/ChatCompletionResponse`, `ChatMessage`). `SugerenciaFerreteriaDTO`
+  `huggingface/ChatCompletionResponse`, `ChatMessage`). `SugerenciaFerreteriaDTO`
   also null-safe-accessors returning `List.of()`.
 - **Mutating DTOs** (`DiagnoseRequestDTO`) may be simple classes with
   getters/setters instead of records.
@@ -247,9 +247,7 @@ Verified from `SecurityConfig.java` and `JwtAuthenticationFilter.java`:
 | `MethodArgumentNotValidException` | 400, with per-field messages map |
 | `ProductoNotFoundException` | 404 |
 | `StockUpdateConflictException` (from `OptimisticLockingFailureException` on stock update) | 409 |
-| `GroqRateLimitException` (HTTP 429 from Groq) | 429 |
-| `GroqException` | exception's `status` (default 502 → `BAD_GATEWAY`; non-error codes are coerced to 502) |
-| `HuggingFaceRateLimitException` (HTTP 429 from HF) | 429 |
+| `HuggingFaceRateLimitException` (HTTP 429 from Hugging Face) | 429 |
 | `HuggingFaceException` | exception's `status` (default 502 → `BAD_GATEWAY`; 401/403 → `UNAUTHORIZED`-style message, non-error codes coerced to 502) |
 | any other `Exception` | 500, generic message (details hidden) |
 
@@ -275,26 +273,24 @@ Spanish.
   (auth); other HTTP errors → `HuggingFaceException`; connection failures →
   `HuggingFaceException`. `spring-ai-starter-model-openai` was **removed** from
   `pom.xml` (its auto-configuration required the OpenRouter/OpenAI key).
-- **Groq** (chat del asistente) is called via a dedicated `RestClient` bean
-  (`groqRestClient`) built in `GroqConfig` with headers:
-  `Authorization: Bearer <key>`, `HTTP-Referer`, `X-Title`, `Content-Type:
-  application/json`.
-- `GroqProperties` (`prefix = "groq.api"`): `key`, `model`
-  (default `qwen/qwen3.8-27b`), `baseUrl` (default
-  `https://api.groq.com/openai/v1`), `httpReferer` (default
-  `http://localhost:8080`), `appTitle` (default `Ferreteria IA App`).
-- `GroqService.analizarConsulta()`:
+- **Hugging Face Chat** is called via a dedicated `RestClient` bean
+  (`huggingFaceChatRestClient`) built in `HuggingFaceChatConfig` with headers:
+  `Authorization: Bearer <key>`, `Content-Type: application/json`.
+- `HuggingFaceChatProperties` (`prefix = "huggingface.chat"`): `key`, `model`
+  (default `Meta-Llama/Llama-3.2-3B-Instruct`), `baseUrl` (default
+  `https://router.huggingface.co/v1`).
+- `HuggingFaceChatService.analizarConsulta()`:
   - Validates key/model/query presence (Spanish error messages).
   - Sends `POST {baseUrl}/chat/completions` with `{model, messages:[system, user]}`
     using a fixed `SYSTEM_PROMPT` that instructs the model to answer **only**
     valid JSON `{palabrasClave[], herramientas[], repuestos[]}` — 3–8 keywords,
     no brands/product codes, empty lists for non-hardware queries.
-  - Maps HTTP 429 → `GroqRateLimitException`; other HTTP errors →
-    `GroqException`; connection/rest failures wrapped accordingly.
+  - Maps HTTP 429 → `HuggingFaceRateLimitException`; other HTTP errors →
+    `HuggingFaceException`; connection/rest failures wrapped accordingly.
   - Parses the model's text: strips markdown fences and extracts the first
     `{...}` block (`extraerJson`), then deserializes with Jackson 3
     `ObjectMapper` into `SugerenciaFerreteriaDTO`. Parse failure →
-    `GroqException`.
+    `HuggingFaceException`.
 
 ---
 
@@ -312,18 +308,16 @@ YAML**):
 | `spring.jpa.hibernate.ddl-auto` | `update` | — |
 | `spring.jpa.show-sql` | `true` | — |
 | `spring.jpa.properties.hibernate.dialect` | `org.hibernate.dialect.PostgreSQLDialect` | — |
-| `groq.api.key` | `${GROQ_API_KEY}` | **`GROQ_API_KEY`** (chat) |
-| `groq.api.base-url` | `https://api.groq.com/openai/v1` | — |
-| `groq.api.model` | `qwen/qwen3.8-27b` | — |
+| `huggingface.chat.key` | `${HUGGINGFACE_CHAT_API_KEY}` | **`HUGGINGFACE_CHAT_API_KEY`** (chat) |
+| `huggingface.chat.base-url` | `https://router.huggingface.co/v1` | — |
+| `huggingface.chat.model` | `Meta-Llama/Llama-3.2-3B-Instruct` | — |
 | `huggingface.api.key` | `${HUGGINGFACE_API_KEY}` | **`HUGGINGFACE_API_KEY`** (embeddings) |
 | `huggingface.api.model` | `sentence-transformers/all-MiniLM-L6-v2` (default, 384 dims) | — |
 | `huggingface.api.base-url` | `https://router.huggingface.co/hf-inference/models` | — |
 
-- **Never commit real keys.** `GROQ_API_KEY` (chat) and `HUGGINGFACE_API_KEY`
+- **Never commit real keys.** `HUGGINGFACE_CHAT_API_KEY` (chat) and `HUGGINGFACE_API_KEY`
   (embeddings) are resolved from the environment; the repo's `.gitignore`
   already excludes `.env`, `.env.local` and `application-local.properties/yml`.
-  (`OPENROUTER_API_KEY` is no longer used — the OpenAI/OpenRouter embedding
-  config was removed.)
 - PostgreSQL must have the **pgvector extension installed**
   (`CREATE EXTENSION IF NOT EXISTS vector;`) and a database matching
   `spring.datasource.url`.
@@ -343,7 +337,7 @@ YAML**):
    Lombok usage minimal (entities/`@ConfigurationProperties`).
 2. **Spanish** for user-facing strings: validation messages, exception messages,
    the LLM system prompt, and this domain's DTO field semantics.
-3. Never change the Groq `SYSTEM_PROMPT` JSON contract without updating
+3. Never change the Hugging Face `SYSTEM_PROMPT` JSON contract without updating
    `SugerenciaFerreteriaDTO` in the same change.
 4. When adding endpoints: update `SecurityConfig` rules, keep `GET` read-only
    endpoints public only if intended (current policy), and document them in
@@ -376,8 +370,8 @@ them as facts:
   the database is assumed to already have it.
 - **Embedding model & dimensions:** the repo configures
   `sentence-transformers/all-MiniLM-L6-v2` (384 dims, matches `vector(384)` and
-  `HuggingFaceEmbeddingModel.DIMENSION`). This is the live configuration after
-  the migration from OpenRouter; the HF key is required (`HUGGINGFACE_API_KEY`)
+  `HuggingFaceEmbeddingModel.DIMENSION`). This is the live configuration;
+  the HF key is required (`HUGGINGFACE_API_KEY`)
   for embeddings to be generated — a missing key throws `HuggingFaceException`.
 - **Tests & data:** 69 tests pass across unit (services, controller, exceptions)
   and integration (`@SpringBootTest` + MockMvc + Testcontainers pgvector); the
@@ -400,12 +394,12 @@ them as facts:
 
 `pom.xml`, `src/main/resources/application.properties`,
 `src/main/java/org/alexis/ecommerceai/ECommerceAiApplication.java`,
-`config/{SecurityConfig,GroqConfig,GroqProperties,HuggingFaceConfig,HuggingFaceProperties,HuggingFaceEmbeddingModel}.java`,
+`config/{SecurityConfig,HuggingFaceChatConfig,HuggingFaceChatProperties,HuggingFaceConfig,HuggingFaceProperties,HuggingFaceEmbeddingModel}.java`,
 `security/JwtAuthenticationFilter.java`, `controller/ProductoController.java`,
-`ai/{AsistenteIAService,GroqService}.java`, `service/ProductoService.java`,
+`ai/{AsistenteIAService,HuggingFaceChatService}.java`, `service/ProductoService.java`,
 `repository/ProductoRepository.java`, `model/Producto.java`,
 `dto/{ProductoRequestDTO,ProductoResponseDTO,BusquedaInteligenteResponse,DiagnoseRequestDTO,ReindexacionResponse,SugerenciaFerreteriaDTO}.java`,
-`dto/groq/{ChatCompletionRequest,ChatCompletionResponse,ChatMessage}.java`,
-`exception/{ErrorResponse,GlobalExceptionHandler,GroqException,GroqRateLimitException,HuggingFaceException,HuggingFaceRateLimitException,ProductoNotFoundException,StockUpdateConflictException}.java`,
+`dto/huggingface/{ChatCompletionRequest,ChatCompletionResponse,ChatMessage}.java`,
+`exception/{ErrorResponse,GlobalExceptionHandler,HuggingFaceException,HuggingFaceRateLimitException,ProductoNotFoundException,StockUpdateConflictException}.java`,
 `src/test/java/org/alexis/ecommerceai/ECommerceAiApplicationTests.java`,
 `.gitignore`, `.mvn/wrapper/maven-wrapper.properties`.

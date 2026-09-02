@@ -18,8 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/productos")
-@CrossOrigin(origins = {"http://localhost:3001"}) // Habilita CORS para el frontend
+@RequestMapping("/v1/productos")
 @Validated
 public class ProductoController {
 

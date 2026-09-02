@@ -2,9 +2,9 @@ package org.alexis.ecommerceai.ai;
 
 import org.alexis.ecommerceai.config.HuggingFaceChatProperties;
 import org.alexis.ecommerceai.dto.SugerenciaFerreteriaDTO;
-import org.alexis.ecommerceai.dto.groq.ChatCompletionRequest;
-import org.alexis.ecommerceai.dto.groq.ChatCompletionResponse;
-import org.alexis.ecommerceai.dto.groq.ChatMessage;
+import org.alexis.ecommerceai.dto.huggingface.ChatCompletionRequest;
+import org.alexis.ecommerceai.dto.huggingface.ChatCompletionResponse;
+import org.alexis.ecommerceai.dto.huggingface.ChatMessage;
 import org.alexis.ecommerceai.exception.HuggingFaceException;
 import org.alexis.ecommerceai.exception.HuggingFaceRateLimitException;
 import org.springframework.beans.factory.annotation.Qualifier;
