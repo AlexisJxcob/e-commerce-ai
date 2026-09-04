@@ -1,6 +1,7 @@
 package org.alexis.ecommerceai.integration;
 
 import org.alexis.ecommerceai.testconfig.EmbeddingModelTestConfig;
+import org.alexis.ecommerceai.testconfig.MockMvcContextPathConfig;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
@@ -21,7 +22,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import(EmbeddingModelTestConfig.class)
+@Import({ EmbeddingModelTestConfig.class, MockMvcContextPathConfig.class })
 public abstract class AbstractIntegrationTest {
 
     @Container
