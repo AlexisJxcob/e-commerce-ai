@@ -7,26 +7,36 @@ import org.alexis.ecommerceai.service.ProductoService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 public class AsistenteIAService {
 
     private final ProductoService productoService;
+    private final HuggingFaceChatService huggingFaceChatService;
 
-    public AsistenteIAService(ProductoService productoService) {
+    public AsistenteIAService(ProductoService productoService, HuggingFaceChatService huggingFaceChatService) {
         this.productoService = productoService;
+        this.huggingFaceChatService = huggingFaceChatService;
     }
 
     public BusquedaInteligenteResponse buscarRecomendacion(String preferenciaUsuario) {
-        SugerenciaFerreteriaDTO sugerenciaMock = new SugerenciaFerreteriaDTO(
-                List.of(preferenciaUsuario),
-                List.of(),
-                List.of()
-        );
+        SugerenciaFerreteriaDTO sugerencia = huggingFaceChatService.analizarConsulta(preferenciaUsuario);
 
-        // Llama a la búsqueda vectorial pgvector en ProductoService (top 5 resultados)
-        List<ProductoResponseDTO> productos = productoService.buscarPorSimilitud(preferenciaUsuario, 5);
+        // Aplanar palabras clave + herramientas + repuestos, filtrando nulos/vacíos y deduplicando.
+        List<String> terminos = Stream.of(
+                        sugerencia.palabrasClave(),
+                        sugerencia.herramientas(),
+                        sugerencia.repuestos())
+                .flatMap(List::stream)
+                .filter(termino -> termino != null && !termino.isBlank())
+                .map(String::trim)
+                .distinct()
+                .toList();
 
-        return new BusquedaInteligenteResponse(sugerenciaMock, productos);
+        // Búsqueda textual sobre el catálogo con los términos extraídos por el LLM.
+        List<ProductoResponseDTO> productos = productoService.buscarPorPalabrasClave(terminos);
+
+        return new BusquedaInteligenteResponse(sugerencia, productos);
     }
 }
