@@ -1,6 +1,5 @@
 package org.alexis.ecommerceai.ai;
 
-import org.alexis.ecommerceai.config.HuggingFaceChatConfig;
 import org.alexis.ecommerceai.config.HuggingFaceChatProperties;
 import org.alexis.ecommerceai.dto.SugerenciaFerreteriaDTO;
 import org.alexis.ecommerceai.exception.HuggingFaceException;
@@ -43,10 +42,17 @@ class HuggingFaceChatServiceTest {
         properties.setModel("test-model");
         properties.setBaseUrl(BASE_URL);
 
-        // Construir el cliente e interinterceptarlo correctamente con MockRestServiceServer
+        // HuggingFaceChatConfig construye el cliente sobre builder.clone() con su propio
+        // request factory, lo que hace inalcanzable a MockRestServiceServer.bindTo(builder).
+        // Por eso el cliente se arma sobre el builder ya interceptado, replicando baseUrl
+        // y headers del config: solo así el mock puede responder y no hay llamadas reales.
         RestClient.Builder builder = RestClient.builder();
-        RestClient client = new HuggingFaceChatConfig().huggingFaceChatRestClient(builder, properties);
         server = MockRestServiceServer.bindTo(builder).build();
+        RestClient client = builder
+                .baseUrl(properties.getBaseUrl())
+                .defaultHeader("Authorization", "Bearer " + properties.getKey())
+                .defaultHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                .build();
 
         service = new HuggingFaceChatService(client, properties, JsonMapper.builder().build());
     }
