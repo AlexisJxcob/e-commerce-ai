@@ -43,11 +43,11 @@ Chain strategy: pending
 
 ## Phase 3: Auth BD + fix PATCH stock
 
-- [ ] 3.1 RED `AuthServiceTest.java`+`AuthControllerTest.java`: login admin→`ROLE_ADMIN`+TTL `app.jwt.expiration`; pass mala/usuario ∄→401 iguales; register→201 CLIENTE, dup→409, hint ADMIN→CLIENTE; sin hash
-- [ ] 3.2 RED integración (fix #5): PATCH stock CLIENTE→403 (hoy 200), sin token→403, ADMIN→200
-- [ ] 3.3 GREEN: `model/Usuario.java`, `model/Rol.java`, `repository/UsuarioRepository.java`, `service/AuthService.java`; `RegisterRequestDTO.java` (`@Size(min=8)`)/`UsuarioResponseDTO.java`; `UsuarioDuplicadoException`
-- [ ] 3.4 GREEN: `config/AdminSeeder.java` (idempotente, BCrypt `${ADMIN_PASSWORD:admin123}`); `config/JwtProperties.java` `@ConfigurationProperties("app.jwt")`; beans `JwtEncoder`/`JwtDecoder`/`PasswordEncoder`; `config/SecurityConfig.java` PATCH productos→ADMIN + endpoint /auth/register (read-only) permitAll; login BD+register en `controller/AuthController.java`; `application.properties` +`app.jwt.expiration`
-- [ ] 3.5 GREEN: delete `config/JwtConfig.java` (dead, secret divergente)
+- [x] 3.1 RED `AuthServiceTest.java`+`AuthControllerTest.java`: login admin→`ROLE_ADMIN`+TTL `app.jwt.expiration`; pass mala/usuario ∄→401 iguales; register→201 CLIENTE, dup→409, hint ADMIN→CLIENTE; sin hash
+- [x] 3.2 RED integración (fix #5): PATCH stock CLIENTE→403 (hoy 200), sin token→403, ADMIN→200
+- [x] 3.3 GREEN: `model/Usuario.java`, `model/Rol.java`, `repository/UsuarioRepository.java`, `service/AuthService.java`; `RegisterRequestDTO.java` (`@Size(min=8)`)/`UsuarioResponseDTO.java`; `UsuarioDuplicadoException`
+- [x] 3.4 GREEN: `config/AdminSeeder.java` (idempotente, BCrypt `${ADMIN_PASSWORD:admin123}`); `config/JwtProperties.java` `@ConfigurationProperties("app.jwt")`; beans `JwtEncoder`/`JwtDecoder`/`PasswordEncoder`; `config/SecurityConfig.java` PATCH productos→ADMIN + endpoint /auth/register (read-only) permitAll; login BD+register en `controller/AuthController.java`; `application.properties` +`app.jwt.expiration`
+- [x] 3.5 GREEN: delete `config/JwtConfig.java` (dead, secret divergente)
 
 ## Phase 4: Pedidos
 

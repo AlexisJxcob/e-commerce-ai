@@ -82,6 +82,21 @@ class ProductoControllerIntegrationTest extends AbstractIntegrationTest {
         return objectMapper.readTree(response).get("id").asLong();
     }
 
+    private static String jwtCliente() {
+        try {
+            SecretKeySpec key = new SecretKeySpec(SECRETO_TEST.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            SignedJWT jwt = new SignedJWT(
+                    new JWSHeader(JWSAlgorithm.HS256),
+                    new JWTClaimsSet.Builder()
+                            .subject("juan")
+                            .claim("roles", List.of("ROLE_CLIENTE"))
+                            .build());
+            jwt.sign(new MACSigner(key));
+            return jwt.serialize();
+        } catch (JOSEException e) {
+            throw new IllegalStateException("No se pudo firmar el JWT de prueba", e);
+        }
+    }
     private long crearProducto(String sku, String nombre) throws Exception {
         long categoriaId = crearCategoria("CAT-" + sku);
         String body = """
@@ -219,6 +234,25 @@ class ProductoControllerIntegrationTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + jwtAdmin())
                         .param("stock", "5"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void actualizarStock_conTokenCliente_devuelve403() throws Exception {
+        long id = crearProducto("SKU-STOCK-CLI", "Taladro");
+
+        mockMvc.perform(patch("/api/v1/productos/" + id + "/stock")
+                        .header("Authorization", "Bearer " + jwtCliente())
+                        .param("stock", "9"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void actualizarStock_sinToken_devuelve403() throws Exception {
+        long id = crearProducto("SKU-STOCK-NOAUTH", "Sierra");
+
+        mockMvc.perform(patch("/api/v1/productos/" + id + "/stock")
+                        .param("stock", "9"))
+                .andExpect(status().isForbidden());
     }
 
     // ---------- búsqueda vectorial (pgvector) ----------
