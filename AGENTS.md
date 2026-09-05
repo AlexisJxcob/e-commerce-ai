@@ -65,36 +65,53 @@ src/main/java/org/alexis/ecommerceai/
 │   ├── AsistenteIAService.java        # Orchestrates LLM analysis → product search
 │   └── HuggingFaceChatService.java    # Hugging Face Chat client + JSON parsing
 ├── config/
-│   ├── SecurityConfig.java            # Filter chain, JWT decoder bean
+│   ├── SecurityConfig.java            # Filter chain, rules por endpoint, JWT encoder/decoder, PasswordEncoder
+│   ├── AdminSeeder.java               # Seed idempotente del admin inicial (app.seed.admin-password)
+│   ├── JwtProperties.java             # @ConfigurationProperties("app.jwt") (secret + expiration MS)
 │   ├── HuggingFaceChatConfig.java     # RestClient bean ("huggingFaceChatRestClient")
 │   ├── HuggingFaceChatProperties.java # @ConfigurationProperties("huggingface.chat")
 │   ├── HuggingFaceConfig.java         # RestClient bean ("huggingFaceRestClient") + EmbeddingModel bean
 │   ├── HuggingFaceProperties.java     # @ConfigurationProperties("huggingface.api") (key/model/baseUrl)
 │   └── HuggingFaceEmbeddingModel.java # EmbeddingModel impl → HF Inference API (feature-extraction, 384 dims)
 ├── controller/
-│   └── ProductoController.java        # /api/v1/productos (REST + AI endpoints, incl. reindexar)
+│   ├── ProductoController.java        # /api/v1/productos (REST + AI endpoints, incl. reindexar)
+│   ├── AuthController.java            # /api/auth (login contra BD + register público CLIENTE)
+│   ├── CategoriaController.java       # /api/v1/categorias (CRUD)
+│   ├── PedidoController.java          # /api/v1/pedidos (crear/listar propios/detalle)
+│   └── CarritoController.java         # /api/v1/carrito (carrito persistente del principal)
 ├── dto/
-│   ├── ProductoRequestDTO.java        # Create/update payload (record + validation)
+│   ├── ProductoRequestDTO.java        # Create/update payload (record + validation, incl. categoriaId)
 │   ├── ProductoResponseDTO.java       # API response (record)
-│   ├── BusquedaInteligenteResponse.java
-│   ├── DiagnoseRequestDTO.java        # POST /diagnose body { "problema": "..." }
-│   ├── ReindexacionResponse.java      # record(procesados, pendientes) for POST /reindexar
+│   ├── LoginRequest/LoginResponse.java, RegisterRequestDTO, UsuarioResponseDTO
+│   ├── CategoriaRequestDTO/CategoriaResponseDTO, PedidoRequestDTO/LineaPedidoDTO/PedidoResponseDTO
+│   ├── AgregarItemCarritoDTO/ActualizarItemCarritoDTO/CarritoResponseDTO/LineaCarritoResponseDTO
+│   ├── BusquedaInteligenteResponse.java, DiagnoseRequestDTO, ReindexacionResponse.java
 │   ├── SugerenciaFerreteriaDTO.java   # LLM JSON contract (keywords/tools/spare parts)
 │   └── huggingface/                    # ChatCompletion{Request,Response}, ChatMessage
 ├── exception/
 │   ├── ErrorResponse.java             # Unified error body (record)
-│   ├── GlobalExceptionHandler.java    # @RestControllerAdvice
-│   └── (HuggingFaceException,
-│        HuggingFaceRateLimitException, ProductoNotFoundException,
-│        StockUpdateConflictException)
+│   ├── GlobalExceptionHandler.java    # @RestControllerAdvice (incl. backstop DataIntegrityViolation → 409)
+│   └── (HuggingFaceException, HuggingFaceRateLimitException,
+│        ProductoNotFoundException, StockUpdateConflictException,
+│        RecursoNoEncontradoException, ConflictoException, CategoriaNotFoundException,
+│        CategoriaEnUsoException, UsuarioDuplicadoException, CredencialesInvalidasException,
+│        PedidoNotFoundException, StockInsuficienteException, ProductoConPedidosException,
+│        ItemCarritoNotFoundException)
 ├── model/
-│   └── Producto.java                  # JPA entity "productos" incl. vector(384) column
+│   ├── Producto.java                  # JPA entity "productos" incl. vector(384) + @ManyToOne Categoria (nullable)
+│   ├── Categoria.java                 # JPA entity "categorias"
+│   ├── Usuario.java                   # JPA entity "usuarios" (roles ADMIN/CLIENTE, password BCrypt)
+│   ├── Pedido.java + ItemPedido.java  # "pedidos" + "items_pedido" (snapshot precioUnitario)
+│   └── ItemCarrito.java               # "items_carrito" (UNIQUE usuario+producto, carrito persistente)
 ├── repository/
-│   └── ProductoRepository.java        # JPA + native vector similarity query + pendientes de embedding
+│   ├── ProductoRepository.java        # JPA + native vector similarity query + pendientes de embedding
+│   ├── CategoriaRepository.java, UsuarioRepository.java
+│   ├── PedidoRepository.java, ItemPedidoRepository.java, ItemCarritoRepository.java
 ├── security/
 │   └── JwtAuthenticationFilter.java   # Custom Bearer-JWT filter
 └── service/
-    └── ProductoService.java           # CRUD, stock, keyword & vector search, reindexación
+    ├── ProductoService.java           # CRUD, stock, keyword & vector search, reindexación
+    ├── AuthService.java, CategoriaService.java, PedidoService.java, CarritoService.java
 src/main/resources/
 └── application.properties             # The only config file (no YAML)
 src/test/java/.../ECommerceAiApplicationTests.java
@@ -180,9 +197,27 @@ pgvector facts verified from code:
 
 - `@CrossOrigin(origins = {"http://localhost:3001"})` at controller level — the
   only allowed origin.
-- `GET` paths are `permitAll()`; **all** POST/PUT/PATCH/DELETE under
-  `/api/v1/productos/**` require `hasRole("ADMIN")`; everything else requires
-  authentication (see Security section).
+- `GET` catalog paths are `permitAll()`; **all** POST/PUT/PATCH/DELETE under
+  `/api/v1/productos/**` and `/api/v1/categorias/**` require `hasRole("ADMIN")`;
+  everything else requires authentication (see Security section).
+
+### Auth & new domain endpoints
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| POST | `/api/auth/login` | Public | Login contra BD (`username`+`password`) → `LoginResponse` con `token`, `username`, `rol`, `expiresIn` (ms). Credenciales inválidas → 401 con mensaje genérico |
+| POST | `/api/auth/register` | Public | Registro público; fuerza rol `CLIENTE` aunque el payload pida otro → 201 `UsuarioResponseDTO(id, username, rol)` (nunca password). Username duplicado → 409 |
+| GET | `/api/v1/categorias` `/api/v1/categorias/{id}` | Public | CRUD de categorías (lectura pública) |
+| POST | `/api/v1/categorias` | **ADMIN** | Crear (nombre único → 409 si duplicado) |
+| PUT/DELETE | `/api/v1/categorias/{id}` | **ADMIN** | Actualizar / borrar. Borrar categoría referenciada por ≥1 producto → 409 (sin cascade) |
+| POST | `/api/v1/pedidos` | Autenticado | Crear pedido desde líneas `{productoId, cantidad}` → 201. Insuficiente stock / race última unidad → 409 sin parcial; producto inexistente → 404; cuerpo vacío → 400 |
+| GET | `/api/v1/pedidos` | Autenticado | Pedidos del principal (newest first) |
+| GET | `/api/v1/pedidos/{id}` | Autenticado | Detalle; solo propios (ADMIN puede ver cualquiera); ajeno/inexistente → 404 |
+| GET | `/api/v1/carrito` | Autenticado | Carrito persistente del principal (con totales a precio actual) |
+| POST | `/api/v1/carrito/items` | Autenticado | Agregar/merge producto (UNIQUE usuario+producto) |
+| PATCH | `/api/v1/carrito/items/{id}` | Autenticado | Cambiar cantidad (≥1); línea ajena → 404 |
+| DELETE | `/api/v1/carrito/items/{id}` | Autenticado | Quitar línea; producto borrado se purga (FK CASCADE) |
+| DELETE | `/api/v1/carrito` | Autenticado | Vaciar carrito |
 
 ---
 
@@ -191,28 +226,29 @@ pgvector facts verified from code:
 Verified from `SecurityConfig.java` and `JwtAuthenticationFilter.java`:
 
 - Stateless sessions (`SessionCreationPolicy.STATELESS`), CSRF disabled.
-- Rule table:
-  - `GET /api/v1/productos/**` → `permitAll()`
-  - `POST/PUT/DELETE /api/v1/productos/**` → `hasRole("ADMIN")`
-  - `anyRequest()` → `authenticated()`
+- Rule table (context-path `/api` aplicado por `server.servlet.context-path`):
+  - `GET /api/v1/productos/**`, `GET /api/v1/categorias/**` → `permitAll()`
+  - `POST/PUT/PATCH/DELETE /api/v1/productos/**` y `POST/PUT/DELETE /api/v1/categorias/**` → `hasRole("ADMIN")` (PATCH stock incluido)
+  - `POST /api/auth/login`, `POST /api/auth/register` → `permitAll()`
+  - `anyRequest()` → `authenticated()` (pedidos y carrito)
 - `JwtAuthenticationFilter` (custom, registered before
   `UsernamePasswordAuthenticationFilter`):
   1. Reads `Authorization: Bearer <token>`.
-  2. Decodes with a `NimbusJwtDecoder` built from a **hardcoded HS256 secret**
-     in `SecurityConfig.jwtDecoder()` (code comment marks it as an example —
-     production must inject it safely).
+  2. Decodes with a `NimbusJwtDecoder` built from `app.jwt.secret` (HS256).
   3. Sets `username = jwt.getSubject()`; authorities come from the **`roles`**
      claim (`getClaimAsStringList("roles")`), each mapped to a
      `SimpleGrantedAuthority` — so to satisfy `hasRole("ADMIN")` the claim must
      contain the literal string `ROLE_ADMIN`.
   4. On any `JwtException` the context is cleared (anonymous), the request
      still continues through the chain.
+- **Token issuance**: `POST /api/auth/login` valida contra la tabla `usuarios`
+  (BCrypt) y emite HS256 JWT con `subject=username` y `roles=[ROLE_<ROL>]`
+  desde la fila del usuario; `expiresIn` y firma usan `app.jwt.*`. El admin
+  inicial lo siembra `AdminSeeder` (idempotente) con
+  `app.seed.admin-password` (`${ADMIN_PASSWORD:admin123}`).
 - OAuth2 starters (authorization-server, client, resource-server) are declared
   in `pom.xml` but **no OAuth2 configuration code exists** in `src/main` — the
   authorization-server starter is unused by any `@Configuration`.
-- **There is no token-issuing (login) endpoint in this repository.** JWT
-  issuance is out of scope of the code; for local testing, generate a token
-  externally (HS256, subject, `roles: ["ROLE_ADMIN"]`).
 
 ---
 
@@ -314,10 +350,16 @@ YAML**):
 | `huggingface.api.key` | `${HUGGINGFACE_API_KEY}` | **`HUGGINGFACE_API_KEY`** (embeddings) |
 | `huggingface.api.model` | `sentence-transformers/all-MiniLM-L6-v2` (default, 384 dims) | — |
 | `huggingface.api.base-url` | `https://router.huggingface.co/hf-inference/models` | — |
+| `app.jwt.secret` | `${JWT_SECRET:clave-secreta-de-256-bits-para-jwt-cambiar-en-produccion}` | prefer `JWT_SECRET` |
+| `app.jwt.expiration` | `${JWT_EXPIRATION_MS:86400000}` (24 h) | prefer `JWT_EXPIRATION_MS` |
+| `app.seed.admin-password` | `${ADMIN_PASSWORD:admin123}` | prefer `ADMIN_PASSWORD` |
 
 - **Never commit real keys.** `HUGGINGFACE_CHAT_API_KEY` (chat) and `HUGGINGFACE_API_KEY`
   (embeddings) are resolved from the environment; the repo's `.gitignore`
   already excludes `.env`, `.env.local` and `application-local.properties/yml`.
+- JWT secret/expiration ya no están hardcodeados en `SecurityConfig`: viven en
+  `app.jwt.*` (leídos por `JwtProperties`) y alimentan `JwtEncoder`/`JwtDecoder`
+  (HS256) + el TTL de emisión en el login.
 - PostgreSQL must have the **pgvector extension installed**
   (`CREATE EXTENSION IF NOT EXISTS vector;`) and a database matching
   `spring.datasource.url`.
@@ -352,9 +394,8 @@ YAML**):
 8. `RestClient` is the HTTP client of choice (Spring Boot 4 modular starter) —
    do not reintroduce `RestTemplate`.
 9. Use the Maven wrapper (`./mvnw`) for builds; `mvnw.cmd` for Windows.
-10. Before changing security behavior, note that the JWT secret is currently
-    hardcoded in `SecurityConfig` — move it to an environment variable/property
-    as part of any security work.
+10. JWT secret/expiration viven en `app.jwt.*` (`JwtProperties`); cualquier
+    cambio de seguridad debe mantener esa única fuente de config.
 
 ---
 
@@ -363,25 +404,25 @@ YAML**):
 The following could **not** be verified from the repository code — do not treat
 them as facts:
 
-- **JWT issuance:** no login/token endpoint exists; the OAuth2
-  authorization-server/client/resource-server starters are dependencies only.
-  How tokens are minted in production is unknown.
 - **pgvector extension bootstrap:** no SQL migration creates the extension;
-  the database is assumed to already have it.
+  the database is assumed to already have it. Sin Flyway/Liquibase hoy: todas
+  las tablas (incl. `categorias`, `usuarios`, `pedidos`, `items_pedido`,
+  `items_carrito`) las crea `ddl-auto=update` — el Bloque 4 debe reemplazar
+  esto por migraciones versionadas y backfillear `productos.categoria_id`.
 - **Embedding model & dimensions:** the repo configures
   `sentence-transformers/all-MiniLM-L6-v2` (384 dims, matches `vector(384)` and
   `HuggingFaceEmbeddingModel.DIMENSION`). This is the live configuration;
   the HF key is required (`HUGGINGFACE_API_KEY`)
   for embeddings to be generated — a missing key throws `HuggingFaceException`.
-- **Tests & data:** 69 tests pass across unit (services, controller, exceptions)
-  and integration (`@SpringBootTest` + MockMvc + Testcontainers pgvector); the
-  old "contextLoads-only" state no longer applies. Per the migration commit,
-  the 23 products in PostgreSQL were successfully vectorized (embeddings
-  generated) — this is asserted in the commit message, not re-verified live here
-  from code alone.
-- **Swagger/OpenAPI reachability:** springdoc is present, but
-  `anyRequest().authenticated()` in `SecurityConfig` does not exempt
-  `/swagger-ui/**` or `/v3/api-docs` — verified: **403 without a JWT, 200 with**.
+- **Tests & data:** 174 tests pass (verificado con `./mvnw test` tras Bloque 3)
+  across unit (services, controller, exceptions) and integration
+  (`@SpringBootTest` + MockMvc + Testcontainers pgvector + `@DirtiesContext`
+  por clase de integración). Per the migration commit, the 23 products in
+  PostgreSQL were successfully vectorized (embeddings generated) — asserted in
+  the commit message, not re-verified live here from code alone.
+- **Swagger/OpenAPI reachability:** springdoc is present; `SecurityConfig`
+  permite `/swagger-ui/**`, `/api-docs/**` y `/swagger-ui.html` via `permitAll()`
+  (verificado en el código actual del Bloque 3).
 - **Frontend:** the repo contains no frontend; `@CrossOrigin` hints at a client
   on `http://localhost:3001` and `ProductoController` comments reference an
   `apiClient.ts` ("Antigravity"), but no such project is in this repository.
