@@ -25,5 +25,8 @@ public record ProductoRequestDTO(
         String descripcionTecnica,
 
         @NotBlank(message = "La descripción coloquial es obligatoria para el buscador de IA")
-        String descripcionColoquial
+        String descripcionColoquial,
+
+        @NotNull(message = "La categoría es obligatoria")
+        Long categoriaId
 ) {}

@@ -66,7 +66,7 @@ class ProductoControllerTest {
 
     private static ProductoResponseDTO dto(Long id, String sku) {
         return new ProductoResponseDTO(id, sku, "Cinta", "tec", "col",
-                new BigDecimal("10.00"), 5);
+                new BigDecimal("10.00"), 5, 7L);
     }
 
     // ---------- lecturas públicas ----------
@@ -123,7 +123,7 @@ class ProductoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"sku":"SKU-1","nombre":"Cinta","precio":10.50,"stock":5,
-                                 "descripcionTecnica":"tec","descripcionColoquial":"col"}
+                                 "descripcionTecnica":"tec","descripcionColoquial":"col","categoriaId":7}
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))

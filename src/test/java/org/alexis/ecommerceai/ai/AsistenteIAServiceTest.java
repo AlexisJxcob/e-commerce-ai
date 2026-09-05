@@ -36,7 +36,7 @@ class AsistenteIAServiceTest {
 
     private static ProductoResponseDTO producto(Long id, String sku) {
         return new ProductoResponseDTO(id, sku, "Cinta", "tec", "col",
-                new BigDecimal("10.00"), 5);
+                new BigDecimal("10.00"), 5, 7L);
     }
 
     @Test

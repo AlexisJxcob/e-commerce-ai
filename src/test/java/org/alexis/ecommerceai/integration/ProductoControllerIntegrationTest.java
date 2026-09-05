@@ -69,11 +69,26 @@ class ProductoControllerIntegrationTest extends AbstractIntegrationTest {
         }
     }
 
+    private long crearCategoria(String nombre) throws Exception {
+        String body = """
+                {"nombre":"%s","descripcion":"Categoria de %s"}
+                """.formatted(nombre, nombre);
+        String response = mockMvc.perform(post("/api/v1/categorias")
+                        .header("Authorization", "Bearer " + jwtAdmin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readTree(response).get("id").asLong();
+    }
+
     private long crearProducto(String sku, String nombre) throws Exception {
+        long categoriaId = crearCategoria("CAT-" + sku);
         String body = """
                 {"sku":"%s","nombre":"%s","precio":10.50,"stock":5,
-                 "descripcionTecnica":"Descripcion tecnica de %s","descripcionColoquial":"el coso de %s"}
-                """.formatted(sku, nombre, nombre, nombre);
+                 "descripcionTecnica":"Descripcion tecnica de %s","descripcionColoquial":"el coso de %s",
+                 "categoriaId":%d}
+                """.formatted(sku, nombre, nombre, nombre, categoriaId);
         String response = mockMvc.perform(post("/api/v1/productos")
                         .header("Authorization", "Bearer " + jwtAdmin())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -158,6 +173,20 @@ class ProductoControllerIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.fieldErrors.sku").exists())
                 .andExpect(jsonPath("$.fieldErrors.precio").exists());
+    }
+
+    @Test
+    void crearProducto_sinCategoriaId_devuelve400() throws Exception {
+        mockMvc.perform(post("/api/v1/productos")
+                        .header("Authorization", "Bearer " + jwtAdmin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"sku":"SKU-SIN-CAT","nombre":"Sin categoria","precio":10.50,"stock":5,
+                                 "descripcionTecnica":"Descripcion tecnica","descripcionColoquial":"el coso"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.fieldErrors.categoriaId").exists());
     }
 
     // ---------- stock ----------

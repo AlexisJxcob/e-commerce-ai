@@ -30,16 +30,16 @@ Chain strategy: pending
 
 ## Phase 1: Foundation — Excepciones
 
-- [ ] 1.1 RED: extender `GlobalExceptionHandlerTest.java` (stub controllers): bases 404/409, `DataIntegrityViolationException`→409
-- [ ] 1.2 GREEN: crear `exception/RecursoNoEncontradoException.java`, `exception/ConflictoException.java`; handlers base + backstop DIVE en `GlobalExceptionHandler.java`
+- [x] 1.1 RED: extender `GlobalExceptionHandlerTest.java` (stub controllers): bases 404/409, `DataIntegrityViolationException`→409
+- [x] 1.2 GREEN: crear `exception/RecursoNoEncontradoException.java`, `exception/ConflictoException.java`; handlers base + backstop DIVE en `GlobalExceptionHandler.java`
 
 ## Phase 2: Categorías + FK en Producto
 
-- [ ] 2.1 RED `CategoriaServiceTest.java`+`CategoriaControllerTest.java`: CRUD 201/200/204, dup→409, delete referenciado→409 sin cascade, GET público, sin token→403 (spec S1–S4)
-- [ ] 2.2 RED `ProductoServiceTest.java`+integración: sin `categoriaId`→400, id desconocido→404, legacy NULL→200/buscable (S5–S8)
-- [ ] 2.3 GREEN: `model/Categoria.java`, `repository/CategoriaRepository.java` (`existsByNombre`/`existsByCategoriaId`), `service/CategoriaService.java`, `controller/CategoriaController.java`; `CategoriaNotFoundException`/`CategoriaEnUsoException`
-- [ ] 2.4 GREEN: `model/Producto.java` +`@ManyToOne` nullable; `dto/ProductoRequestDTO.java`/`ProductoResponseDTO.java` +`categoriaId`; validar en `service/ProductoService.java`; `config/SecurityConfig.java`: GET categorias permitAll, POST/PUT/DELETE ADMIN
-- [ ] 2.5 GREEN: fixtures con `categoriaId` en `ProductoControllerIntegrationTest.java`/`ProductoControllerTest.java`; embeddings intactos
+- [x] 2.1 RED `CategoriaServiceTest.java`+`CategoriaControllerTest.java`: CRUD 201/200/204, dup→409, delete referenciado→409 sin cascade, GET público, sin token→403 (spec S1–S4)
+- [x] 2.2 RED `ProductoServiceTest.java`+integración: sin `categoriaId`→400, id desconocido→404, legacy NULL→200/buscable (S5–S8)
+- [x] 2.3 GREEN: `model/Categoria.java`, `repository/CategoriaRepository.java` (`existsByNombre`/`existsByCategoriaId`), `service/CategoriaService.java`, `controller/CategoriaController.java`; `CategoriaNotFoundException`/`CategoriaEnUsoException`
+- [x] 2.4 GREEN: `model/Producto.java` +`@ManyToOne` nullable; `dto/ProductoRequestDTO.java`/`ProductoResponseDTO.java` +`categoriaId`; validar en `service/ProductoService.java`; `config/SecurityConfig.java`: GET categorias permitAll, POST/PUT/DELETE ADMIN
+- [x] 2.5 GREEN: fixtures con `categoriaId` en `ProductoControllerIntegrationTest.java`/`ProductoControllerTest.java`; embeddings intactos
 
 ## Phase 3: Auth BD + fix PATCH stock
 
