@@ -62,5 +62,5 @@ Chain strategy: pending
 
 ## Phase 6: Verificación
 
-- [ ] 6.1 Correr `./mvnw test` completo verde (unit+integration); embedding/`jwtAdmin()` intactos
-- [ ] 6.2 Actualizar `AGENTS.md`: tablas endpoints/seguridad + sección JWT
+- [x] 6.1 Correr `./mvnw test` completo verde (unit+integration); embedding/`jwtAdmin()` intactos
+- [x] 6.2 Actualizar `AGENTS.md`: tablas endpoints/seguridad + sección JWT
