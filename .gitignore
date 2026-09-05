@@ -59,3 +59,6 @@ application-*.yml
 
 ### Artefactos generados localmente ###
 openapi-bruno.json
+.aider*
+.atl/
+

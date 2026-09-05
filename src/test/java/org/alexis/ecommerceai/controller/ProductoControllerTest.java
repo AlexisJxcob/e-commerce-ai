@@ -8,6 +8,7 @@ import org.alexis.ecommerceai.exception.GlobalExceptionHandler;
 import org.alexis.ecommerceai.exception.ProductoNotFoundException;
 import org.alexis.ecommerceai.exception.StockUpdateConflictException;
 import org.alexis.ecommerceai.service.ProductoService;
+import org.alexis.ecommerceai.testconfig.MockMvcContextPathConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,10 +52,15 @@ class ProductoControllerTest {
         ProductoController controller = new ProductoController(productoService, asistenteIAService);
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
+        // standaloneSetup no pasa por @AutoConfigureMockMvc, así que
+        // MockMvcContextPathConfig no aplica aquí: hay que fijar el context-path
+        // por request por defecto, reusando la misma constante del test de
+        // integración para no repetir el literal "/api" a mano.
         mockMvc = MockMvcBuilders
                 .standaloneSetup(controller)
                 .setValidator(validator)
                 .setControllerAdvice(new GlobalExceptionHandler())
+                .defaultRequest(get("/").contextPath(MockMvcContextPathConfig.CONTEXT_PATH))
                 .build();
     }
 
