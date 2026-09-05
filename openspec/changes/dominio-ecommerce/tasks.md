@@ -57,8 +57,8 @@ Chain strategy: pending
 
 ## Phase 5: Carrito persistente
 
-- [ ] 5.1 RED `CarritoServiceTest.java`+`CarritoControllerTest.java`: sin token→403 (S1); línea ajena→404 (S2); merge→1 línea (S4)/2 productos→2 (S3); cantidad 0→400, producto ∄→404 (S5); totales precio actual (S6); borrado→excluido+purgado (S7); over-stock ok (S8); pedido no altera carrito (S9)
-- [ ] 5.2 GREEN: `model/ItemCarrito.java` (UNIQUE usuario+producto, FK producto CASCADE), `repository/ItemCarritoRepository.java`, `service/CarritoService.java`, `controller/CarritoController.java`; DTOs carrito; `ItemCarritoNotFoundException`; purge defensivo
+- [x] 5.1 RED `CarritoServiceTest.java`+`CarritoControllerTest.java`: sin token→403 (S1); línea ajena→404 (S2); merge→1 línea (S4)/2 productos→2 (S3); cantidad 0→400, producto ∄→404 (S5); totales precio actual (S6); borrado→excluido+purgado (S7); over-stock ok (S8); pedido no altera carrito (S9)
+- [x] 5.2 GREEN: `model/ItemCarrito.java` (UNIQUE usuario+producto, FK producto CASCADE), `repository/ItemCarritoRepository.java`, `service/CarritoService.java`, `controller/CarritoController.java`; DTOs carrito; `ItemCarritoNotFoundException`; purge defensivo
 
 ## Phase 6: Verificación
 
