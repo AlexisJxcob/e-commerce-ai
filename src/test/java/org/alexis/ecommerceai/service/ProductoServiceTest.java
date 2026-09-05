@@ -3,11 +3,13 @@ package org.alexis.ecommerceai.service;
 import org.alexis.ecommerceai.dto.ProductoRequestDTO;
 import org.alexis.ecommerceai.dto.ProductoResponseDTO;
 import org.alexis.ecommerceai.exception.CategoriaNotFoundException;
+import org.alexis.ecommerceai.exception.ProductoConPedidosException;
 import org.alexis.ecommerceai.exception.ProductoNotFoundException;
 import org.alexis.ecommerceai.exception.StockUpdateConflictException;
 import org.alexis.ecommerceai.model.Categoria;
 import org.alexis.ecommerceai.model.Producto;
 import org.alexis.ecommerceai.repository.CategoriaRepository;
+import org.alexis.ecommerceai.repository.ItemPedidoRepository;
 import org.alexis.ecommerceai.repository.ProductoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,13 +45,17 @@ class ProductoServiceTest {
     private CategoriaRepository categoriaRepository;
 
     @Mock
+    private ItemPedidoRepository itemPedidoRepository;
+
+    @Mock
     private EmbeddingModel embeddingModel;
 
     private ProductoService productoService;
 
     @BeforeEach
     void setUp() {
-        productoService = new ProductoService(productoRepository, categoriaRepository, embeddingModel);
+        productoService = new ProductoService(productoRepository, categoriaRepository,
+                itemPedidoRepository, embeddingModel);
     }
 
     private static Producto producto(Long id, String sku, String nombre) {
@@ -197,10 +203,22 @@ class ProductoServiceTest {
     @Test
     void delete_eliminaProductoExistente() {
         when(productoRepository.existsById(1L)).thenReturn(true);
+        when(itemPedidoRepository.existsByProductoId(1L)).thenReturn(false);
 
         productoService.delete(1L);
 
         verify(productoRepository).deleteById(1L);
+    }
+
+    @Test
+    void delete_conPedidosAsociados_lanza409() {
+        when(productoRepository.existsById(1L)).thenReturn(true);
+        when(itemPedidoRepository.existsByProductoId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> productoService.delete(1L))
+                .isInstanceOf(ProductoConPedidosException.class)
+                .hasMessageContaining("pedidos");
+        verify(productoRepository, never()).deleteById(any());
     }
 
     @Test

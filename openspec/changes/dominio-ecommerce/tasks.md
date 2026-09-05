@@ -51,9 +51,9 @@ Chain strategy: pending
 
 ## Phase 4: Pedidos
 
-- [ ] 4.1 RED `PedidoServiceTest.java`+`PedidoControllerTest.java`: 201 snapshot/total/decremento (S1); insuficiente→409 sin parcial (S2); vacío/0→400, producto ∄→404 (S3); race última unidad→409 (S4); ajeno→404 (S5–S6); snapshot inmutable (S7); con pedidos→409 (S8)
-- [ ] 4.2 GREEN: `model/Pedido.java`+`ItemPedido.java` (snapshot, `PENDIENTE`), repos pedido/item, `service/PedidoService.java` (`@Transactional`, lock ordenado, `OptimisticLockingFailureException`→409), `controller/PedidoController.java`; DTOs `PedidoRequestDTO`/`LineaPedidoDTO`/`PedidoResponseDTO`; `PedidoNotFoundException`/`StockInsuficienteException`
-- [ ] 4.3 GREEN: `existsByProductoId` en `ProductoRepository.java` + guard `ProductoConPedidosException`→409 en `ProductoService.delete`
+- [x] 4.1 RED `PedidoServiceTest.java`+`PedidoControllerTest.java`: 201 snapshot/total/decremento (S1); insuficiente→409 sin parcial (S2); vacío/0→400, producto ∄→404 (S3); race última unidad→409 (S4); ajeno→404 (S5–S6); snapshot inmutable (S7); con pedidos→409 (S8)
+- [x] 4.2 GREEN: `model/Pedido.java`+`ItemPedido.java` (snapshot, `PENDIENTE`), repos pedido/item, `service/PedidoService.java` (`@Transactional`, lock ordenado, `OptimisticLockingFailureException`→409), `controller/PedidoController.java`; DTOs `PedidoRequestDTO`/`LineaPedidoDTO`/`PedidoResponseDTO`; `PedidoNotFoundException`/`StockInsuficienteException`
+- [x] 4.3 GREEN: `existsByProductoId` en `ProductoRepository.java` + guard `ProductoConPedidosException`→409 en `ProductoService.delete`
 
 ## Phase 5: Carrito persistente
 

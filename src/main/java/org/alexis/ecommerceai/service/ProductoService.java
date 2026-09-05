@@ -4,11 +4,13 @@ import org.alexis.ecommerceai.dto.ProductoRequestDTO;
 import org.alexis.ecommerceai.dto.ProductoResponseDTO;
 import org.alexis.ecommerceai.dto.ReindexacionResponse;
 import org.alexis.ecommerceai.exception.CategoriaNotFoundException;
+import org.alexis.ecommerceai.exception.ProductoConPedidosException;
 import org.alexis.ecommerceai.exception.ProductoNotFoundException;
 import org.alexis.ecommerceai.exception.StockUpdateConflictException;
 import org.alexis.ecommerceai.model.Categoria;
 import org.alexis.ecommerceai.model.Producto;
 import org.alexis.ecommerceai.repository.CategoriaRepository;
+import org.alexis.ecommerceai.repository.ItemPedidoRepository;
 import org.alexis.ecommerceai.repository.ProductoRepository;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -25,13 +27,16 @@ public class ProductoService {
 
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
+    private final ItemPedidoRepository itemPedidoRepository;
     private final EmbeddingModel embeddingModel;
 
     public ProductoService(ProductoRepository productoRepository,
                            CategoriaRepository categoriaRepository,
+                           ItemPedidoRepository itemPedidoRepository,
                            EmbeddingModel embeddingModel) {
         this.productoRepository = productoRepository;
         this.categoriaRepository = categoriaRepository;
+        this.itemPedidoRepository = itemPedidoRepository;
         this.embeddingModel = embeddingModel;
     }
 
@@ -160,6 +165,10 @@ public class ProductoService {
     public void delete(Long id) {
         if (!productoRepository.existsById(id)) {
             throw new ProductoNotFoundException("Producto no encontrado con id: " + id);
+        }
+        if (itemPedidoRepository.existsByProductoId(id)) {
+            throw new ProductoConPedidosException(
+                    "No se puede eliminar el producto con id: " + id + " porque tiene pedidos asociados");
         }
         productoRepository.deleteById(id);
     }
