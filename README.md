@@ -304,6 +304,8 @@ src/main/java/org/alexis/ecommerceai/
 No se ha definido una licencia para este proyecto. Si planeas publicarlo,
 agrega un archivo `LICENSE` (p. ej. MIT).
 
+agregar futuramente lic mit / apache
+
 ---
 
 *Documentación generada a partir del análisis del código real del repositorio.*
