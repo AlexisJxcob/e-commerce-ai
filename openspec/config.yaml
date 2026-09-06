@@ -1,0 +1,63 @@
+# openspec/config.yaml — SDD configuration for e-commerce-ai
+schema: spec-driven
+
+context: |
+  Tech stack: Java 21, Spring Boot 4.1.1 (modular webmvc starters), Spring AI 2.0.1,
+  PostgreSQL 16 + pgvector, Spring Security JWT, Maven wrapper (./mvnw).
+  Architecture: layered REST API (controller -> service -> repository) with AI
+  orchestration (Hugging Face Chat + custom EmbeddingModel) and pgvector similarity search.
+  Testing: JUnit 5 + MockMvc unit tests; @SpringBootTest integration via Testcontainers
+  (pgvector/pgvector:pg16); embedding model mocked in tests.
+  Style: Spanish user-facing strings; Java records for DTOs; constructor injection;
+  minimal Lombok; RestClient for HTTP; every exception mapped in GlobalExceptionHandler.
+
+strict_tdd: true
+
+testing:
+  detected: 2026-09-05
+  strict_tdd: true
+  test_command: ./mvnw test
+  build_command: ./mvnw -DskipTests package
+  coverage_threshold: 0
+  layers:
+    unit: JUnit 5 + MockMvc (standalone) + MockRestServiceServer
+    integration: "@SpringBootTest + MockMvc + Testcontainers PostgreSQL/pgvector"
+    e2e: none
+
+projects:
+  - path: .
+    stack: Java 21 / Spring Boot 4.1.1 / Spring AI 2.0.1 (Maven)
+    test_command: ./mvnw test
+    framework: JUnit Jupiter 5
+    layers: [unit, integration]
+    coverage_command: null
+    quality_tools: null
+
+rules:
+  proposal:
+    - State intent, scope, and approach; include rollback plan for risky changes
+    - Keep proposed diff under the review budget
+  specs:
+    - Use Given/When/Then scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Domain-facing strings in Spanish; identifiers and artifacts in English
+  design:
+    - Document architecture decisions with rationale
+    - Include sequence diagrams for complex flows
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    guidelines:
+      - Follow the existing layered architecture and DTO/exception conventions
+      - Update GlobalExceptionHandler when adding exception types
+      - Keep the LLM JSON contract and SugerenciaFerreteriaDTO in sync
+    tdd: true
+    test_command: ./mvnw test
+  verify:
+    test_command: ./mvnw test
+    build_command: ./mvnw -DskipTests package
+    coverage_threshold: 0
+    note: Integration tests need Docker (Testcontainers); skipped automatically without it
+  archive:
+    - Warn before merging destructive deltas

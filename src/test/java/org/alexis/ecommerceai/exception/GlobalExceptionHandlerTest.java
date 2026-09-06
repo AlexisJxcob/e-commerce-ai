@@ -3,6 +3,7 @@ package org.alexis.ecommerceai.exception;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -76,6 +77,21 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/gen")
         public void generic() {
             throw new IllegalStateException("boom");
+        }
+
+        @GetMapping("/rnfe")
+        public void recursoNoEncontrado() {
+            throw new RecursoNoEncontradoException("recurso no encontrado");
+        }
+
+        @GetMapping("/ce")
+        public void conflicto() {
+            throw new ConflictoException("conflicto de dominio");
+        }
+
+        @GetMapping("/dive")
+        public void violacionIntegridad() {
+            throw new DataIntegrityViolationException("violación de integridad");
         }
     }
 
@@ -154,5 +170,28 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.status").value(500))
                 .andExpect(jsonPath("$.message").value("Error interno del servidor"));
+    }
+
+    @Test
+    void recursoNoEncontrado_devuelve404() throws Exception {
+        mockMvc.perform(get("/rnfe"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("recurso no encontrado"));
+    }
+
+    @Test
+    void conflicto_devuelve409() throws Exception {
+        mockMvc.perform(get("/ce"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value("conflicto de dominio"));
+    }
+
+    @Test
+    void violacionIntegridad_devuelve409() throws Exception {
+        mockMvc.perform(get("/dive"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
     }
 }

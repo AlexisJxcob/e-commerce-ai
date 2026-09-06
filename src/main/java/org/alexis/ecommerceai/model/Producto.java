@@ -41,6 +41,13 @@ public class Producto {
     @Column(nullable = false)
     private Integer stock;
 
+    // Categoría del catálogo. Nullable para no romper las filas legacy
+    // existentes (el backfill es Bloque 4); la API exige categoriaId
+    // en create/update vía validación del DTO.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id")
+    private Categoria categoria;
+
     // Mapeo directo del tipo vector para PostgreSQL.
     // Dimensiones del modelo sentence-transformers/all-MiniLM-L6-v2 = 384.
     // Si cambias de modelo de embedding, actualiza también este valor

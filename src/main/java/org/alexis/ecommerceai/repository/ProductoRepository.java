@@ -36,6 +36,12 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
      */
     long countByEmbeddingIsNull();
 
+    /**
+     * Indica si existe al menos un producto asociado a la categoría dada.
+     * Se usa para bloquear el borrado de categorías referenciadas (409).
+     */
+    boolean existsByCategoriaId(Long categoriaId);
+
     @Query("""
             SELECT p FROM Producto p
             WHERE LOWER(p.nombre) LIKE LOWER(CONCAT('%', :keyword, '%'))

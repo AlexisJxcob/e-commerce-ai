@@ -2,9 +2,14 @@ package org.alexis.ecommerceai.service;
 
 import org.alexis.ecommerceai.dto.ProductoRequestDTO;
 import org.alexis.ecommerceai.dto.ProductoResponseDTO;
+import org.alexis.ecommerceai.exception.CategoriaNotFoundException;
+import org.alexis.ecommerceai.exception.ProductoConPedidosException;
 import org.alexis.ecommerceai.exception.ProductoNotFoundException;
 import org.alexis.ecommerceai.exception.StockUpdateConflictException;
+import org.alexis.ecommerceai.model.Categoria;
 import org.alexis.ecommerceai.model.Producto;
+import org.alexis.ecommerceai.repository.CategoriaRepository;
+import org.alexis.ecommerceai.repository.ItemPedidoRepository;
 import org.alexis.ecommerceai.repository.ProductoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,13 +42,20 @@ class ProductoServiceTest {
     private ProductoRepository productoRepository;
 
     @Mock
+    private CategoriaRepository categoriaRepository;
+
+    @Mock
+    private ItemPedidoRepository itemPedidoRepository;
+
+    @Mock
     private EmbeddingModel embeddingModel;
 
     private ProductoService productoService;
 
     @BeforeEach
     void setUp() {
-        productoService = new ProductoService(productoRepository, embeddingModel);
+        productoService = new ProductoService(productoRepository, categoriaRepository,
+                itemPedidoRepository, embeddingModel);
     }
 
     private static Producto producto(Long id, String sku, String nombre) {
@@ -59,7 +71,14 @@ class ProductoServiceTest {
     private static ProductoRequestDTO request(String sku, String nombre, String descripcionTecnica,
                                               String descripcionColoquial, String precio, int stock) {
         return new ProductoRequestDTO(sku, nombre, new BigDecimal(precio), stock,
-                descripcionTecnica, descripcionColoquial);
+                descripcionTecnica, descripcionColoquial, null);
+    }
+
+    private static ProductoRequestDTO requestConCategoria(String sku, String nombre, String descripcionTecnica,
+                                                          String descripcionColoquial, String precio, int stock,
+                                                          Long categoriaId) {
+        return new ProductoRequestDTO(sku, nombre, new BigDecimal(precio), stock,
+                descripcionTecnica, descripcionColoquial, categoriaId);
     }
 
     // ---------- findAll ----------
@@ -184,10 +203,22 @@ class ProductoServiceTest {
     @Test
     void delete_eliminaProductoExistente() {
         when(productoRepository.existsById(1L)).thenReturn(true);
+        when(itemPedidoRepository.existsByProductoId(1L)).thenReturn(false);
 
         productoService.delete(1L);
 
         verify(productoRepository).deleteById(1L);
+    }
+
+    @Test
+    void delete_conPedidosAsociados_lanza409() {
+        when(productoRepository.existsById(1L)).thenReturn(true);
+        when(itemPedidoRepository.existsByProductoId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> productoService.delete(1L))
+                .isInstanceOf(ProductoConPedidosException.class)
+                .hasMessageContaining("pedidos");
+        verify(productoRepository, never()).deleteById(any());
     }
 
     @Test
@@ -247,5 +278,50 @@ class ProductoServiceTest {
         verify(productoRepository, never()).buscarPorPalabraClave("  ");
         verify(productoRepository, never()).buscarPorPalabraClave("");
         verify(productoRepository, never()).buscarPorPalabraClave(null);
+    }
+
+    // ---------- categoria (Fase 2) ----------
+
+    @Test
+    void create_conCategoriaInexistente_lanzaCategoriaNotFound() {
+        when(categoriaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productoService.create(
+                requestConCategoria("SKU-1", "Cinta", "Tecnica", "la cinta", "10.00", 5, 99L)))
+                .isInstanceOf(CategoriaNotFoundException.class)
+                .hasMessageContaining("99");
+        verify(productoRepository, never()).save(any(Producto.class));
+    }
+
+    @Test
+    void create_conCategoriaValida_asignaCategoriaYDevuelveCategoriaId() {
+        Categoria categoria = new Categoria();
+        categoria.setId(7L);
+        categoria.setNombre("Fijaciones");
+        when(categoriaRepository.findById(7L)).thenReturn(Optional.of(categoria));
+        when(embeddingModel.embed("Cinta la cinta")).thenReturn(VECTOR);
+        when(productoRepository.save(any(Producto.class))).thenAnswer(invocation -> {
+            Producto guardado = invocation.getArgument(0);
+            guardado.setId(1L);
+            return guardado;
+        });
+
+        ProductoResponseDTO result = productoService.create(
+                requestConCategoria("SKU-1", "Cinta", "Tecnica", "la cinta", "10.00", 5, 7L));
+
+        assertThat(result.categoriaId()).isEqualTo(7L);
+        verify(categoriaRepository).findById(7L);
+    }
+
+    @Test
+    void findById_conProductoLegacySinCategoria_devuelveCategoriaIdNulo() {
+        Producto legacy = producto(1L, "SKU-LEGACY", "Legacy");
+        legacy.setCategoria(null);
+        when(productoRepository.findById(1L)).thenReturn(Optional.of(legacy));
+
+        ProductoResponseDTO result = productoService.findById(1L);
+
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.categoriaId()).isNull();
     }
 }

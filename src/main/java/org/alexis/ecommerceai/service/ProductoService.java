@@ -3,9 +3,14 @@ package org.alexis.ecommerceai.service;
 import org.alexis.ecommerceai.dto.ProductoRequestDTO;
 import org.alexis.ecommerceai.dto.ProductoResponseDTO;
 import org.alexis.ecommerceai.dto.ReindexacionResponse;
+import org.alexis.ecommerceai.exception.CategoriaNotFoundException;
+import org.alexis.ecommerceai.exception.ProductoConPedidosException;
 import org.alexis.ecommerceai.exception.ProductoNotFoundException;
 import org.alexis.ecommerceai.exception.StockUpdateConflictException;
+import org.alexis.ecommerceai.model.Categoria;
 import org.alexis.ecommerceai.model.Producto;
+import org.alexis.ecommerceai.repository.CategoriaRepository;
+import org.alexis.ecommerceai.repository.ItemPedidoRepository;
 import org.alexis.ecommerceai.repository.ProductoRepository;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -21,10 +26,17 @@ import java.util.Map;
 public class ProductoService {
 
     private final ProductoRepository productoRepository;
+    private final CategoriaRepository categoriaRepository;
+    private final ItemPedidoRepository itemPedidoRepository;
     private final EmbeddingModel embeddingModel;
 
-    public ProductoService(ProductoRepository productoRepository, EmbeddingModel embeddingModel) {
+    public ProductoService(ProductoRepository productoRepository,
+                           CategoriaRepository categoriaRepository,
+                           ItemPedidoRepository itemPedidoRepository,
+                           EmbeddingModel embeddingModel) {
         this.productoRepository = productoRepository;
+        this.categoriaRepository = categoriaRepository;
+        this.itemPedidoRepository = itemPedidoRepository;
         this.embeddingModel = embeddingModel;
     }
 
@@ -109,6 +121,7 @@ public class ProductoService {
         producto.setDescripcionColoquial(request.descripcionColoquial());
         producto.setPrecio(request.precio());
         producto.setStock(request.stock());
+        producto.setCategoria(resolverCategoria(request.categoriaId()));
         producto.setEmbedding(generarEmbedding(request.nombre(), request.descripcionColoquial()));
 
         producto = productoRepository.save(producto);
@@ -126,6 +139,7 @@ public class ProductoService {
         producto.setDescripcionColoquial(request.descripcionColoquial());
         producto.setPrecio(request.precio());
         producto.setStock(request.stock());
+        producto.setCategoria(resolverCategoria(request.categoriaId()));
 
         // Regenerar el embedding si la descripción cambia
         producto.setEmbedding(generarEmbedding(request.nombre(), request.descripcionColoquial()));
@@ -152,6 +166,10 @@ public class ProductoService {
         if (!productoRepository.existsById(id)) {
             throw new ProductoNotFoundException("Producto no encontrado con id: " + id);
         }
+        if (itemPedidoRepository.existsByProductoId(id)) {
+            throw new ProductoConPedidosException(
+                    "No se puede eliminar el producto con id: " + id + " porque tiene pedidos asociados");
+        }
         productoRepository.deleteById(id);
     }
 
@@ -164,6 +182,20 @@ public class ProductoService {
         return Arrays.toString(vector);
     }
 
+    /**
+     * Resuelve la categoría del producto. Un {@code categoriaId} nulo deja la
+     * asociación intacta (filas legacy sin categoría); la obligatoriedad en la
+     * API la impone la validación del DTO (400). Un id desconocido es 404.
+     */
+    private Categoria resolverCategoria(Long categoriaId) {
+        if (categoriaId == null) {
+            return null;
+        }
+        return categoriaRepository.findById(categoriaId)
+                .orElseThrow(() -> new CategoriaNotFoundException(
+                        "Categoría no encontrada con id: " + categoriaId));
+    }
+
     private ProductoResponseDTO toResponseDTO(Producto producto) {
         return new ProductoResponseDTO(
                 producto.getId(),
@@ -172,7 +204,8 @@ public class ProductoService {
                 producto.getDescripcionTecnica(),
                 producto.getDescripcionColoquial(),
                 producto.getPrecio(),
-                producto.getStock()
+                producto.getStock(),
+                producto.getCategoria() != null ? producto.getCategoria().getId() : null
         );
     }
 }
