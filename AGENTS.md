@@ -226,11 +226,18 @@ pgvector facts verified from code:
 Verified from `SecurityConfig.java` and `JwtAuthenticationFilter.java`:
 
 - Stateless sessions (`SessionCreationPolicy.STATELESS`), CSRF disabled.
-- Rule table (context-path `/api` aplicado por `server.servlet.context-path`):
-  - `GET /api/v1/productos/**`, `GET /api/v1/categorias/**` → `permitAll()`
-  - `POST/PUT/PATCH/DELETE /api/v1/productos/**` y `POST/PUT/DELETE /api/v1/categorias/**` → `hasRole("ADMIN")` (PATCH stock incluido)
-  - `POST /api/auth/login`, `POST /api/auth/register` → `permitAll()`
+- Rule table: `server.servlet.context-path=/api` recorta el prefijo antes de que
+  Spring Security evalúe, así que **los `requestMatchers` trabajan sobre el
+  `servletPath`, SIN el prefijo `/api`** (no duplicar `/api` en los matchers):
+  - `GET /v1/productos/**`, `GET /v1/categorias/**` → `permitAll()`
+  - `POST/PUT/PATCH/DELETE /v1/productos/**` y `POST/PUT/DELETE /v1/categorias/**` → `hasRole("ADMIN")` (PATCH stock incluido)
+  - `POST /auth/login`, `POST /auth/register` → `permitAll()`
+  - `/swagger-ui/**`, `/api-docs/**`, `/swagger-ui.html` → `permitAll()` (openAPI
+    docs: `springdoc.api-docs.path=/api-docs`, `springdoc.swagger-ui.path=/swagger-ui.html`)
   - `anyRequest()` → `authenticated()` (pedidos y carrito)
+- **JWTs**: `SecurityConfig` expone tanto un `JwtDecoder` como un `JwtEncoder`
+  (ambos `NimbusJwtDecoder/Encoder` HS256 construidos desde la misma
+  `SecretKeySpec` derivada de `app.jwt.secret`). El login usa el `JwtEncoder`.
 - `JwtAuthenticationFilter` (custom, registered before
   `UsernamePasswordAuthenticationFilter`):
   1. Reads `Authorization: Bearer <token>`.
