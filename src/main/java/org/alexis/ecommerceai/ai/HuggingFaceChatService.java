@@ -9,6 +9,8 @@ import org.alexis.ecommerceai.exception.HuggingFaceException;
 import org.alexis.ecommerceai.exception.HuggingFaceRateLimitException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResourceAccessException;
@@ -23,6 +25,8 @@ import java.util.List;
 
 @Service
 public class HuggingFaceChatService {
+
+    private static final Logger log = LoggerFactory.getLogger(HuggingFaceChatService.class);
 
     static final String SYSTEM_PROMPT = """
             Eres el asistente técnico de una ferretería. El cliente describe un problema en lenguaje coloquial \
@@ -100,8 +104,11 @@ public class HuggingFaceChatService {
         } catch (HuggingFaceException ex) {
             throw ex;
         } catch (ResourceAccessException ex) {
+            log.error("Error de conectividad con Hugging Face: {}", ex.getMessage());
             throw new HuggingFaceException("No se pudo conectar con Hugging Face.", ex);
         } catch (RestClientResponseException ex) {
+            log.error("Error devuelto por Hugging Face [status={}]: {}",
+                    ex.getStatusCode().value(), ex.getResponseBodyAsString());
             if (ex.getStatusCode().value() == 429) {
                 throw new HuggingFaceRateLimitException(
                         "Hugging Face alcanzó el límite de peticiones (rate limit). Intente más tarde.");
@@ -110,6 +117,7 @@ public class HuggingFaceChatService {
                     "Error al consultar Hugging Face (" + ex.getStatusCode().value() + ").",
                     ex.getStatusCode().value());
         } catch (RestClientException ex) {
+            log.error("Fallo inesperado al invocar la API de Hugging Face: {}", ex.getMessage(), ex);
             throw new HuggingFaceException("Fallo al invocar la API de Hugging Face.", ex);
         }
     }
