@@ -83,6 +83,22 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-tika-document-reader</artifactId>
         </dependency>
+
+        <!--
+            Flyway: control de versiones declarativo e inmutable del esquema.
+            Spring Boot 4 modularizó la auto-configuración: se necesita el
+            starter dedicado spring-boot-starter-flyway (no basta flyway-core).
+            flyway-database-postgresql es obligatorio desde Flyway 9.16+ para
+            soportar PostgreSQL/pgvector. Versiones gestionadas por el parent.
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-vector-store-advisor</artifactId>

@@ -61,4 +61,6 @@ application-*.yml
 openapi-bruno.json
 .aider*
 .atl/
+# Restos corruptos de un target/ previo (no borrables desde Linux, rompen git/rg)
+target_corrupted_tmp/
 
