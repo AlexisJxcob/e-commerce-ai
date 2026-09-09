@@ -2,7 +2,9 @@ package org.alexis.ecommerceai.controller;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.alexis.ecommerceai.dto.BusquedaInteligenteResponse;
 import org.alexis.ecommerceai.dto.DiagnoseRequestDTO; // DTO para el body { "problema": "..." }
 import org.alexis.ecommerceai.dto.ProductoRequestDTO;
@@ -43,14 +45,21 @@ public class ProductoController {
     // Búsqueda vectorial directa (PGVector - Top N similares)
     @GetMapping("/buscar")
     public ResponseEntity<List<ProductoResponseDTO>> buscarPorSimilitud(
-            @RequestParam("q") String query,
+            @RequestParam("q")
+            @NotBlank(message = "El término de búsqueda no puede estar vacío")
+            @Size(min = 2, max = 250, message = "El término de búsqueda debe tener entre 2 y 250 caracteres")
+            String query,
             @RequestParam(value = "limite", defaultValue = "5") int limite) {
         return ResponseEntity.ok(productoService.buscarPorSimilitud(query, limite));
     }
 
     // Búsqueda inteligente vía GET (?q=...)
     @GetMapping("/asistente")
-    public ResponseEntity<BusquedaInteligenteResponse> consultarAsistente(@RequestParam("q") String query) {
+    public ResponseEntity<BusquedaInteligenteResponse> consultarAsistente(
+            @RequestParam("q")
+            @NotBlank(message = "El término de búsqueda no puede estar vacío")
+            @Size(min = 2, max = 250, message = "El término de búsqueda debe tener entre 2 y 250 caracteres")
+            String query) {
         return ResponseEntity.ok(asistenteIAService.buscarRecomendacion(query));
     }
 
