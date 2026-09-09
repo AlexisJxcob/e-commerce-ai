@@ -56,7 +56,7 @@ class AuthServiceTest {
         jwtEncoder = NimbusJwtEncoder.withSecretKey(key).build();
         jwtDecoder = NimbusJwtDecoder.withSecretKey(key).build();
         authService = new AuthService(usuarioRepository, passwordEncoder, jwtEncoder,
-                new JwtProperties(SECRETO_TEST, EXPIRACION));
+                new JwtProperties(SECRETO_TEST, EXPIRACION, null));
     }
 
     private static Usuario usuario(String username, Rol rol) {
