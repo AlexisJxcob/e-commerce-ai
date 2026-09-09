@@ -64,13 +64,50 @@ CREATE DATABASE ecommerce_db;
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-> El proyecto usa `spring.jpa.hibernate.ddl-auto=update` en desarrollo, pero se recomienda
-> usar `validate` en producción. La columna `embedding` es de tipo `vector(384)` — 
-> debe coincidir con la dimensión del modelo de embeddings utilizado 
+> El esquema está versionado con **Flyway** (migraciones en
+> `src/main/resources/db/migration`) y Hibernate usa `ddl-auto=validate`.
+> La columna `embedding` es de tipo `vector(384)` — debe coincidir con la
+> dimensión del modelo de embeddings utilizado
 > (`sentence-transformers/all-MiniLM-L6-v2`).
 
 > **Importante**: Asegúrate de que la extensión pgvector esté instalada en tu base de datos
-> antes de iniciar la aplicación.
+> antes de iniciar la aplicación (la migración `V1` la crea con
+> `CREATE EXTENSION IF NOT EXISTS vector;` si el usuario tiene privilegio `CREATE`).
+
+### 🗄️ Migraciones de esquema (Flyway)
+
+Convención de versionado y reglas de uso (detalle en `docs/`):
+
+- **Ubicación**: `src/main/resources/db/migration/`.
+- **Formato de nombre**: secuencia entera correlativa
+  `V{N}__{descripcion_en_snake_case}.sql` (ej. `V1__baseline_esquema_inicial.sql`,
+  `V2__backfill_categoria_productos.sql`). No se usa sufijo de timestamp:
+  la secuencia entera es suficiente para este proyecto y legible en PRs.
+- **Inmutabilidad**: una migración **mergeada no se edita jamás** (ni su
+  checksum se altera). Todo cambio de esquema posterior es una migración
+  nueva con el siguiente número de versión. Si necesitas "corregir" un
+  baseline ya aplicado, se hace con `V{N+1}` (p. ej. `ALTER`, `BACKFILL`).
+- **Extensión pgvector**: la crea `V1`; las columnas `vector(N)` solo pueden
+  existir si la extensión está creada antes de la tabla que las usa.
+- **Bases existentes (dev/staging/prod creadas con `ddl-auto`)**:
+  `spring.flyway.baseline-on-migrate=true` + `spring.flyway.baseline-version=1`
+  marcan la base como "equivalente a V1" (baseline) en el primer arranque:
+  Flyway **no ejecuta** `V1` ni borra datos; desde ahí solo aplica
+  migraciones nuevas. Si la base actual difiere del esquema de `V1`
+  (`ddl-auto=validate` falla con `SchemaManagementException`), corregir la
+  discrepancia con una migración nueva, nunca editando `V1`.
+- **Nuevas bases**: Flyway ejecuta `V1` desde cero (esquema completo +
+  extensión), que es exactamente lo que los tests de integración verifican
+  sobre Testcontainers (PostgreSQL + pgvector).
+- **Plan de pruebas en staging**:
+  1. `./mvnw test`: los tests de integración arrancan Testcontainers con una
+     base vacía y verifican que Flyway crea la extensión `vector` y todas las
+     tablas desde cero, sin `SchemaManagementException`.
+  2. Conectar la app a un clon de staging **con datos** y verificar el
+     arranque con `baseline-on-migrate=true` (baseline en V1, datos intactos).
+  3. Verificar en el log de arranque que no aparecen advertencias de
+     desalineación entre la entidad `Producto` y el esquema con
+     `ddl-auto=validate`.
 
 ### 2. Variables de entorno
 
@@ -110,8 +147,13 @@ spring.datasource.username=${DB_USERNAME:postgres}
 spring.datasource.password=${DB_PASSWORD:postgres}
 
 # JPA
-spring.jpa.hibernate.ddl-auto=${JPA_DDL_AUTO:update}
+spring.jpa.hibernate.ddl-auto=${JPA_DDL_AUTO:validate}
 spring.jpa.show-sql=${JPA_SHOW_SQL:true}
+
+# Flyway (esquema versionado; V1 = baseline inicial)
+spring.flyway.enabled=true
+spring.flyway.baseline-on-migrate=true
+spring.flyway.baseline-version=1
 
 # JWT Security
 app.jwt.secret=${JWT_SECRET:clave-secreta-de-256-bits-para-jwt-cambiar-en-produccion}
@@ -295,9 +337,10 @@ src/main/java/org/alexis/ecommerceai/
   `com.fasterxml.*`: romperías la compilación.
 - **CORS**: solo se permite el origen `http://localhost:3001` (frontend de
   desarrollo).
-- **Sin migraciones de esquema**: `ddl-auto=update` está pensado para
-  desarrollo; para producción se recomienda migraciones (Flyway/Liquibase).
-- **Cobertura de tests**: 69 tests (unitarios + integración con Testcontainers).
+- **Esquema versionado con Flyway**: `ddl-auto=validate` en todos los
+  entornos; las migraciones en `src/main/resources/db/migration` son la
+  única fuente de verdad del esquema (ver sección *Migraciones de esquema*).
+- **Cobertura de tests**: 174 tests (unitarios + integración con Testcontainers).
 
 ## 📄 Licencia
 
