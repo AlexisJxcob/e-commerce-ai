@@ -90,11 +90,13 @@ jobs:
           retention-days: 7
 
   # SCA: escáner principal de vulnerabilidades en dependencias. Funciona
-  # igual en repos públicos y privados. La base NVD se cachea entre runs.
+  # igual en repos públicos y privados. La base NVD se cachea entre runs;
+  # el primer sync (389k+ CVEs) tarda bastante sin API key, por eso se
+  # acepta NVD_API_KEY como secret opcional (gratis en nvd.nist.gov).
   dependency-check:
     name: Análisis de dependencias (OWASP Dependency-Check)
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -116,7 +118,11 @@ jobs:
 
       # Umbral de fallo CVSS >= 7.0 configurado en el perfil "owasp" del
       # pom; los falsos positivos se clasifican en owasp-suppression.xml.
+      # NVD_API_KEY (secret opcional) acelera el sync inicial de la NVD;
+      # sin él el escáner avisa y continúa (lento la primera vez).
       - name: Escaneo SCA (perfil owasp)
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: ./mvnw -B -ntp -Powasp -Dmaven.test.skip=true verify
 
       - name: Subir reporte OWASP (aunque falle el umbral)

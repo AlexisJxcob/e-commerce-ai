@@ -52,6 +52,7 @@ Repo → **Settings → Secrets and variables → Actions** → *New repository 
 | Nombre                    | Valor                          |
 |---------------------------|--------------------------------|
 | `RENDER_DEPLOY_HOOK_URL`  | URL del Deploy Hook de Render  |
+| `NVD_API_KEY` *(opcional)*| API key gratuita de la NVD (acelera el primer sync del escáner) |
 
 ## Workflows
 
@@ -60,7 +61,7 @@ Repo → **Settings → Secrets and variables → Actions** → *New repository 
 | Job | Qué hace | Umbral |
 |-----|----------|--------|
 | `build-and-test` | Java 21 Temurin, `./mvnw test` (los tests de integración usan Testcontainers → Docker del runner, sin servicios extra). Después levanta `pgvector/pgvector:pg16` como servicio y corre `flyway:migrate flyway:validate` contra esa base efímera. | Fallo = build rojo |
-| `dependency-check` | OWASP Dependency-Check (perfil `owasp` del pom). La base NVD se cachea con `actions/cache` en `~/.m2/repository/org/owasp/dependency-check-data`. | Falla si hay CVSS **>= 7.0** no suprimido |
+| `dependency-check` | OWASP Dependency-Check (perfil `owasp` del pom). La base NVD se cachea con `actions/cache` en `~/.m2/repository/org/owasp/dependency-check-data`. *Primer run*: sincroniza ~389k CVEs; sin API key puede tardar mucho, por eso el step acepta el secret `NVD_API_KEY` (gratis) — en runs posteriores solo actualiza el delta. | Falla si hay CVSS **>= 7.0** no suprimido |
 | `dependency-review` | GitHub Dependency Review (solo `pull_request`). El repo es **público**, así que no necesita GitHub Advanced Security. | `fail-on-severity: high` |
 
 El gate de Flyway detecta en el PR, antes del merge: **SQL inválido**,
@@ -95,8 +96,9 @@ docker run -d --rm --name flyway-gate -e POSTGRES_DB=ecommerce_ci \
   flyway:migrate flyway:validate
 docker rm -f flyway-gate
 
-# 3) SCA OWASP (descarga la base NVD la primera vez)
-./mvnw -Powasp -Dmaven.test.skip=true verify
+# 3) SCA OWASP (el primer sync de la NVD es lento; con NVD_API_KEY en el
+#    entorno es mucho más rápido)
+NVD_API_KEY=... ./mvnw -Powasp -Dmaven.test.skip=true verify
 # Reporte: target/dependency-check-report.html / .json
 ```
 
