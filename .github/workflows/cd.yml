@@ -1,0 +1,65 @@
+# =====================================================================
+# CD — Despliegue automático a Render (Producción)
+#
+# Se dispara con workflow_run SOLO cuando el workflow "CI" termina con
+# éxito sobre main (push mergeado). Así el deploy espera de verdad a que
+# compile, pasen los tests y el gate de Flyway, en lugar de correr en
+# paralelo ante un push suelto.
+#
+# Requisitos previos (una sola vez, en Render):
+#   1. Desactivar el "Auto-Deploy" nativo del servicio Web en Render
+#      (Settings del servicio) para no duplicar deploys.
+#   2. Crear un Deploy Hook (Settings → Deploy Hook) y copiar su URL.
+#   3. Guardar esa URL como secret RENDER_DEPLOY_HOOK_URL en este repo.
+#
+# Rollback: Render conserva los deploys previos (dashboard o API).
+# Procedimiento documentado en docs/cicd-github-actions.md.
+# =====================================================================
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Una sola deploy en curso a la vez; si llega otra, espera (no se cancela):
+# evita solaparse con un deploy anterior que aún esté en progreso.
+concurrency:
+  group: cd-render-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Desplegar en Render (Deploy Hook)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Doble compuerta: el workflow_run ya filtra por rama main y conclusión,
+    # pero se re-evalúa explícitamente para no desplegar si CI falló.
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'main' }}
+
+    steps:
+      - name: Registrar el run de CI que dispara el deploy
+        run: |
+          echo "CI run #${{ github.event.workflow_run.run_number }} (commit ${{ github.event.workflow_run.head_sha }}) terminó en éxito sobre main."
+          echo "Evento origen: ${{ github.event.workflow_run.event }}"
+
+      - name: Llamar al Deploy Hook de Render
+        env:
+          RENDER_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "${RENDER_HOOK}" ]; then
+            echo "::error::Falta el secret RENDER_DEPLOY_HOOK_URL (URL del Deploy Hook de Render)."
+            exit 1
+          fi
+          curl --fail --silent --show-error \
+               --max-time 120 \
+               --retry 3 \
+               --retry-delay 5 \
+               --retry-all-errors \
+               --request POST "${RENDER_HOOK}"
