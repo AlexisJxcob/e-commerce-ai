@@ -81,7 +81,10 @@ export DB_USERNAME="postgres"
 export DB_PASSWORD="TU_CONTRASENA" 
 
 # JWT Security
-export JWT_SECRET="tu_secret_jwt_de_256_bits_seguro"
+# Obligatoria: clave segura >= 256 bits (32 caracteres UTF-8). Si no cumple, fail-fast al arrancar.
+export JWT_SECRET="cambia_este_valor_por_uno_generado_con_openssl_rand_hex_32"
+# Opcional: emisor esperado en claim 'iss'
+export JWT_ISSUER=""
 
 # Hugging Face API (para embeddings y chat)
 export HUGGINGFACE_API_KEY="hf_TU_API_KEY_AQUI"
