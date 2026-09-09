@@ -29,6 +29,8 @@
     <properties>
         <java.version>21</java.version>
         <spring-ai.version>2.0.1</spring-ai.version>
+        <!-- OWASP Dependency-Check (SCA) — versión del plugin invocada por el perfil "owasp" -->
+        <dependency-check.version>12.1.5</dependency-check.version>
     </properties>
     <dependencies>
         <dependency>
@@ -223,7 +225,64 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--
+                Flyway Maven: permite ejecutar el gate de migraciones en CI
+                (mvn flyway:migrate flyway:validate) contra un Postgres
+                efímero, antes del merge. No está ligado a ninguna fase del
+                ciclo de vida: solo se invoca explícitamente (p. ej. en
+                .github/workflows/ci.yml). Versión gestionada por el parent
+                (flyway.version).
+            -->
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!--
+            Perfil "owasp": análisis estático de dependencias (SCA) con OWASP
+            Dependency-Check. Inactivo por defecto para no ralentizar los
+            builds locales; lo activa explícitamente el workflow CI con
+            ./mvnw -Powasp verify.
+
+            - Umbral de fallo: cualquier dependencia con CVSS >= 7.0
+              (High/Critical) rompe el build, salvo que esté clasificada
+              como falso positivo en owasp-suppression.xml.
+            - dataDirectory: la base de datos NVD vive bajo ~/.m2 para poder
+              cachearla entre runs (actions/cache en CI).
+        -->
+        <profile>
+            <id>owasp</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <version>${dependency-check.version}</version>
+                        <configuration>
+                            <failBuildOnCVSS>7</failBuildOnCVSS>
+                            <suppressionFiles>
+                                <suppressionFile>${project.basedir}/owasp-suppression.xml</suppressionFile>
+                            </suppressionFiles>
+                            <formats>
+                                <format>HTML</format>
+                                <format>JSON</format>
+                            </formats>
+                            <dataDirectory>${user.home}/.m2/repository/org/owasp/dependency-check-data</dataDirectory>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

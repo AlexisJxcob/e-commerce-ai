@@ -1,0 +1,148 @@
+# =====================================================================
+# CI — Compilación, tests, gate de migraciones Flyway y análisis estático
+# de dependencias (SCA) para e-commerce-ai.
+#
+# Disparado por:
+#   - push a main
+#   - pull_request (cualquier rama que apunte a este repo)
+#
+# Notas:
+#   * Docker Engine ya viene activo en los runners ubuntu-latest (socket
+#     por defecto), por lo que Testcontainers funciona sin declarar un
+#     servicio "docker" extra.
+#   * El job "build-and-test" levanta un PostgreSQL efímero (servicio)
+#     con la extensión pgvector para validar las migraciones Flyway antes
+#     del merge.
+#   * El workflow CD (cd.yml) escucha la conclusión de ESTE workflow por
+#     su nombre: el atributo `name` debe permanecer exactamente "CI".
+# =====================================================================
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build, tests y gate Flyway
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # PostgreSQL efímero para el gate de Flyway. Se usa la imagen con
+    # pgvector (igual que en los tests de integración) porque V1 ejecuta
+    # CREATE EXTENSION vector. Mantener el major alineado con producción:
+    # si producción corre otro major, cambiar el tag (p. ej. pg17).
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: ecommerce_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ecommerce_ci"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21 (Temurin) con caché de Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Compilar y ejecutar todos los tests (unit + integración con Testcontainers)
+        run: ./mvnw -B -ntp test
+
+      # Gate de Flyway: aplica las migraciones sobre la base EFÍMERA vacía
+      # (detecta SQL inválido, colisiones de versiones o migraciones que no
+      # aplican en orden) y valida el estado resultante. Un PR que rompa
+      # esto falla aquí, antes del merge.
+      - name: Validar migraciones Flyway (migrate + validate)
+        run: >-
+          ./mvnw -B -ntp
+          -Dflyway.url=jdbc:postgresql://localhost:5432/ecommerce_ci
+          -Dflyway.user=postgres
+          -Dflyway.password=postgres
+          flyway:migrate flyway:validate
+
+      - name: Subir reportes de tests (aunque fallen)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+  # SCA: escáner principal de vulnerabilidades en dependencias. Funciona
+  # igual en repos públicos y privados. La base NVD se cachea entre runs.
+  dependency-check:
+    name: Análisis de dependencias (OWASP Dependency-Check)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21 (Temurin) con caché de Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Cache de la base NVD (evita re-descargarla en cada run)
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: odc-nvd-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            odc-nvd-${{ runner.os }}-
+
+      # Umbral de fallo CVSS >= 7.0 configurado en el perfil "owasp" del
+      # pom; los falsos positivos se clasifican en owasp-suppression.xml.
+      - name: Escaneo SCA (perfil owasp)
+        run: ./mvnw -B -ntp -Powasp -Dmaven.test.skip=true verify
+
+      - name: Subir reporte OWASP (aunque falle el umbral)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: target/dependency-check-report.*
+          retention-days: 14
+
+  # Capa extra SOLO en pull_request: usa el dependency graph de GitHub.
+  # El repo es público (verificado), por lo que no requiere GitHub
+  # Advanced Security. En un repo privado habría que quitarla o activar GHAS.
+  dependency-review:
+    name: Revisión de dependencias en el PR (GitHub)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: dependency-review-action
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: true
