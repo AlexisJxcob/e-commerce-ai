@@ -39,7 +39,9 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
-        // Esquema limpio por contexto de test (la extensión vector viene en la imagen)
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        // El esquema lo construye Flyway (V1) sobre el contenedor vacío; la
+        // extensión vector la aporta la imagen y el init-script. Hibernate
+        // queda en validate para detectar desalineación entidad-esquema.
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
     }
 }
