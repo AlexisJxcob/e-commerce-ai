@@ -1,5 +1,6 @@
 package org.alexis.ecommerceai.service;
 
+import org.alexis.ecommerceai.config.CacheConfig;
 import org.alexis.ecommerceai.dto.ProductoRequestDTO;
 import org.alexis.ecommerceai.dto.ProductoResponseDTO;
 import org.alexis.ecommerceai.dto.ReindexacionResponse;
@@ -7,6 +8,10 @@ import org.alexis.ecommerceai.exception.CategoriaNotFoundException;
 import org.alexis.ecommerceai.exception.ProductoConPedidosException;
 import org.alexis.ecommerceai.exception.ProductoNotFoundException;
 import org.alexis.ecommerceai.exception.StockUpdateConflictException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.alexis.ecommerceai.model.Categoria;
 import org.alexis.ecommerceai.model.Producto;
 import org.alexis.ecommerceai.repository.CategoriaRepository;
@@ -40,13 +45,14 @@ public class ProductoService {
         this.embeddingModel = embeddingModel;
     }
 
+    @Cacheable(cacheNames = CacheConfig.PRODUCTOS_CACHE)
     @Transactional(readOnly = true)
-    public List<ProductoResponseDTO> findAll() {
-        return productoRepository.findAll().stream()
-                .map(this::toResponseDTO)
-                .toList();
+    public Page<ProductoResponseDTO> findAll(Pageable pageable) {
+        return productoRepository.findAll(pageable)
+                .map(this::toResponseDTO);
     }
 
+    @Cacheable(cacheNames = CacheConfig.PRODUCTOS_CACHE, key = "#id")
     @Transactional(readOnly = true)
     public ProductoResponseDTO findById(Long id) {
         return productoRepository.findById(id)
@@ -112,6 +118,7 @@ public class ProductoService {
         return new ReindexacionResponse(procesados, (int) restantes);
     }
 
+    @CacheEvict(cacheNames = CacheConfig.PRODUCTOS_CACHE, allEntries = true)
     @Transactional
     public ProductoResponseDTO create(ProductoRequestDTO request) {
         var producto = new Producto();
@@ -128,6 +135,7 @@ public class ProductoService {
         return toResponseDTO(producto);
     }
 
+    @CacheEvict(cacheNames = CacheConfig.PRODUCTOS_CACHE, allEntries = true)
     @Transactional
     public ProductoResponseDTO update(Long id, ProductoRequestDTO request) {
         var producto = productoRepository.findById(id)
@@ -148,6 +156,7 @@ public class ProductoService {
         return toResponseDTO(producto);
     }
 
+    @CacheEvict(cacheNames = CacheConfig.PRODUCTOS_CACHE, allEntries = true)
     @Transactional
     public ProductoResponseDTO updateStock(Long id, Integer newStock) {
         try {
@@ -161,6 +170,7 @@ public class ProductoService {
         }
     }
 
+    @CacheEvict(cacheNames = CacheConfig.PRODUCTOS_CACHE, allEntries = true)
     @Transactional
     public void delete(Long id) {
         if (!productoRepository.existsById(id)) {
