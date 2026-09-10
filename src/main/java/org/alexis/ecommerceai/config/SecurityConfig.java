@@ -58,6 +58,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/v1/categorias/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/v1/categorias/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/v1/categorias/**").hasRole("ADMIN")
+                        // El rol sale del JWT firmado (claim "roles"), nunca de un
+                        // header ni de un parámetro: X-Role: ADMIN no tiene efecto.
+                        .requestMatchers(HttpMethod.GET, "/v1/usuarios/me").authenticated()
+                        .requestMatchers("/v1/usuarios/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/v1/pedidos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
