@@ -96,8 +96,10 @@ public class HuggingFaceChatService {
                     })
                     .onStatus(HttpStatusCode::isError, (req, res) -> {
                         String body = new String(res.getBody().readAllBytes(), StandardCharsets.UTF_8);
+                        log.error("Error upstream devuelto por Hugging Face [status={}]: {}",
+                                res.getStatusCode().value(), body);
                         throw new HuggingFaceException(
-                                "Error al consultar Hugging Face (" + res.getStatusCode().value() + "): " + body,
+                                "Error al consultar Hugging Face (" + res.getStatusCode().value() + ").",
                                 res.getStatusCode().value());
                     })
                     .body(ChatCompletionResponse.class);

@@ -25,10 +25,6 @@ public record JwtProperties(
     /** Mínimo exigido por HS256: 256 bits = 32 bytes. */
     public static final int MIN_SECRET_BYTES = 32;
 
-    public JwtProperties(String secret, Duration expiration) {
-        this(secret, expiration, null);
-    }
-
     public JwtProperties {
         if (secret == null || secret.isBlank()) {
             throw new IllegalStateException(
