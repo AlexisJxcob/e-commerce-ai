@@ -93,6 +93,21 @@ class GlobalExceptionHandlerTest {
         public void violacionIntegridad() {
             throw new DataIntegrityViolationException("violación de integridad");
         }
+
+        @GetMapping("/sie")
+        public void stockInsuficiente() {
+            throw new StockInsuficienteException("Stock insuficiente para el producto con id: 1");
+        }
+
+        @GetMapping("/cve-domain")
+        public void carritoVacio() {
+            throw new CarritoVacioException("El carrito está vacío");
+        }
+
+        @GetMapping("/tei")
+        public void transicionInvalida() {
+            throw new TransicionEstadoInvalidaException("Transición inválida: no se puede pasar de ENTREGADO a CANCELADO");
+        }
     }
 
     @BeforeEach
@@ -191,6 +206,30 @@ class GlobalExceptionHandlerTest {
     @Test
     void violacionIntegridad_devuelve409() throws Exception {
         mockMvc.perform(get("/dive"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
+    }
+
+    /** Stock insuficiente en la petición: 400, no 409 (eso es la carrera). */
+    @Test
+    void stockInsuficiente_devuelve400() throws Exception {
+        mockMvc.perform(get("/sie"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Stock insuficiente para el producto con id: 1"));
+    }
+
+    @Test
+    void carritoVacio_devuelve400() throws Exception {
+        mockMvc.perform(get("/cve-domain"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("El carrito está vacío"));
+    }
+
+    @Test
+    void transicionEstadoInvalida_devuelve409() throws Exception {
+        mockMvc.perform(get("/tei"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409));
     }

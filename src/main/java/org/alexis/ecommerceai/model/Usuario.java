@@ -28,8 +28,13 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
+    /** Hash BCrypt. Nunca se expone en los DTOs de salida. */
     @Column(nullable = false, length = 100)
     private String password;
+
+    /** Opcional y único cuando está informado (migración V4). */
+    @Column(length = 150)
+    private String email;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

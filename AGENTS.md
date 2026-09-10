@@ -47,7 +47,8 @@ messages, and the LLM system prompt are all in Spanish.
 | JSON | Jackson 3 (`tools.jackson.*` — `ObjectMapper`, `JacksonException`) | `HuggingFaceChatService` |
 | Codegen | Lombok (`@Getter/@Setter/@NoArgsConstructor/@AllArgsConstructor`) | `pom.xml`, `Producto`, `HuggingFaceChatProperties` |
 | Build | Maven Wrapper 3.9.16 (`mvnw`) | `.mvn/wrapper/maven-wrapper.properties` |
-| Tests | `spring-boot-starter-*-test` starters + Testcontainers; 69 tests (unit + integration) | `pom.xml`, `src/test` |
+| Migraciones | **Flyway 12** (`spring-boot-starter-flyway` + `flyway-database-postgresql`), `src/main/resources/db/migration/V1..V4`; `ddl-auto=validate` en todos los perfiles | `pom.xml`, `flyway_schema_history` |
+| Tests | starters `spring-boot-starter-*-test` + Testcontainers (`pgvector/pgvector:pg16`); `@DataJpaTest` con conteo de sentencias Hibernate | `pom.xml`, `src/test` |
 
 > **Note:** Spring Boot 4 / Spring Framework 7 use modular starters
 > (`spring-boot-starter-webmvc`, `spring-boot-starter-restclient`) and ship
@@ -76,14 +77,16 @@ src/main/java/org/alexis/ecommerceai/
 ├── controller/
 │   ├── ProductoController.java        # /api/v1/productos (REST + AI endpoints, incl. reindexar)
 │   ├── AuthController.java            # /api/auth (login contra BD + register público CLIENTE)
-│   ├── CategoriaController.java       # /api/v1/categorias (CRUD)
-│   ├── PedidoController.java          # /api/v1/pedidos (crear/listar propios/detalle)
-│   └── CarritoController.java         # /api/v1/carrito (carrito persistente del principal)
+│   ├── CategoriaController.java       # /api/v1/categorias (CRUD con jerarquía padreId)
+│   ├── PedidoController.java          # /api/v1/pedidos (crear/desde-carrito/listar propios/detalle/estado ADMIN)
+│   ├── CarritoController.java         # /api/v1/carrito (carrito persistente del principal)
+│   └── UsuarioController.java         # /api/v1/usuarios (me autenticado, listado ADMIN)
 ├── dto/
 │   ├── ProductoRequestDTO.java        # Create/update payload (record + validation, incl. categoriaId)
 │   ├── ProductoResponseDTO.java       # API response (record)
 │   ├── LoginRequest/LoginResponse.java, RegisterRequestDTO, UsuarioResponseDTO
 │   ├── CategoriaRequestDTO/CategoriaResponseDTO, PedidoRequestDTO/LineaPedidoDTO/PedidoResponseDTO
+│   ├── EstadoPedidoRequestDTO.java    # Transición de estado (ADMIN)
 │   ├── AgregarItemCarritoDTO/ActualizarItemCarritoDTO/CarritoResponseDTO/LineaCarritoResponseDTO
 │   ├── BusquedaInteligenteResponse.java, DiagnoseRequestDTO, ReindexacionResponse.java
 │   ├── SugerenciaFerreteriaDTO.java   # LLM JSON contract (keywords/tools/spare parts)
@@ -96,24 +99,28 @@ src/main/java/org/alexis/ecommerceai/
 │        RecursoNoEncontradoException, ConflictoException, CategoriaNotFoundException,
 │        CategoriaEnUsoException, UsuarioDuplicadoException, CredencialesInvalidasException,
 │        PedidoNotFoundException, StockInsuficienteException, ProductoConPedidosException,
-│        ItemCarritoNotFoundException)
+│        CarritoItemNotFoundException, CarritoVacioException, TransicionEstadoInvalidaException)
 ├── model/
 │   ├── Producto.java                  # JPA entity "productos" incl. vector(384) + @ManyToOne Categoria (nullable)
-│   ├── Categoria.java                 # JPA entity "categorias"
-│   ├── Usuario.java                   # JPA entity "usuarios" (roles ADMIN/CLIENTE, password BCrypt)
+│   ├── Categoria.java                 # JPA entity "categorias" + self-FK padre_id (jerarquía)
+│   ├── Usuario.java                   # JPA entity "usuarios" (roles ADMIN/CLIENTE, password BCrypt, email opcional)
 │   ├── Pedido.java + ItemPedido.java  # "pedidos" + "items_pedido" (snapshot precioUnitario)
-│   └── ItemCarrito.java               # "items_carrito" (UNIQUE usuario+producto, carrito persistente)
+│   ├── EstadoPedido.java              # ciclo de vida PENDIENTE→CONFIRMADO→ENVIADO→ENTREGADO / CANCELADO
+│   ├── Carrito.java + CarritoItem.java # "carritos" + "carrito_items" (agregado con cabecera)
 ├── repository/
 │   ├── ProductoRepository.java        # JPA + native vector similarity query + pendientes de embedding
 │   ├── CategoriaRepository.java, UsuarioRepository.java
-│   ├── PedidoRepository.java, ItemPedidoRepository.java, ItemCarritoRepository.java
+│   ├── PedidoRepository.java (@EntityGraph), ItemPedidoRepository.java
+│   ├── CarritoRepository.java (@EntityGraph), CarritoItemRepository.java
 ├── security/
 │   └── JwtAuthenticationFilter.java   # Custom Bearer-JWT filter
 └── service/
     ├── ProductoService.java           # CRUD, stock, keyword & vector search, reindexación
     ├── AuthService.java, CategoriaService.java, PedidoService.java, CarritoService.java
+    ├── UsuarioService.java            # lectura de usuarios; única salida = UsuarioResponseDTO (sin password)
 src/main/resources/
-└── application.properties             # The only config file (no YAML)
+├── application.properties             # The only config file (no YAML)
+└── db/migration/                      # Flyway: V1 baseline, V2 jerarquía, V3 carrito, V4 email
 src/test/java/.../ECommerceAiApplicationTests.java
 ```
 
@@ -155,8 +162,9 @@ src/test/java/.../ECommerceAiApplicationTests.java
 pgvector facts verified from code:
 
 - The `embedding` column requires the **pgvector extension** to exist in the
-  database (`CREATE EXTENSION IF NOT EXISTS vector;`). **No migration/SQL file
-  creating the extension exists in the repo** — it must be created manually.
+  database: `V1__baseline_esquema_inicial.sql` la crea con
+  `CREATE EXTENSION IF NOT EXISTS vector;` (idempotente; si el rol no tiene
+  privilegio `CREATE`, debe crearse antes de migrar).
 - Dimension is **384**, matching the configured embedding model
   `sentence-transformers/all-MiniLM-L6-v2` (exposed as
   `HuggingFaceEmbeddingModel.DIMENSION` / `dimensions()`), and hardcoded in the
@@ -176,7 +184,33 @@ pgvector facts verified from code:
   persisted as a `String`.
 - `ProductoRepository.findPendientesDeEmbedding()` (`embedding IS NULL`) and
   `countByEmbeddingIsNull()` back the reindexación-masiva (seed/reindex) flow.
-- `ddl-auto=update` (Hibernate) creates/updates tables; `show-sql=true`.
+- `ddl-auto=validate` en **todos** los perfiles (base/dev/test/prod): el esquema
+  lo construye Flyway y Hibernate solo valida. Cualquier divergencia
+  entidad↔esquema impide arrancar el contexto (falla en tests de integración
+  incluidos). `show-sql=true` en dev.
+
+### 4.1 Otras entidades del dominio
+
+| Entidad | Tabla | Notas clave |
+|---|---|---|
+| `Categoria` | `categorias` | self-FK `padre_id` (V2) mapeada como `@ManyToOne(LAZY) padre`; la jerarquía debe ser acíclica (lo valida `CategoriaService`, la FK no puede) |
+| `Usuario` | `usuarios` | `username` UNIQUE, `password` BCrypt (nunca se serializa), `email` opcional UNIQUE (V4), `rol` ADMIN/CLIENTE |
+| `EstadoPedido` | (`pedidos.estado`) | enum `PENDIENTE→CONFIRMADO→ENVIADO→ENTREGADO`, más `CANCELADO` desde cualquier estado no terminal; `transicionesValidas()`/`puedeTransicionarA()` son la regla de dominio |
+| `Pedido`/`ItemPedido` | `pedidos`/`items_pedido` | `items` con `cascade=ALL, orphanRemoval`; `ItemPedido.productoId` es columna simple (snapshot de precio, sin FK) |
+| `Carrito`/`CarritoItem` | `carritos`/`carrito_items` (V3) | 1 carrito por usuario (`uk_carritos_usuario`), UNIQUE `(carrito_id, producto_id)`; `carrito_items.producto_id` con `ON DELETE CASCADE`; `items` con `cascade=ALL, orphanRemoval` |
+
+**Migraciones (inmutables una vez aplicadas):**
+
+| Versión | Contenido |
+|---|---|
+| V1 | extensión pgvector + `productos`, `categorias`, `usuarios`, `pedidos`, `items_pedido`, `items_carrito` |
+| V2 | `categorias.padre_id` + `fk_categorias_padre` + `idx_categorias_padre`; semilla `Sin categoría`; backfill defensivo de `productos.categoria_id` (con `COUNT(*)` previo registrado por `RAISE NOTICE`) |
+| V3 | `carritos` + `carrito_items`, migración de datos legacy desde `items_carrito`, `DROP TABLE items_carrito`, índices de FK |
+| V4 | `usuarios.email` + `uk_usuarios_email` (nullable: los usuarios sin email no colisionan) |
+
+`spring.flyway.baseline-on-migrate=true` + `baseline-version=1` significa que
+sobre una base **no vacía** Flyway baselinaría en V1 y **omitiría** V1: por eso
+las migraciones nuevas deben ser siempre aditivas (V2+) y nunca editar V1.
 
 ---
 
@@ -205,18 +239,22 @@ pgvector facts verified from code:
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| POST | `/api/auth/login` | Public | Login contra BD (`username`+`password`) → `LoginResponse` con `token`, `username`, `rol`, `expiresIn` (ms). Credenciales inválidas → 401 con mensaje genérico |
-| POST | `/api/auth/register` | Public | Registro público; fuerza rol `CLIENTE` aunque el payload pida otro → 201 `UsuarioResponseDTO(id, username, rol)` (nunca password). Username duplicado → 409 |
-| GET | `/api/v1/categorias` `/api/v1/categorias/{id}` | Public | CRUD de categorías (lectura pública) |
-| POST | `/api/v1/categorias` | **ADMIN** | Crear (nombre único → 409 si duplicado) |
-| PUT/DELETE | `/api/v1/categorias/{id}` | **ADMIN** | Actualizar / borrar. Borrar categoría referenciada por ≥1 producto → 409 (sin cascade) |
-| POST | `/api/v1/pedidos` | Autenticado | Crear pedido desde líneas `{productoId, cantidad}` → 201. Insuficiente stock / race última unidad → 409 sin parcial; producto inexistente → 404; cuerpo vacío → 400 |
-| GET | `/api/v1/pedidos` | Autenticado | Pedidos del principal (newest first) |
+| POST | `/api/auth/login` | Public | Login contra BD (`username`+`password`) → `LoginResponse(token, username, expiresIn)` — **no incluye `rol`**: el rol viaja dentro del JWT (claim `roles`). Credenciales inválidas → 401 con mensaje genérico |
+| POST | `/api/auth/register` | Public | Registro público; fuerza rol `CLIENTE` aunque el payload pida otro → 201 `UsuarioResponseDTO(id, username, rol, email)` (nunca password). `email` es opcional pero, si viene, se valida con `@Email` y es único → 409 si ya existe. Username duplicado → 409 |
+| GET | `/api/v1/categorias` `/api/v1/categorias/{id}` | Public | CRUD de categorías (lectura pública); la respuesta incluye `padreId` (null = raíz) |
+| POST | `/api/v1/categorias` | **ADMIN** | Crear (nombre único → 409 si duplicado; `padreId` inexistente → 404; `padreId` = sí misma → 409) |
+| PUT/DELETE | `/api/v1/categorias/{id}` | **ADMIN** | Actualizar (incluido mover de rama; crear un ciclo → 409) / borrar. Borrar categoría con ≥1 producto o con subcategorías → 409 (sin cascade) |
+| POST | `/api/v1/pedidos` | Autenticado | Crear pedido desde líneas `{productoId, cantidad}` → 201 (estado `PENDIENTE`). Stock insuficiente en la petición → **400**; carrera por la última unidad (bloqueo optimista) → **409**, sin pedido parcial; producto inexistente → 404; cuerpo vacío o cantidad ≤ 0 → 400 |
+| POST | `/api/v1/pedidos/desde-carrito` | Autenticado | Convierte el carrito persistente en pedido → 201 y **vacía el carrito solo si el pedido se creó** (misma transacción). Carrito inexistente o vacío → 400 |
+| GET | `/api/v1/pedidos` | Autenticado | Pedidos del principal (newest first), con ítems resueltos por `@EntityGraph` (sin N+1) |
 | GET | `/api/v1/pedidos/{id}` | Autenticado | Detalle; solo propios (ADMIN puede ver cualquiera); ajeno/inexistente → 404 |
+| PATCH | `/api/v1/pedidos/{id}/estado` | **ADMIN** | Transición de estado (`{"estado":"CONFIRMADO"}`) validada por `EstadoPedido`; transición imposible → 409; estado ausente/desconocido → 400 |
+| GET | `/api/v1/usuarios/me` | Autenticado | Perfil del principal → `UsuarioResponseDTO` (sin password) |
+| GET | `/api/v1/usuarios` | **ADMIN** | Listado de usuarios → `UsuarioResponseDTO[]` (sin password) |
 | GET | `/api/v1/carrito` | Autenticado | Carrito persistente del principal (con totales a precio actual) |
-| POST | `/api/v1/carrito/items` | Autenticado | Agregar/merge producto (UNIQUE usuario+producto) |
-| PATCH | `/api/v1/carrito/items/{id}` | Autenticado | Cambiar cantidad (≥1); línea ajena → 404 |
-| DELETE | `/api/v1/carrito/items/{id}` | Autenticado | Quitar línea; producto borrado se purga (FK CASCADE) |
+| POST | `/api/v1/carrito/items` | Autenticado | Agregar/merge producto (UNIQUE carrito+producto); cantidad `@Positive` |
+| PATCH | `/api/v1/carrito/items/{id}` | Autenticado | Cambiar cantidad (`@Positive`); línea ajena → 404 |
+| DELETE | `/api/v1/carrito/items/{id}` | Autenticado | Quitar línea (orphanRemoval); producto borrado se purga (FK CASCADE) |
 | DELETE | `/api/v1/carrito` | Autenticado | Vaciar carrito |
 
 ---
@@ -232,9 +270,15 @@ Verified from `SecurityConfig.java` and `JwtAuthenticationFilter.java`:
   - `GET /v1/productos/**`, `GET /v1/categorias/**` → `permitAll()`
   - `POST/PUT/PATCH/DELETE /v1/productos/**` y `POST/PUT/DELETE /v1/categorias/**` → `hasRole("ADMIN")` (PATCH stock incluido)
   - `POST /auth/login`, `POST /auth/register` → `permitAll()`
+  - `GET /v1/usuarios/me` → `authenticated()`; `/v1/usuarios/**` → `hasRole("ADMIN")` (el `me` se declara **antes** para que no lo capture la regla ADMIN)
+  - `PATCH /v1/pedidos/**` → `hasRole("ADMIN")` (transición de estado)
   - `/swagger-ui/**`, `/api-docs/**`, `/swagger-ui.html` → `permitAll()` (openAPI
     docs: `springdoc.api-docs.path=/api-docs`, `springdoc.swagger-ui.path=/swagger-ui.html`)
   - `anyRequest()` → `authenticated()` (pedidos y carrito)
+- **El rol sale siempre del JWT firmado** (claim `roles`), nunca de una cabecera
+  ni de un parámetro: `X-Role: ADMIN`, `?rol=ADMIN` o un JWT con
+  `roles:[ROLE_ADMIN]` firmado con otra clave **no** elevan privilegios
+  (verificado en `SeguridadRolesIntegrationTest`).
 - **JWTs**: `SecurityConfig` expone tanto un `JwtDecoder` como un `JwtEncoder`
   (ambos `NimbusJwtDecoder/Encoder` HS256 construidos desde la misma
   `SecretKeySpec` derivada de `app.jwt.secret`). El login usa el `JwtEncoder`.
@@ -288,11 +332,20 @@ Verified from `SecurityConfig.java` and `JwtAuthenticationFilter.java`:
 | Exception | HTTP Status |
 |---|---|
 | `MethodArgumentNotValidException` | 400, with per-field messages map |
-| `ProductoNotFoundException` | 404 |
-| `StockUpdateConflictException` (from `OptimisticLockingFailureException` on stock update) | 409 |
+| `ProductoNotFoundException`, `RecursoNoEncontradoException`, `CategoriaNotFoundException` | 404 |
+| `StockInsuficienteException` (stock insuficiente **en la petición**) | **400** |
+| `CarritoVacioException` (no hay carrito o está vacío) | **400** |
+| `StockUpdateConflictException` (de `OptimisticLockingFailureException`: carrera por la última unidad) | 409 |
+| `ConflictoException`, `CategoriaEnUsoException`, `TransicionEstadoInvalidaException`, `UsuarioDuplicadoException`, `DataIntegrityViolationException` | 409 |
+| `CredencialesInvalidasException` | 401 |
 | `HuggingFaceRateLimitException` (HTTP 429 from Hugging Face) | 429 |
 | `HuggingFaceException` | exception's `status` (default 502 → `BAD_GATEWAY`; 401/403 → `UNAUTHORIZED`-style message, non-error codes coerced to 502) |
 | any other `Exception` | 500, generic message (details hidden) |
+
+**Contrato de stock (no confundir 400 con 409):** 400 = "la petición pide más
+de lo que hay" (comprobación previa, determinista); 409 = "lo había cuando
+pediste, otra transacción se adelantó" (bloqueo optimista de
+`Producto.version`).
 
 Rules when adding exceptions: extend `RuntimeException`, add a `@ExceptionHandler`
 in `GlobalExceptionHandler` mapping to the proper HTTP status, keep messages in
@@ -348,8 +401,9 @@ YAML**):
 | `spring.datasource.username` | local default (dev) | prefer env override |
 | `spring.datasource.password` | local default (dev) | prefer env override |
 | `spring.datasource.driver-class-name` | `org.postgresql.Driver` | — |
-| `spring.jpa.hibernate.ddl-auto` | `update` | — |
-| `spring.jpa.show-sql` | `true` | — |
+| `spring.jpa.hibernate.ddl-auto` | `validate` (base/dev/test/prod) | — |
+| `spring.jpa.show-sql` | `true` (dev) | — |
+| `spring.flyway.baseline-on-migrate` | `true` (`baseline-version=1`) | — |
 | `spring.jpa.properties.hibernate.dialect` | `org.hibernate.dialect.PostgreSQLDialect` | — |
 | `huggingface.chat.key` | `${HUGGINGFACE_CHAT_API_KEY}` | **`HUGGINGFACE_CHAT_API_KEY`** (chat) |
 | `huggingface.chat.base-url` | `https://router.huggingface.co/v1` | — |
@@ -396,13 +450,24 @@ YAML**):
 6. Embeddings are derived from `nombre + descripcionColoquial`; if the formula
    changes, existing rows' embeddings become stale — run `POST
    /api/v1/productos/reindexar` (ADMIN) or plan a re-index.
-7. `ddl-auto=update` is for dev; do not rely on it for schema migrations in
-   production (no Flyway/Liquibase exists in the repo).
-8. `RestClient` is the HTTP client of choice (Spring Boot 4 modular starter) —
+7. **El esquema es de Flyway, no de Hibernate**: `ddl-auto=validate` en todos
+   los perfiles. Todo cambio de esquema es una migración nueva
+   (`V5__...`) — **nunca** editar una versión ya aplicada ni confiar en que
+   Hibernate actualice algo. Con `baseline-on-migrate=true`, sobre una base no
+   vacía Flyway baselinaría en V1: las migraciones nuevas deben ser aditivas.
+   Para aplicar migraciones contra la base local:
+   `./mvnw -Dflyway.url=... -Dflyway.user=... -Dflyway.password=... flyway:migrate`
+   (o dejar que Spring Boot las aplique al arrancar).
+8. Toda consulta de lectura que devuelva una colección (`Pedido.items`,
+   `Carrito.items` + `producto`) debe traerla con `@EntityGraph`/fetch join y
+   estar cubierta por un test de conteo de sentencias
+   (`*RepositoryJpaTest`), para que un N+1 futuro rompa el build.
+9. `RestClient` is the HTTP client of choice (Spring Boot 4 modular starter) —
    do not reintroduce `RestTemplate`.
-9. Use the Maven wrapper (`./mvnw`) for builds; `mvnw.cmd` for Windows.
-10. JWT secret/expiration viven en `app.jwt.*` (`JwtProperties`); cualquier
-    cambio de seguridad debe mantener esa única fuente de config.
+10. Use the Maven wrapper (`./mvnw`) for builds; `mvnw.cmd` for Windows.
+11. JWT secret/expiration viven en `app.jwt.*` (`JwtProperties`); cualquier
+    cambio de seguridad debe mantener esa única fuente de config. El rol se lee
+    del JWT, jamás de cabeceras o parámetros del cliente.
 
 ---
 
@@ -411,30 +476,34 @@ YAML**):
 The following could **not** be verified from the repository code — do not treat
 them as facts:
 
-- **pgvector extension bootstrap:** no SQL migration creates the extension;
-  the database is assumed to already have it. Sin Flyway/Liquibase hoy: todas
-  las tablas (incl. `categorias`, `usuarios`, `pedidos`, `items_pedido`,
-  `items_carrito`) las crea `ddl-auto=update` — el Bloque 4 debe reemplazar
-  esto por migraciones versionadas y backfillear `productos.categoria_id`.
+- **Bootstrap de pgvector:** `V1` crea la extensión
+  (`CREATE EXTENSION IF NOT EXISTS vector;`). Requiere que el rol de la base
+  tenga privilegio `CREATE` sobre la base; si no lo tiene, la extensión debe
+  crearse antes de migrar.
 - **Embedding model & dimensions:** the repo configures
   `sentence-transformers/all-MiniLM-L6-v2` (384 dims, matches `vector(384)` and
   `HuggingFaceEmbeddingModel.DIMENSION`). This is the live configuration;
   the HF key is required (`HUGGINGFACE_API_KEY`)
   for embeddings to be generated — a missing key throws `HuggingFaceException`.
-- **Tests & data:** 174 tests pass (verificado con `./mvnw test` tras Bloque 3)
-  across unit (services, controller, exceptions) and integration
-  (`@SpringBootTest` + MockMvc + Testcontainers pgvector + `@DirtiesContext`
-  por clase de integración). Per the migration commit, the 23 products in
-  PostgreSQL were successfully vectorized (embeddings generated) — asserted in
-  the commit message, not re-verified live here from code alone.
+- **Tests:** la suite completa (unitarios + integración con Testcontainers)
+  incluye `@DataJpaTest` con conteo de sentencias sobre PostgreSQL real, un test
+  de concurrencia HTTP (`CompraConcurrenteIntegrationTest`) y la verificación de
+  escalada de privilegios. Requiere Docker; `@Testcontainers(disabledWithoutDocker = true)`
+  los desactiva si no está disponible. Los números exactos de la última
+  ejecución están en el reporte del Bloque 4, no aquí.
+- **Datos de la base local:** la semilla `Sin categoría` y el backfill de
+  `productos.categoria_id` los aplica V2; los 23 productos existen con embedding
+  generado. No hay usuarios ni pedidos reales en dev (proyecto en desarrollo).
 - **Swagger/OpenAPI reachability:** springdoc is present; `SecurityConfig`
-  permite `/swagger-ui/**`, `/api-docs/**` y `/swagger-ui.html` via `permitAll()`
-  (verificado en el código actual del Bloque 3).
+  permite `/swagger-ui/**`, `/api-docs/**` y `/swagger-ui.html` via `permitAll()`.
 - **Frontend:** the repo contains no frontend; `@CrossOrigin` hints at a client
   on `http://localhost:3001` and `ProductoController` comments reference an
   `apiClient.ts` ("Antigravity"), but no such project is in this repository.
 - `spring-ai-tika-document-reader` and `spring-ai-vector-store-advisor` are
   declared dependencies with no usage found in `src/main`.
+- **Fuera de alcance del Bloque 4 (pendiente):** cancelar un pedido no
+  devuelve stock al inventario (`EstadoPedido.CANCELADO` solo cambia el estado);
+  no hay endpoint de auto-gestión de perfil (solo lectura `me`/listado).
 
 ---
 

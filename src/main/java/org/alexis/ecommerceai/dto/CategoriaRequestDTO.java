@@ -8,6 +8,9 @@ public record CategoriaRequestDTO(
         @Size(max = 100, message = "El nombre de la categoría no puede exceder 100 caracteres")
         String nombre,
 
-        String descripcion
+        String descripcion,
+
+        /** Categoría padre; {@code null} para una categoría raíz. */
+        Long padreId
 ) {
 }

@@ -17,6 +17,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -90,7 +91,7 @@ class CategoriaControllerIntegrationTest extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/categorias"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$[?(@.nombre == 'Fijaciones')].nombre", hasSize(1)));
 
         mockMvc.perform(put("/api/v1/categorias/" + id)
                         .header("Authorization", "Bearer " + jwtAdmin())
@@ -151,7 +152,19 @@ class CategoriaControllerIntegrationTest extends AbstractIntegrationTest {
 
         mockMvc.perform(get("/api/v1/categorias"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$[?(@.nombre == 'Publica')].nombre", hasSize(1)));
+    }
+
+    /**
+     * La semilla de V2 es parte del contrato: todo producto sin categoría se
+     * backfillea a "Sin categoría", así que la fila debe existir siempre.
+     */
+    @Test
+    void semillaSinCategoria_existeComoCategoriaRaiz() throws Exception {
+        mockMvc.perform(get("/api/v1/categorias"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.nombre == 'Sin categoría')].nombre", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.nombre == 'Sin categoría')].padreId[0]").doesNotExist());
     }
 
     @Test

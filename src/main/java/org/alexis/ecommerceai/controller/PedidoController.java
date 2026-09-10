@@ -1,6 +1,7 @@
 package org.alexis.ecommerceai.controller;
 
 import jakarta.validation.Valid;
+import org.alexis.ecommerceai.dto.EstadoPedidoRequestDTO;
 import org.alexis.ecommerceai.dto.PedidoRequestDTO;
 import org.alexis.ecommerceai.dto.PedidoResponseDTO;
 import org.alexis.ecommerceai.service.PedidoService;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,6 +34,28 @@ public class PedidoController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         var creado = pedidoService.create(auth.getName(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+    }
+
+    /**
+     * Convierte el carrito persistente del usuario autenticado en un pedido.
+     * El carrito se vacía sólo si el pedido se creó correctamente.
+     */
+    @PostMapping("/desde-carrito")
+    public ResponseEntity<PedidoResponseDTO> crearDesdeCarrito() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        var creado = pedidoService.crearDesdeCarrito(auth.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+    }
+
+    /**
+     * Transición de estado (ADMIN). El rol se resuelve en el filtro JWT a
+     * partir del claim firmado; {@code SecurityConfig} exige ROLE_ADMIN para
+     * PATCH en esta ruta, de modo que ningún header del cliente lo eleva.
+     */
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<PedidoResponseDTO> cambiarEstado(@PathVariable Long id,
+                                                          @Valid @RequestBody EstadoPedidoRequestDTO request) {
+        return ResponseEntity.ok(pedidoService.cambiarEstado(id, request.estado()));
     }
 
     @GetMapping
