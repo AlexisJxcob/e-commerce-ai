@@ -3,7 +3,7 @@ package org.alexis.ecommerceai.controller;
 import org.alexis.ecommerceai.dto.CarritoResponseDTO;
 import org.alexis.ecommerceai.dto.LineaCarritoResponseDTO;
 import org.alexis.ecommerceai.exception.GlobalExceptionHandler;
-import org.alexis.ecommerceai.exception.ItemCarritoNotFoundException;
+import org.alexis.ecommerceai.exception.CarritoItemNotFoundException;
 import org.alexis.ecommerceai.exception.ProductoNotFoundException;
 import org.alexis.ecommerceai.service.CarritoService;
 import org.alexis.ecommerceai.testconfig.MockMvcContextPathConfig;
@@ -129,7 +129,7 @@ class CarritoControllerTest {
     @Test
     void actualizarCantidad_lineaAjena_devuelve404() throws Exception {
         when(carritoService.actualizarCantidad(eq("juan"), eq(10L), eq(5)))
-                .thenThrow(new ItemCarritoNotFoundException("Línea de carrito no encontrada con id: 10"));
+                .thenThrow(new CarritoItemNotFoundException("Línea de carrito no encontrada con id: 10"));
 
         mockMvc.perform(patch("/api/v1/carrito/items/10")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -148,7 +148,7 @@ class CarritoControllerTest {
 
     @Test
     void eliminarLinea_ajena_devuelve404() throws Exception {
-        doThrow(new ItemCarritoNotFoundException("Línea de carrito no encontrada con id: 10"))
+        doThrow(new CarritoItemNotFoundException("Línea de carrito no encontrada con id: 10"))
                 .when(carritoService).eliminarLinea("juan", 10L);
 
         mockMvc.perform(delete("/api/v1/carrito/items/10"))

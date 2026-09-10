@@ -3,6 +3,7 @@ package org.alexis.ecommerceai.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -43,7 +44,7 @@ public class Categoria {
 
     /** Categoría padre; {@code null} si es raíz. */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "padre_id")
+    @JoinColumn(name = "padre_id", foreignKey = @ForeignKey(name = "fk_categorias_padre"))
     private Categoria padre;
 
     /** true si la categoría no cuelga de ninguna otra. */
