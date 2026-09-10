@@ -2,6 +2,7 @@ package org.alexis.ecommerceai.integration;
 
 import org.alexis.ecommerceai.testconfig.EmbeddingModelTestConfig;
 import org.alexis.ecommerceai.testconfig.MockMvcContextPathConfig;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
@@ -10,16 +11,21 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Base común para tests de integración con contexto Spring completo.
- * Usa Testcontainers con la imagen oficial de PostgreSQL + pgvector
- * (en lugar de una base en memoria), para que la columna vector(384)
- * y la búsqueda con el operador <=> funcionen igual que en producción.
+ *
+ * <p>El motor es PostgreSQL real con pgvector (nunca una base en memoria), para
+ * que la columna {@code vector(384)} y el operador {@code <=>} se comporten
+ * igual que en producción. El destino lo decide {@link EntornoIntegracion}:
+ * una rama Neon de pruebas si {@code NEON_TEST_DATABASE_URL} está definida, o
+ * un contenedor {@code pgvector/pgvector:pg16} en caso contrario.</p>
+ *
+ * <p>La clase se deshabilita cuando no hay ni Neon configurado ni Docker
+ * disponible (equivalente al antiguo {@code disabledWithoutDocker = true},
+ * pero sin renunciar al modo Neon en máquinas sin Docker).</p>
  */
-@Testcontainers(disabledWithoutDocker = true)
+@EnabledIf("org.alexis.ecommerceai.integration.EntornoIntegracion#disponible")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -27,21 +33,28 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Import({ EmbeddingModelTestConfig.class, MockMvcContextPathConfig.class })
 public abstract class AbstractIntegrationTest {
 
-    @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("pgvector/pgvector:pg16")
-            .withDatabaseName("ecommerce_test")
-            .withUsername("test")
-            .withPassword("test")
-            .withInitScript("pgvector-init.sql");
+    /** {@code null} en modo Neon: allí no hay contenedor que arrancar. */
+    static final PostgreSQLContainer<?> POSTGRES = EntornoIntegracion.contenedor();
 
     @DynamicPropertySource
     static void datasourceProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
-        // El esquema lo construye Flyway (V1) sobre el contenedor vacío; la
-        // extensión vector la aporta la imagen y el init-script. Hibernate
-        // queda en validate para detectar desalineación entidad-esquema.
+        if (EntornoIntegracion.usarNeon()) {
+            registry.add("spring.datasource.url", EntornoIntegracion::urlPooled);
+            registry.add("spring.datasource.username", EntornoIntegracion::usuario);
+            registry.add("spring.datasource.password", EntornoIntegracion::password);
+            // Flyway va por el endpoint directo de Neon, nunca por el pooler.
+            registry.add("spring.flyway.url", EntornoIntegracion::urlDirecta);
+        } else {
+            registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+            registry.add("spring.datasource.username", POSTGRES::getUsername);
+            registry.add("spring.datasource.password", POSTGRES::getPassword);
+            // Sin este override, Flyway seguiría el DATABASE_DIRECT_URL del
+            // entorno y migraría la base real durante los tests.
+            registry.add("spring.flyway.url", POSTGRES::getJdbcUrl);
+        }
+        // El esquema lo construye Flyway (V1) sobre una base vacía; la extensión
+        // vector la aporta la imagen/la rama Neon. Hibernate queda en validate
+        // para detectar desalineación entidad-esquema.
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
     }
 }

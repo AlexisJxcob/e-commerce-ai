@@ -34,11 +34,19 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @ImportAutoConfiguration(FlywayAutoConfiguration.class)
 abstract class AbstractJpaSliceTest {
 
-    /** Propiedades de conexión que cada subclase registra desde su contenedor. */
+    /**
+     * Propiedades de conexión que cada subclase registra desde su contenedor.
+     *
+     * <p>{@code spring.flyway.url} se fija explícitamente al contenedor: en
+     * {@code application.properties} apunta a {@code DATABASE_DIRECT_URL}, y
+     * sin este override un entorno con las variables de Neon exportadas haría
+     * que Flyway migrase la base real desde los tests.</p>
+     */
     protected static void registrarDatasource(DynamicPropertyRegistry registry, PostgreSQLContainer<?> contenedor) {
         registry.add("spring.datasource.url", contenedor::getJdbcUrl);
         registry.add("spring.datasource.username", contenedor::getUsername);
         registry.add("spring.datasource.password", contenedor::getPassword);
+        registry.add("spring.flyway.url", contenedor::getJdbcUrl);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.jpa.properties.hibernate.generate_statistics", () -> "true");
     }
