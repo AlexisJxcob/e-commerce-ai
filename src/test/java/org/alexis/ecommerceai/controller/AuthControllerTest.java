@@ -78,7 +78,7 @@ class AuthControllerTest {
 
     @Test
     void register_usuarioValido_devuelve201ClienteSinPassword() throws Exception {
-        when(authService.register(any())).thenReturn(new UsuarioResponseDTO(2L, "juan", "CLIENTE"));
+        when(authService.register(any())).thenReturn(new UsuarioResponseDTO(2L, "juan", "CLIENTE", null));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -92,7 +92,7 @@ class AuthControllerTest {
 
     @Test
     void register_conHintDeAdmin_respondeCliente() throws Exception {
-        when(authService.register(any())).thenReturn(new UsuarioResponseDTO(3L, "vivo", "CLIENTE"));
+        when(authService.register(any())).thenReturn(new UsuarioResponseDTO(3L, "vivo", "CLIENTE", null));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

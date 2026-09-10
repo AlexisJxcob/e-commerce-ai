@@ -4,6 +4,7 @@ import org.alexis.ecommerceai.config.JwtProperties;
 import org.alexis.ecommerceai.dto.LoginResponse;
 import org.alexis.ecommerceai.dto.RegisterRequestDTO;
 import org.alexis.ecommerceai.dto.UsuarioResponseDTO;
+import org.alexis.ecommerceai.exception.ConflictoException;
 import org.alexis.ecommerceai.exception.CredencialesInvalidasException;
 import org.alexis.ecommerceai.exception.UsuarioDuplicadoException;
 import org.alexis.ecommerceai.model.Rol;
@@ -54,12 +55,26 @@ public class AuthService {
         if (usuarioRepository.existsByUsername(request.username())) {
             throw new UsuarioDuplicadoException("Ya existe un usuario con el nombre: " + request.username());
         }
+        String email = normalizarEmail(request.email());
+        if (email != null && usuarioRepository.existsByEmail(email)) {
+            throw new ConflictoException("Ya existe un usuario con el email: " + email);
+        }
         var usuario = new Usuario();
         usuario.setUsername(request.username());
         usuario.setPassword(passwordEncoder.encode(request.password()));
+        usuario.setEmail(email);
         usuario.setRol(Rol.CLIENTE);
         usuario = usuarioRepository.save(usuario);
-        return new UsuarioResponseDTO(usuario.getId(), usuario.getUsername(), usuario.getRol().name());
+        return new UsuarioResponseDTO(
+                usuario.getId(), usuario.getUsername(), usuario.getRol().name(), usuario.getEmail());
+    }
+
+    /** Email opcional: cadena vacía o en blanco se normaliza a {@code null}. */
+    private String normalizarEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return email.trim().toLowerCase();
     }
 
     private String emitirToken(Usuario usuario) {

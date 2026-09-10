@@ -131,7 +131,7 @@ class AuthServiceTest {
             return guardado;
         });
 
-        UsuarioResponseDTO response = authService.register(new RegisterRequestDTO("juan", "secreta123", null));
+        UsuarioResponseDTO response = authService.register(new RegisterRequestDTO("juan", "secreta123", null, null));
 
         assertThat(response.id()).isEqualTo(2L);
         assertThat(response.username()).isEqualTo("juan");
@@ -145,7 +145,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode("secreta123")).thenReturn("$2a$10$hashnuevo");
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UsuarioResponseDTO response = authService.register(new RegisterRequestDTO("vivo", "secreta123", "ADMIN"));
+        UsuarioResponseDTO response = authService.register(new RegisterRequestDTO("vivo", "secreta123", "ADMIN", null));
 
         assertThat(response.rol()).isEqualTo("CLIENTE");
     }
@@ -154,7 +154,7 @@ class AuthServiceTest {
     void register_conUsernameDuplicado_lanza409() {
         when(usuarioRepository.existsByUsername("juan")).thenReturn(true);
 
-        assertThatThrownBy(() -> authService.register(new RegisterRequestDTO("juan", "secreta123", null)))
+        assertThatThrownBy(() -> authService.register(new RegisterRequestDTO("juan", "secreta123", null, null)))
                 .isInstanceOf(UsuarioDuplicadoException.class)
                 .hasMessageContaining("juan");
         verify(usuarioRepository, never()).save(any(Usuario.class));
@@ -166,7 +166,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode("secreta123")).thenAnswer(invocation -> "cifrado:" + invocation.getArgument(0));
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        authService.register(new RegisterRequestDTO("juan", "secreta123", null));
+        authService.register(new RegisterRequestDTO("juan", "secreta123", null, null));
 
         var captor = org.mockito.ArgumentCaptor.forClass(Usuario.class);
         verify(usuarioRepository).save(captor.capture());
