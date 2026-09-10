@@ -112,19 +112,22 @@ class PedidoControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void crearPedido_stockInsuficiente_409SinPedidoNiCambios() throws Exception {
+    void crearPedido_stockInsuficiente_400SinPedidoNiCambios() throws Exception {
         registrar("juan");
         String tokenAdmin = login("admin", "admin123");
         String tokenJuan = login("juan", "secreta123");
         long categoriaId = crearCategoria("CAT-PED-2", tokenAdmin);
         long p1 = crearProducto("SKU-PED-3", 1, 10.00, categoriaId, tokenAdmin);
 
+        // Stock insuficiente ya en la petición → 400 (petición imposible),
+        // no 409 (ese código queda para la carrera por la última unidad).
         mockMvc.perform(post("/api/v1/pedidos")
                         .header("Authorization", "Bearer " + tokenJuan)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"items\":[{\"productoId\":%d,\"cantidad\":5}]}".formatted(p1)))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value(409));
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Stock insuficiente")));
 
         mockMvc.perform(get("/api/v1/pedidos")
                         .header("Authorization", "Bearer " + tokenJuan))

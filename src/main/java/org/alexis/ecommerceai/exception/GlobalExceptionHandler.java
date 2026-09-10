@@ -107,6 +107,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+    @ExceptionHandler({StockInsuficienteException.class, CarritoVacioException.class})
+    public ResponseEntity<ErrorResponse> handlePeticionInvalidaDeDominio(RuntimeException ex) {
+        var errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage()
+        );
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+
     @ExceptionHandler(StockUpdateConflictException.class)
     public ResponseEntity<ErrorResponse> handleStockConflict(StockUpdateConflictException ex) {
         var errorResponse = new ErrorResponse(

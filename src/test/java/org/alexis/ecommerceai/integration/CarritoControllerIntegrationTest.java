@@ -212,12 +212,13 @@ class CarritoControllerIntegrationTest extends AbstractIntegrationTest {
 
         agregarAlCarrito(tokenJuan, p1, 5);
 
-        // ...pero el pedido posterior falla con 409
+        // ...pero el pedido posterior falla con 400 (stock insuficiente es una
+        // petición imposible, no un conflicto de concurrencia)
         mockMvc.perform(post("/api/v1/pedidos")
                         .header("Authorization", "Bearer " + tokenJuan)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"items\":[{\"productoId\":%d,\"cantidad\":5}]}".formatted(p1)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
