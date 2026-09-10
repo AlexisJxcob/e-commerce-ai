@@ -67,10 +67,16 @@ public class Carrito {
         item.setCarrito(this);
     }
 
-    /** Quita la línea; con orphanRemoval, la fila se elimina al hacer flush. */
+    /**
+     * Quita la línea del agregado; {@code orphanRemoval} borra la fila.
+     *
+     * <p>No se pone {@code item.setCarrito(null)}: con {@code carrito_id NOT NULL}
+     * esa asignación hace que Hibernate programe un {@code UPDATE ... SET
+     * carrito_id = NULL} antes del DELETE y la transacción revienta con una
+     * violación de NOT NULL (traducida a 409). El borrado por huérfano basta.</p>
+     */
     public void quitarItem(CarritoItem item) {
         items.remove(item);
-        item.setCarrito(null);
     }
 
     /** Línea correspondiente a un producto, si existe. */
@@ -83,9 +89,8 @@ public class Carrito {
                 .findFirst();
     }
 
-    /** Vacía el carrito sin dejar líneas huérfanas. */
+    /** Vacía el carrito sin dejar líneas huérfanas (orphanRemoval borra las filas). */
     public void vaciar() {
-        items.forEach(item -> item.setCarrito(null));
         items.clear();
     }
 

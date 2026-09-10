@@ -192,23 +192,39 @@ class CarritoServiceTest {
 
     @Test
     void eliminarLinea_lineaAjena_lanza404() {
-        when(carritoItemRepository.findByIdAndCarritoUsuarioUsername(100L, "juan"))
-                .thenReturn(Optional.empty());
+        Carrito carrito = carrito();
+        carrito.agregarItem(linea(100L, 1L, 2));
+        when(carritoRepository.findByUsuarioUsername("juan")).thenReturn(Optional.of(carrito));
 
-        assertThatThrownBy(() -> carritoService.eliminarLinea("juan", 100L))
+        assertThatThrownBy(() -> carritoService.eliminarLinea("juan", 999L))
                 .isInstanceOf(CarritoItemNotFoundException.class);
-        verify(carritoItemRepository, never()).delete(any(CarritoItem.class));
+        // La línea propia sigue en el agregado: no se borró nada
+        assertThat(carrito.getItems()).hasSize(1);
     }
 
     @Test
-    void eliminarLinea_propia_borraLaLinea() {
+    void eliminarLinea_sinCarrito_lanza404() {
+        when(carritoRepository.findByUsuarioUsername("juan")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> carritoService.eliminarLinea("juan", 100L))
+                .isInstanceOf(CarritoItemNotFoundException.class);
+    }
+
+    @Test
+    void eliminarLinea_propia_laQuitaDelAgregadoYGuarda() {
+        Carrito carrito = carrito();
         CarritoItem propia = linea(100L, 1L, 2);
-        when(carritoItemRepository.findByIdAndCarritoUsuarioUsername(100L, "juan"))
-                .thenReturn(Optional.of(propia));
+        CarritoItem otra = linea(101L, 2L, 1);
+        carrito.agregarItem(propia);
+        carrito.agregarItem(otra);
+        when(carritoRepository.findByUsuarioUsername("juan")).thenReturn(Optional.of(carrito));
 
         carritoService.eliminarLinea("juan", 100L);
 
-        verify(carritoItemRepository).delete(propia);
+        // Se quita de la colección (orphanRemoval borra la fila): el carrito en
+        // memoria queda consistente con la base dentro de la misma transacción
+        assertThat(carrito.getItems()).containsExactly(otra);
+        verify(carritoRepository).save(carrito);
     }
 
     // ---------- ver ----------

@@ -93,11 +93,19 @@ public class CarritoService {
 
     @Transactional
     public void eliminarLinea(String username, Long lineaId) {
-        CarritoItem item = carritoItemRepository
-                .findByIdAndCarritoUsuarioUsername(lineaId, username)
+        // Se opera a través del agregado (quitar de la colección) y no con un
+        // DELETE suelto: así el carrito en memoria queda consistente con la
+        // base dentro de la misma transacción y orphanRemoval borra la fila.
+        Carrito carrito = carritoRepository.findByUsuarioUsername(username)
                 .orElseThrow(() -> new CarritoItemNotFoundException(
                         "Línea de carrito no encontrada con id: " + lineaId));
-        carritoItemRepository.delete(item);
+        CarritoItem item = carrito.getItems().stream()
+                .filter(linea -> lineaId.equals(linea.getId()))
+                .findFirst()
+                .orElseThrow(() -> new CarritoItemNotFoundException(
+                        "Línea de carrito no encontrada con id: " + lineaId));
+        carrito.quitarItem(item);
+        carritoRepository.save(carrito);
     }
 
     @Transactional
