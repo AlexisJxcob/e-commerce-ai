@@ -119,8 +119,9 @@ class ProductoControllerIntegrationTest extends AbstractIntegrationTest {
     void listarProductos_iniciaVacio() throws Exception {
         mockMvc.perform(get("/api/v1/productos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$").isEmpty());
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty())
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test

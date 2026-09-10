@@ -24,6 +24,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -84,18 +89,22 @@ class ProductoServiceTest {
     // ---------- findAll ----------
 
     @Test
-    void findAll_devuelveProductosMapeados() {
-        when(productoRepository.findAll()).thenReturn(List.of(
+    void findAll_devuelveProductosMapeadosPaginados() {
+        Pageable pageable = PageRequest.of(0, 20);
+        List<Producto> productos = List.of(
                 producto(1L, "SKU-1", "Cinta"),
                 producto(2L, "SKU-2", "Llave")
-        ));
+        );
+        Page<Producto> page = new PageImpl<>(productos, pageable, 2);
+        when(productoRepository.findAll(pageable)).thenReturn(page);
 
-        List<ProductoResponseDTO> result = productoService.findAll();
+        Page<ProductoResponseDTO> result = productoService.findAll(pageable);
 
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).id()).isEqualTo(1L);
-        assertThat(result.get(0).sku()).isEqualTo("SKU-1");
-        assertThat(result.get(0).precio()).isEqualByComparingTo("10.00");
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent().get(0).id()).isEqualTo(1L);
+        assertThat(result.getContent().get(0).sku()).isEqualTo("SKU-1");
+        assertThat(result.getContent().get(0).precio()).isEqualByComparingTo("10.00");
+        assertThat(result.getTotalElements()).isEqualTo(2);
     }
 
     // ---------- findById ----------
