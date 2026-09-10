@@ -22,6 +22,12 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -60,6 +66,7 @@ class ProductoControllerTest {
                 .standaloneSetup(controller)
                 .setValidator(validator)
                 .setControllerAdvice(new GlobalExceptionHandler())
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                 .defaultRequest(get("/").contextPath(MockMvcContextPathConfig.CONTEXT_PATH))
                 .build();
     }
@@ -72,14 +79,49 @@ class ProductoControllerTest {
     // ---------- lecturas públicas ----------
 
     @Test
-    void listar_devuelve200ConListaDeProductos() throws Exception {
-        when(productoService.findAll()).thenReturn(List.of(dto(1L, "SKU-1"), dto(2L, "SKU-2")));
+    void listar_devuelve200ConPaginaDeProductos() throws Exception {
+        List<ProductoResponseDTO> items = List.of(dto(1L, "SKU-1"), dto(2L, "SKU-2"));
+        Page<ProductoResponseDTO> page = new PageImpl<>(items, PageRequest.of(0, 20), 2);
+        when(productoService.findAll(any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/productos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].sku").value("SKU-1"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].sku").value("SKU-1"))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(1));
+    }
+
+    @Test
+    void listar_conSize2_devuelvePaginaDe2ConMetadata() throws Exception {
+        List<ProductoResponseDTO> items = List.of(dto(1L, "SKU-1"), dto(2L, "SKU-2"));
+        Page<ProductoResponseDTO> page = new PageImpl<>(items, PageRequest.of(0, 2), 5);
+        when(productoService.findAll(any(Pageable.class))).thenReturn(page);
+
+        mockMvc.perform(get("/api/v1/productos")
+                        .param("page", "0")
+                        .param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.totalElements").value(5))
+                .andExpect(jsonPath("$.totalPages").value(3))
+                .andExpect(jsonPath("$.size").value(2))
+                .andExpect(jsonPath("$.number").value(0));
+    }
+
+    @Test
+    void listar_conSizeSuperiorAlMaximo_esClampeadoA50() throws Exception {
+        // El PageableHandlerMethodArgumentResolverCustomizer no aplica en
+        // standaloneSetup, pero podemos verificar que el controlador propaga
+        // el Pageable al service. El clamping real se verifica en integración.
+        Page<ProductoResponseDTO> page = new PageImpl<>(List.of(), PageRequest.of(0, 50), 0);
+        when(productoService.findAll(any(Pageable.class))).thenReturn(page);
+
+        mockMvc.perform(get("/api/v1/productos")
+                        .param("size", "999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test

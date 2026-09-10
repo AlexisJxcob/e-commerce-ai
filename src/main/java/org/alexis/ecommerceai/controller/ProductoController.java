@@ -12,6 +12,8 @@ import org.alexis.ecommerceai.dto.ProductoResponseDTO;
 import org.alexis.ecommerceai.dto.ReindexacionResponse;
 import org.alexis.ecommerceai.ai.AsistenteIAService;
 import org.alexis.ecommerceai.service.ProductoService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -33,8 +35,8 @@ public class ProductoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductoResponseDTO>> listar() {
-        return ResponseEntity.ok(productoService.findAll());
+    public ResponseEntity<Page<ProductoResponseDTO>> listar(Pageable pageable) {
+        return ResponseEntity.ok(productoService.findAll(pageable));
     }
 
     @GetMapping("/{id}")
