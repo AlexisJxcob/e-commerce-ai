@@ -8,4 +8,7 @@ import org.springframework.stereotype.Repository;
 public interface CategoriaRepository extends JpaRepository<Categoria, Long> {
 
     boolean existsByNombre(String nombre);
+
+    /** Bloquea el borrado de una categoría que todavía tiene subcategorías. */
+    boolean existsByPadreId(Long padreId);
 }

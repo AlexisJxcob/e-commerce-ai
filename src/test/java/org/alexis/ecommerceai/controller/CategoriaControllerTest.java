@@ -53,7 +53,7 @@ class CategoriaControllerTest {
     }
 
     private static CategoriaResponseDTO dto(Long id, String nombre) {
-        return new CategoriaResponseDTO(id, nombre, "Descripción de " + nombre);
+        return new CategoriaResponseDTO(id, nombre, "Descripción de " + nombre, null);
     }
 
     @Test
