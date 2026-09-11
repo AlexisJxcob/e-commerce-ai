@@ -3,6 +3,7 @@ package org.alexis.ecommerceai.repository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceContext;
+import org.alexis.ecommerceai.testconfig.PropiedadesDatasourceTest;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,11 +35,15 @@ import org.testcontainers.containers.PostgreSQLContainer;
 @ImportAutoConfiguration(FlywayAutoConfiguration.class)
 abstract class AbstractJpaSliceTest {
 
-    /** Propiedades de conexión que cada subclase registra desde su contenedor. */
+    /**
+     * Propiedades de conexión que cada subclase registra desde su contenedor.
+     *
+     * <p>Delegar en {@link PropiedadesDatasourceTest} garantiza que Flyway
+     * apunte al contenedor (url <em>y</em> credenciales) y no al
+     * {@code DATABASE_DIRECT_URL} del entorno.</p>
+     */
     protected static void registrarDatasource(DynamicPropertyRegistry registry, PostgreSQLContainer<?> contenedor) {
-        registry.add("spring.datasource.url", contenedor::getJdbcUrl);
-        registry.add("spring.datasource.username", contenedor::getUsername);
-        registry.add("spring.datasource.password", contenedor::getPassword);
+        PropiedadesDatasourceTest.registrar(registry, contenedor);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.jpa.properties.hibernate.generate_statistics", () -> "true");
     }
