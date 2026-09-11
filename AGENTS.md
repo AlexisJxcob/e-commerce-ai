@@ -43,12 +43,11 @@ messages, and the LLM system prompt are all in Spanish.
 | OpenAPI/Swagger | `springdoc-openapi-starter-webmvc-ui` **3.1.0** | `pom.xml` |
 | Spring AI — Embeddings | **no starter** — custom `HuggingFaceEmbeddingModel` (`RestClient`) → HF Inference API `feature-extraction`; `spring-ai-starter-model-openai` was **removed** | `pom.xml`, `HuggingFaceConfig`, `HuggingFaceEmbeddingModel`, `application.properties` |
 | Spring AI — Vector store | `spring-ai-starter-vector-store-pgvector` (dependency present; direct SQL used in repo) | `pom.xml`, `ProductoRepository` |
-| Spring AI — ETL | `spring-ai-tika-document-reader`, `spring-ai-vector-store-advisor` (declared, no usage found in code) | `pom.xml` |
 | JSON | Jackson 3 (`tools.jackson.*` — `ObjectMapper`, `JacksonException`) | `HuggingFaceChatService` |
 | Codegen | Lombok (`@Getter/@Setter/@NoArgsConstructor/@AllArgsConstructor`) | `pom.xml`, `Producto`, `HuggingFaceChatProperties` |
 | Build | Maven Wrapper 3.9.16 (`mvnw`) | `.mvn/wrapper/maven-wrapper.properties` |
 | Migraciones | **Flyway 12** (`spring-boot-starter-flyway` + `flyway-database-postgresql`), `src/main/resources/db/migration/V1..V4`; `ddl-auto=validate` en todos los perfiles | `pom.xml`, `flyway_schema_history` |
-| Tests | starters `spring-boot-starter-*-test` + Testcontainers (`pgvector/pgvector:pg16`); `@DataJpaTest` con conteo de sentencias Hibernate | `pom.xml`, `src/test` |
+| Tests | starters `spring-boot-starter-*-test` + Testcontainers (`pgvector/pgvector:pg16`) o rama Neon de pruebas si `NEON_TEST_DATABASE_URL` está definida (`@EnabledIf("…EntornoIntegracion#disponible")`); `@DataJpaTest` con conteo de sentencias Hibernate | `pom.xml`, `src/test` |
 
 > **Note:** Spring Boot 4 / Spring Framework 7 use modular starters
 > (`spring-boot-starter-webmvc`, `spring-boot-starter-restclient`) and ship
@@ -67,8 +66,13 @@ src/main/java/org/alexis/ecommerceai/
 │   └── HuggingFaceChatService.java    # Hugging Face Chat client + JSON parsing
 ├── config/
 │   ├── SecurityConfig.java            # Filter chain, rules por endpoint, JWT encoder/decoder, PasswordEncoder
+│   ├── CorsConfig.java                # CORS global desde app.cors.* (no hay @CrossOrigin en controladores)
 │   ├── AdminSeeder.java               # Seed idempotente del admin inicial (app.seed.admin-password)
-│   ├── JwtProperties.java             # @ConfigurationProperties("app.jwt") (secret + expiration MS)
+│   ├── JwtProperties.java             # @ConfigurationProperties("app.jwt") (secret + expiration + issuer)
+│   ├── ApiKeyValidationConfig.java    # Fail-fast si falta la API key de Hugging Face
+│   ├── ActuatorConfig.java            # /actuator/{health,info,metrics} permitAll
+│   ├── CacheConfig.java               # Caché (Caffeine en prod)
+│   ├── WebConfig.java                 # Configuración web adicional
 │   ├── HuggingFaceChatConfig.java     # RestClient bean ("huggingFaceChatRestClient")
 │   ├── HuggingFaceChatProperties.java # @ConfigurationProperties("huggingface.chat")
 │   ├── HuggingFaceConfig.java         # RestClient bean ("huggingFaceRestClient") + EmbeddingModel bean
@@ -119,9 +123,11 @@ src/main/java/org/alexis/ecommerceai/
     ├── AuthService.java, CategoriaService.java, PedidoService.java, CarritoService.java
     ├── UsuarioService.java            # lectura de usuarios; única salida = UsuarioResponseDTO (sin password)
 src/main/resources/
-├── application.properties             # The only config file (no YAML)
+├── application.properties             # Configuración base (Neon, Hikari, Flyway, JWT, Hugging Face)
+├── application-{dev,prod,test}.properties  # Perfiles (ninguno define spring.profiles.active)
 └── db/migration/                      # Flyway: V1 baseline, V2 jerarquía, V3 carrito, V4 email
 src/test/java/.../ECommerceAiApplicationTests.java
+docs/rollback-conectividad-neon.md     # Runbook de rollback de conectividad (Bloque 5)
 ```
 
 **Request flow (AI recommendation):**
@@ -218,7 +224,7 @@ las migraciones nuevas deben ser siempre aditivas (V2+) y nunca editar V1.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | `/api/v1/productos` | Public | List all products |
+| GET | `/api/v1/productos?page=&size=` | Public | Listado **paginado** (`Page`, 20 por defecto) |
 | GET | `/api/v1/productos/{id}` | Public | Get one product |
 | GET | `/api/v1/productos/buscar?q=...&limite=5` | Public | pgvector similarity search (top-N) |
 | GET | `/api/v1/productos/asistente?q=...` | Public | AI recommendation (Hugging Face Chat + keyword search) |
@@ -229,8 +235,10 @@ las migraciones nuevas deben ser siempre aditivas (V2+) y nunca editar V1.
 | PATCH | `/api/v1/productos/{id}/stock?stock=0` | **ADMIN** | Update stock only (query param, `@Min(0)`) |
 | DELETE | `/api/v1/productos/{id}` | **ADMIN** | Delete (204 No Content) |
 
-- `@CrossOrigin(origins = {"http://localhost:3001"})` at controller level — the
-  only allowed origin.
+- CORS es **global** (`CorsConfig`, sin `@CrossOrigin` en controladores) y se
+  configura con `app.cors.allowed-origins` (por defecto
+  `http://localhost:3001,http://localhost:3000`), `app.cors.allowed-methods`,
+  `app.cors.allowed-headers` y `app.cors.max-age`.
 - `GET` catalog paths are `permitAll()`; **all** POST/PUT/PATCH/DELETE under
   `/api/v1/productos/**` and `/api/v1/categorias/**` require `hasRole("ADMIN")`;
   everything else requires authentication (see Security section).
@@ -368,7 +376,7 @@ Spanish.
   HTTP 429 → `HuggingFaceRateLimitException`; 401/403 → `HuggingFaceException`
   (auth); other HTTP errors → `HuggingFaceException`; connection failures →
   `HuggingFaceException`. `spring-ai-starter-model-openai` was **removed** from
-  `pom.xml` (its auto-configuration required the OpenRouter/OpenAI key).
+  `pom.xml` (its auto-configuration exigía `OPENAI_API_KEY`).
 - **Hugging Face Chat** is called via a dedicated `RestClient` bean
   (`huggingFaceChatRestClient`) built in `HuggingFaceChatConfig` with headers:
   `Authorization: Bearer <key>`, `Content-Type: application/json`.
@@ -397,22 +405,25 @@ YAML**):
 
 | Property | Current value in repo | Required env var |
 |---|---|---|
-| `spring.datasource.url` | `jdbc:postgresql://localhost:5432/ecommerce_db` | — |
-| `spring.datasource.username` | local default (dev) | prefer env override |
-| `spring.datasource.password` | local default (dev) | prefer env override |
+| `spring.datasource.url` | `${DATABASE_URL}` — endpoint **pooled** (`-pooler`) con `?sslmode=require` | **`DATABASE_URL`** (fail-fast) |
+| `spring.datasource.username` / `.password` | `${DATABASE_USER}` / `${DATABASE_PASSWORD}` (pgjdbc no admite userinfo en la URL) | **`DATABASE_USER`**, **`DATABASE_PASSWORD`** |
 | `spring.datasource.driver-class-name` | `org.postgresql.Driver` | — |
+| `spring.datasource.hikari.*` | pool serverless (10 / 2 / 300000 / 600000 / 20000 / 60000) + `initialization-fail-timeout=-1` | `DB_*` (opcionales) |
+| `spring.flyway.url` | `${DATABASE_DIRECT_URL:${DATABASE_URL}}` — endpoint **directo**, sin `-pooler` | **`DATABASE_DIRECT_URL`** |
+| `spring.flyway.user` / `.password` | `${DATABASE_USER}` / `${DATABASE_PASSWORD}` **explícitos**: al definir `spring.flyway.url`, Boot crea un DataSource solo-Flyway y no hereda las credenciales del pool (si faltan: SCRAM `08004`) | — |
 | `spring.jpa.hibernate.ddl-auto` | `validate` (base/dev/test/prod) | — |
 | `spring.jpa.show-sql` | `true` (dev) | — |
 | `spring.flyway.baseline-on-migrate` | `true` (`baseline-version=1`) | — |
 | `spring.jpa.properties.hibernate.dialect` | `org.hibernate.dialect.PostgreSQLDialect` | — |
-| `huggingface.chat.key` | `${HUGGINGFACE_CHAT_API_KEY}` | **`HUGGINGFACE_CHAT_API_KEY`** (chat) |
+| `huggingface.chat.key` | `${HUGGINGFACE_CHAT_API_KEY:${HUGGINGFACE_API_KEY}}` (cae a la key de embeddings) | opcional `HUGGINGFACE_CHAT_API_KEY` |
 | `huggingface.chat.base-url` | `https://router.huggingface.co/v1` | — |
 | `huggingface.chat.model` | `Meta-Llama/Llama-3.2-3B-Instruct` | — |
 | `huggingface.api.key` | `${HUGGINGFACE_API_KEY}` | **`HUGGINGFACE_API_KEY`** (embeddings) |
 | `huggingface.api.model` | `sentence-transformers/all-MiniLM-L6-v2` (default, 384 dims) | — |
 | `huggingface.api.base-url` | `https://router.huggingface.co/hf-inference/models` | — |
-| `app.jwt.secret` | `${JWT_SECRET:clave-secreta-de-256-bits-para-jwt-cambiar-en-produccion}` | prefer `JWT_SECRET` |
+| `app.jwt.secret` | `${JWT_SECRET}` — **sin valor por defecto**: fail-fast si falta o mide < 256 bits | **`JWT_SECRET`** |
 | `app.jwt.expiration` | `${JWT_EXPIRATION_MS:86400000}` (24 h) | prefer `JWT_EXPIRATION_MS` |
+| `app.jwt.issuer` | `${JWT_ISSUER:}` — si se define, valida el claim `iss` | opcional `JWT_ISSUER` |
 | `app.seed.admin-password` | `${ADMIN_PASSWORD:admin123}` | prefer `ADMIN_PASSWORD` |
 
 - **Never commit real keys.** `HUGGINGFACE_CHAT_API_KEY` (chat) and `HUGGINGFACE_API_KEY`
@@ -431,6 +442,28 @@ YAML**):
 - To (re)index products that still have `embedding IS NULL`, call the ADMIN
   endpoint `POST /api/v1/productos/reindexar` (returns
   `ReindexacionResponse(procesados, pendientes)`).
+
+### 10.1 Neon Postgres serverless (producción)
+
+- Proyecto Neon en la región **`aws-sa-east-1` (São Paulo)**, PostgreSQL 18.6 con
+  pgvector 0.8.6. El endpoint **pooled** (PgBouncer en modo transacción) sirve el
+  tráfico de la aplicación; el **directo** sirve a Flyway y a `pg_dump`/`pg_restore`.
+- `?sslmode=require` es **obligatorio** (Neon rechaza conexiones sin TLS); el panel
+  de Neon añade además `&channel_binding=require`.
+- **Scale-to-zero**: el compute se suspende tras unos minutos sin actividad y la
+  primera consulta paga un *cold start* (cientos de ms). Con
+  `initialization-fail-timeout=-1` el arranque no falla si el compute está
+  suspendido y la conexión se obtiene de forma perezosa; `minimum-idle=2` +
+  `keepalive-time=60000` reconectan solos tras la suspensión.
+- La suite de integración puede correr contra una **rama Neon desechable** con
+  `NEON_TEST_DATABASE_URL` / `NEON_TEST_DATABASE_DIRECT_URL` (+
+  `NEON_TEST_DATABASE_USER`, `NEON_TEST_DATABASE_PASSWORD`); si no están
+  definidas usa Testcontainers. Los tests escriben y borran datos.
+- Datos migrados a la rama de producción (Bloque 5): **23 productos, 9 categorías
+  y 23 embeddings de 384 dimensiones**, con paridad verificada frente al motor
+  anterior (conteos, hashes de datos y top-5 de búsqueda vectorial idénticos).
+- **Rollback de conectividad** (solo variables de entorno, sin tocar código):
+  `docs/rollback-conectividad-neon.md` — RTO medido **10,8 s** (criterio < 3 min).
 
 ---
 
@@ -488,20 +521,23 @@ them as facts:
 - **Tests:** la suite completa (unitarios + integración con Testcontainers)
   incluye `@DataJpaTest` con conteo de sentencias sobre PostgreSQL real, un test
   de concurrencia HTTP (`CompraConcurrenteIntegrationTest`) y la verificación de
-  escalada de privilegios. Requiere Docker; `@Testcontainers(disabledWithoutDocker = true)`
-  los desactiva si no está disponible. Los números exactos de la última
-  ejecución están en el reporte del Bloque 4, no aquí.
-- **Datos de la base local:** la semilla `Sin categoría` y el backfill de
-  `productos.categoria_id` los aplica V2; los 23 productos existen con embedding
-  generado. No hay usuarios ni pedidos reales en dev (proyecto en desarrollo).
+  escalada de privilegios. El gate es
+  `@EnabledIf("…EntornoIntegracion#disponible")`: sin Docker **y** sin rama Neon
+  configurada, los tests de integración se desactivan en lugar de fallar. Los
+  números exactos de la última ejecución están en el reporte del Bloque 4, no aquí.
+- **Datos:** la semilla `Sin categoría` y el backfill de `productos.categoria_id`
+  los aplica V2. Tras el Bloque 5 la rama de producción de Neon tiene los 23
+  productos (con embedding generado) y las 9 categorías del motor anterior con
+  los IDs preservados; la rama de pruebas aloja 1 producto de caché y sus
+  secuencias quedaron avanzadas (requiere reset antes de reutilizarla). No hay
+  pedidos ni usuarios reales aparte del admin sembrado.
 - **Swagger/OpenAPI reachability:** springdoc is present; `SecurityConfig`
   permite `/swagger-ui/**`, `/api-docs/**` y `/swagger-ui.html` via `permitAll()`.
-- **Frontend:** the repo contains no frontend; `@CrossOrigin` hints at a client
-  on `http://localhost:3001` and `ProductoController` comments reference an
-  `apiClient.ts` ("Antigravity"), but no such project is in this repository.
-- `spring-ai-tika-document-reader` and `spring-ai-vector-store-advisor` are
-  declared dependencies with no usage found in `src/main`.
-- **Fuera de alcance del Bloque 4 (pendiente):** cancelar un pedido no
+- **Frontend:** the repo contains no frontend; `app.cors.allowed-origins` apunta
+  a un cliente en `http://localhost:3001`/`3000` y los comentarios de
+  `ProductoController` mencionan un `apiClient.ts` ("Antigravity"), pero ningún
+  proyecto así está en este repositorio.
+- **Fuera de alcance / pendiente:** cancelar un pedido no
   devuelve stock al inventario (`EstadoPedido.CANCELADO` solo cambia el estado);
   no hay endpoint de auto-gestión de perfil (solo lectura `me`/listado).
 
@@ -511,7 +547,8 @@ them as facts:
 
 `pom.xml`, `src/main/resources/application.properties`,
 `src/main/java/org/alexis/ecommerceai/ECommerceAiApplication.java`,
-`config/{SecurityConfig,HuggingFaceChatConfig,HuggingFaceChatProperties,HuggingFaceConfig,HuggingFaceProperties,HuggingFaceEmbeddingModel}.java`,
+`config/{SecurityConfig,CorsConfig,JwtProperties,ApiKeyValidationConfig,ActuatorConfig,CacheConfig,WebConfig,HuggingFaceChatConfig,HuggingFaceChatProperties,HuggingFaceConfig,HuggingFaceProperties,HuggingFaceEmbeddingModel}.java`,
+`src/main/resources/application-{dev,prod,test}.properties`, `docs/rollback-conectividad-neon.md`, `.env.example`,
 `security/JwtAuthenticationFilter.java`, `controller/ProductoController.java`,
 `ai/{AsistenteIAService,HuggingFaceChatService}.java`, `service/ProductoService.java`,
 `repository/ProductoRepository.java`, `model/Producto.java`,
