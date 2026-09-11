@@ -2,6 +2,7 @@ package org.alexis.ecommerceai.integration;
 
 import org.alexis.ecommerceai.testconfig.EmbeddingModelTestConfig;
 import org.alexis.ecommerceai.testconfig.InspectorBloqueoCompra;
+import org.alexis.ecommerceai.testconfig.PropiedadesDatasourceTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,9 +63,7 @@ class CompraConcurrenteIntegrationTest {
 
     @DynamicPropertySource
     static void propiedades(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
+        PropiedadesDatasourceTest.registrar(registry, POSTGRES);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.jpa.properties.hibernate.session_factory.statement_inspector",
                 () -> InspectorBloqueoCompra.class.getName());

@@ -2,6 +2,7 @@ package org.alexis.ecommerceai.integration;
 
 import org.alexis.ecommerceai.testconfig.EmbeddingModelTestConfig;
 import org.alexis.ecommerceai.testconfig.MockMvcContextPathConfig;
+import org.alexis.ecommerceai.testconfig.PropiedadesDatasourceTest;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -45,12 +46,10 @@ public abstract class AbstractIntegrationTest {
             // Flyway va por el endpoint directo de Neon, nunca por el pooler.
             registry.add("spring.flyway.url", EntornoIntegracion::urlDirecta);
         } else {
-            registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-            registry.add("spring.datasource.username", POSTGRES::getUsername);
-            registry.add("spring.datasource.password", POSTGRES::getPassword);
-            // Sin este override, Flyway seguiría el DATABASE_DIRECT_URL del
-            // entorno y migraría la base real durante los tests.
-            registry.add("spring.flyway.url", POSTGRES::getJdbcUrl);
+            // Flyway apunta al contenedor (url y credenciales): sin ese override
+            // seguiría el DATABASE_DIRECT_URL del entorno, migraría la base real
+            // y dejaría el contenedor sin esquema.
+            PropiedadesDatasourceTest.registrar(registry, POSTGRES);
         }
         // El esquema lo construye Flyway (V1) sobre una base vacía; la extensión
         // vector la aporta la imagen/la rama Neon. Hibernate queda en validate
