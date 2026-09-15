@@ -42,11 +42,14 @@ class PedidoControllerTest {
     @Mock
     private PedidoService pedidoService;
 
+    @Mock
+    private org.alexis.ecommerceai.service.StripeService stripeService;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        PedidoController controller = new PedidoController(pedidoService);
+        PedidoController controller = new PedidoController(pedidoService, stripeService);
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
         mockMvc = MockMvcBuilders
@@ -197,5 +200,16 @@ class PedidoControllerTest {
                         .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.fieldErrors.estado").value("El estado es obligatorio"));
+    }
+
+    @Test
+    void pagar_conPedidoValido_devuelve200YUrlCheckout() throws Exception {
+        when(stripeService.crearSesionCheckout(eq(7L), eq("juan"), eq(false)))
+                .thenReturn(new org.alexis.ecommerceai.dto.CheckoutResponseDTO("cs_test_123", "https://checkout.stripe.com/c/pay/cs_test_123"));
+
+        mockMvc.perform(post("/api/v1/pedidos/7/pagar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sessionId").value("cs_test_123"))
+                .andExpect(jsonPath("$.checkoutUrl").value("https://checkout.stripe.com/c/pay/cs_test_123"));
     }
 }
