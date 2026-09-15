@@ -43,13 +43,13 @@ class PedidoControllerTest {
     private PedidoService pedidoService;
 
     @Mock
-    private org.alexis.ecommerceai.service.StripeService stripeService;
+    private org.alexis.ecommerceai.service.WebpayService webpayService;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        PedidoController controller = new PedidoController(pedidoService, stripeService);
+        PedidoController controller = new PedidoController(pedidoService, webpayService);
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
         mockMvc = MockMvcBuilders
@@ -204,12 +204,12 @@ class PedidoControllerTest {
 
     @Test
     void pagar_conPedidoValido_devuelve200YUrlCheckout() throws Exception {
-        when(stripeService.crearSesionCheckout(eq(7L), eq("juan"), eq(false)))
-                .thenReturn(new org.alexis.ecommerceai.dto.CheckoutResponseDTO("cs_test_123", "https://checkout.stripe.com/c/pay/cs_test_123"));
+        when(webpayService.crearTransaccion(eq(7L), eq("juan"), eq(false)))
+                .thenReturn(new org.alexis.ecommerceai.dto.CheckoutResponseDTO("token_ws_123", "https://webpay3gint.transbank.cl/webpayserver/initTransaction"));
 
         mockMvc.perform(post("/api/v1/pedidos/7/pagar"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.sessionId").value("cs_test_123"))
-                .andExpect(jsonPath("$.checkoutUrl").value("https://checkout.stripe.com/c/pay/cs_test_123"));
+                .andExpect(jsonPath("$.token").value("token_ws_123"))
+                .andExpect(jsonPath("$.url").value("https://webpay3gint.transbank.cl/webpayserver/initTransaction"));
     }
 }

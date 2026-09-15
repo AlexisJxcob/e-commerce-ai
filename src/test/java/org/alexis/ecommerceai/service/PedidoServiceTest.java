@@ -355,23 +355,23 @@ class PedidoServiceTest {
         when(pedidoRepository.findConItemsById(7L)).thenReturn(Optional.of(pedido));
         when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        PedidoResponseDTO response = pedidoService.marcarComoPagado(7L, "pi_test_123");
+        PedidoResponseDTO response = pedidoService.marcarComoPagado(7L, "auth_code_123");
 
         assertThat(response.estado()).isEqualTo("CONFIRMADO");
         assertThat(response.estadoPago()).isEqualTo("PAGADO");
         assertThat(pedido.getEstado()).isEqualTo(EstadoPedido.CONFIRMADO);
         assertThat(pedido.getEstadoPago()).isEqualTo(EstadoPago.PAGADO);
-        assertThat(pedido.getStripePaymentIntentId()).isEqualTo("pi_test_123");
+        assertThat(pedido.getWebpayAuthorizationCode()).isEqualTo("auth_code_123");
     }
 
     @Test
     void marcarComoPagado_conPedidoYaPagado_esIdempotente() {
         Pedido pedido = pedidoConEstado(EstadoPedido.CONFIRMADO);
         pedido.setEstadoPago(EstadoPago.PAGADO);
-        pedido.setStripePaymentIntentId("pi_test_123");
+        pedido.setWebpayAuthorizationCode("auth_code_123");
         when(pedidoRepository.findConItemsById(7L)).thenReturn(Optional.of(pedido));
 
-        PedidoResponseDTO response = pedidoService.marcarComoPagado(7L, "pi_test_123");
+        PedidoResponseDTO response = pedidoService.marcarComoPagado(7L, "auth_code_123");
 
         assertThat(response.estado()).isEqualTo("CONFIRMADO");
         assertThat(response.estadoPago()).isEqualTo("PAGADO");
@@ -384,10 +384,23 @@ class PedidoServiceTest {
         pedido.setEstadoPago(EstadoPago.PENDIENTE);
         when(pedidoRepository.findConItemsById(7L)).thenReturn(Optional.of(pedido));
 
-        assertThatThrownBy(() -> pedidoService.marcarComoPagado(7L, "pi_test_123"))
+        assertThatThrownBy(() -> pedidoService.marcarComoPagado(7L, "auth_code_123"))
                 .isInstanceOf(TransicionEstadoInvalidaException.class)
                 .hasMessageContaining("Transición inválida");
         assertThat(pedido.getEstado()).isEqualTo(EstadoPedido.CANCELADO);
         assertThat(pedido.getEstadoPago()).isEqualTo(EstadoPago.PENDIENTE);
+    }
+
+    @Test
+    void marcarComoFallido_conPedidoPendiente_actualizaAFallido() {
+        Pedido pedido = pedidoConEstado(EstadoPedido.PENDIENTE);
+        pedido.setEstadoPago(EstadoPago.PENDIENTE);
+        when(pedidoRepository.findConItemsById(7L)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PedidoResponseDTO response = pedidoService.marcarComoFallido(7L);
+
+        assertThat(response.estadoPago()).isEqualTo("FALLIDO");
+        assertThat(pedido.getEstadoPago()).isEqualTo(EstadoPago.FALLIDO);
     }
 }
