@@ -6,7 +6,7 @@ import org.alexis.ecommerceai.dto.EstadoPedidoRequestDTO;
 import org.alexis.ecommerceai.dto.PedidoRequestDTO;
 import org.alexis.ecommerceai.dto.PedidoResponseDTO;
 import org.alexis.ecommerceai.service.PedidoService;
-import org.alexis.ecommerceai.service.StripeService;
+import org.alexis.ecommerceai.service.WebpayService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,11 +26,11 @@ import java.util.List;
 public class PedidoController {
 
     private final PedidoService pedidoService;
-    private final StripeService stripeService;
+    private final WebpayService webpayService;
 
-    public PedidoController(PedidoService pedidoService, StripeService stripeService) {
+    public PedidoController(PedidoService pedidoService, WebpayService webpayService) {
         this.pedidoService = pedidoService;
-        this.stripeService = stripeService;
+        this.webpayService = webpayService;
     }
 
     @PostMapping
@@ -81,6 +81,6 @@ public class PedidoController {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean esAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        return ResponseEntity.ok(stripeService.crearSesionCheckout(id, auth.getName(), esAdmin));
+        return ResponseEntity.ok(webpayService.crearTransaccion(id, auth.getName(), esAdmin));
     }
 }

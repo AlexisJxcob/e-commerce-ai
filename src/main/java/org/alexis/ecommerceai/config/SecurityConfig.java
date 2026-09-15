@@ -50,7 +50,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/v1/productos/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/v1/pagos/webhook").permitAll()
+                        .requestMatchers("/v1/pagos/webpay/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/v1/productos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/v1/productos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/v1/productos/**").hasRole("ADMIN")
