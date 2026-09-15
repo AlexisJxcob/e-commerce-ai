@@ -49,6 +49,16 @@ public class Pedido {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
 
+    @Column(name = "stripe_session_id", unique = true)
+    private String stripeSessionId;
+
+    @Column(name = "stripe_payment_intent_id")
+    private String stripePaymentIntentId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_pago", nullable = false, length = 20)
+    private EstadoPago estadoPago = EstadoPago.PENDIENTE;
+
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemPedido> items = new ArrayList<>();
 }

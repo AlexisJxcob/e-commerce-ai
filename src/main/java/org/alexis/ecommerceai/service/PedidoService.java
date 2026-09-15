@@ -223,7 +223,9 @@ public class PedidoService {
                 pedido.getEstado() != null ? pedido.getEstado().name() : null,
                 pedido.getTotal(),
                 pedido.getFechaCreacion(),
-                items
+                items,
+                pedido.getStripeSessionId(),
+                pedido.getEstadoPago() != null ? pedido.getEstadoPago().name() : null
         );
     }
 }
