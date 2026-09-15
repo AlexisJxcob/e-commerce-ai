@@ -12,6 +12,7 @@ import org.alexis.ecommerceai.exception.StockInsuficienteException;
 import org.alexis.ecommerceai.exception.StockUpdateConflictException;
 import org.alexis.ecommerceai.exception.TransicionEstadoInvalidaException;
 import org.alexis.ecommerceai.model.Carrito;
+import org.alexis.ecommerceai.model.EstadoPago;
 import org.alexis.ecommerceai.model.EstadoPedido;
 import org.alexis.ecommerceai.model.ItemPedido;
 import org.alexis.ecommerceai.model.Pedido;
@@ -191,6 +192,35 @@ public class PedidoService {
                             + (actual != null ? actual.transicionesValidas() : "ninguna") + ")");
         }
         pedido.setEstado(nuevoEstado);
+        return toResponseDTO(pedidoRepository.save(pedido));
+    }
+
+    /**
+     * Marca un pedido como pagado tras recibir la confirmación de Stripe.
+     * Es idempotente: si el pedido ya está CONFIRMADO y con estadoPago PAGADO,
+     * retorna sin reprocesar. Si está en un estado que no puede transicionar a
+     * CONFIRMADO (ej. CANCELADO), lanza TransicionEstadoInvalidaException.
+     */
+    @Transactional
+    public PedidoResponseDTO marcarComoPagado(Long pedidoId, String paymentIntentId) {
+        var pedido = pedidoRepository.findConItemsById(pedidoId)
+                .orElseThrow(() -> new PedidoNotFoundException("Pedido no encontrado con id: " + pedidoId));
+
+        if (pedido.getEstado() == EstadoPedido.CONFIRMADO && pedido.getEstadoPago() == EstadoPago.PAGADO) {
+            return toResponseDTO(pedido);
+        }
+
+        EstadoPedido actual = pedido.getEstado();
+        if (actual == null || !actual.puedeTransicionarA(EstadoPedido.CONFIRMADO)) {
+            throw new TransicionEstadoInvalidaException(
+                    "Transición inválida: no se puede pasar de " + actual + " a CONFIRMADO para el pedido #" + pedidoId);
+        }
+
+        pedido.setEstado(EstadoPedido.CONFIRMADO);
+        pedido.setEstadoPago(EstadoPago.PAGADO);
+        if (paymentIntentId != null && !paymentIntentId.isBlank()) {
+            pedido.setStripePaymentIntentId(paymentIntentId);
+        }
         return toResponseDTO(pedidoRepository.save(pedido));
     }
 
