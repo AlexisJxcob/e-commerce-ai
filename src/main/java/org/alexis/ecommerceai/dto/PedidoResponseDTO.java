@@ -10,7 +10,7 @@ public record PedidoResponseDTO(
         BigDecimal total,
         LocalDateTime fechaCreacion,
         List<ItemPedidoResponseDTO> items,
-        String stripeSessionId,
+        String webpayToken,
         String estadoPago
 ) {
     public PedidoResponseDTO(Long id, String estado, BigDecimal total, LocalDateTime fechaCreacion, List<ItemPedidoResponseDTO> items) {

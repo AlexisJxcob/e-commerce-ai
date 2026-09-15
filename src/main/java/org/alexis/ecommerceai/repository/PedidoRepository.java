@@ -29,5 +29,5 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     @Query("SELECT p FROM Pedido p WHERE p.id = :id")
     Optional<Pedido> findConItemsById(@Param("id") Long id);
 
-    Optional<Pedido> findByStripeSessionId(String stripeSessionId);
+    Optional<Pedido> findByWebpayToken(String webpayToken);
 }

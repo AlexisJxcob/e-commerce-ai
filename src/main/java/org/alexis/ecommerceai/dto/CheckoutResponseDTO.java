@@ -1,10 +1,10 @@
 package org.alexis.ecommerceai.dto;
 
 /**
- * Response returned when a Stripe Checkout session is created.
+ * Response returned when a payment transaction is initiated (e.g. Webpay Plus).
  */
 public record CheckoutResponseDTO(
-        String sessionId,
-        String checkoutUrl
+        String token,
+        String url
 ) {
 }

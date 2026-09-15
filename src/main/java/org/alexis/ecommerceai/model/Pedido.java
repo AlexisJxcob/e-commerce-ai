@@ -49,11 +49,11 @@ public class Pedido {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
 
-    @Column(name = "stripe_session_id", unique = true)
-    private String stripeSessionId;
+    @Column(name = "webpay_token", unique = true)
+    private String webpayToken;
 
-    @Column(name = "stripe_payment_intent_id")
-    private String stripePaymentIntentId;
+    @Column(name = "webpay_authorization_code", length = 50)
+    private String webpayAuthorizationCode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado_pago", nullable = false, length = 20)

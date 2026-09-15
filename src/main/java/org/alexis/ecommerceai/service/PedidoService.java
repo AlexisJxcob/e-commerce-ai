@@ -196,13 +196,13 @@ public class PedidoService {
     }
 
     /**
-     * Marca un pedido como pagado tras recibir la confirmación de Stripe.
+     * Marca un pedido como pagado tras recibir la confirmación de Webpay.
      * Es idempotente: si el pedido ya está CONFIRMADO y con estadoPago PAGADO,
      * retorna sin reprocesar. Si está en un estado que no puede transicionar a
      * CONFIRMADO (ej. CANCELADO), lanza TransicionEstadoInvalidaException.
      */
     @Transactional
-    public PedidoResponseDTO marcarComoPagado(Long pedidoId, String paymentIntentId) {
+    public PedidoResponseDTO marcarComoPagado(Long pedidoId, String authorizationCode) {
         var pedido = pedidoRepository.findConItemsById(pedidoId)
                 .orElseThrow(() -> new PedidoNotFoundException("Pedido no encontrado con id: " + pedidoId));
 
@@ -218,9 +218,25 @@ public class PedidoService {
 
         pedido.setEstado(EstadoPedido.CONFIRMADO);
         pedido.setEstadoPago(EstadoPago.PAGADO);
-        if (paymentIntentId != null && !paymentIntentId.isBlank()) {
-            pedido.setStripePaymentIntentId(paymentIntentId);
+        if (authorizationCode != null && !authorizationCode.isBlank()) {
+            pedido.setWebpayAuthorizationCode(authorizationCode);
         }
+        return toResponseDTO(pedidoRepository.save(pedido));
+    }
+
+    /**
+     * Marca el estado de pago del pedido como FALLIDO si la transacción fue rechazada o anulada.
+     */
+    @Transactional
+    public PedidoResponseDTO marcarComoFallido(Long pedidoId) {
+        var pedido = pedidoRepository.findConItemsById(pedidoId)
+                .orElseThrow(() -> new PedidoNotFoundException("Pedido no encontrado con id: " + pedidoId));
+
+        if (pedido.getEstadoPago() == EstadoPago.PAGADO) {
+            return toResponseDTO(pedido);
+        }
+
+        pedido.setEstadoPago(EstadoPago.FALLIDO);
         return toResponseDTO(pedidoRepository.save(pedido));
     }
 
@@ -254,7 +270,7 @@ public class PedidoService {
                 pedido.getTotal(),
                 pedido.getFechaCreacion(),
                 items,
-                pedido.getStripeSessionId(),
+                pedido.getWebpayToken(),
                 pedido.getEstadoPago() != null ? pedido.getEstadoPago().name() : null
         );
     }
