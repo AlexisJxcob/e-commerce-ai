@@ -1,0 +1,277 @@
+@import "primeicons/primeicons.css";
+
+/* ==========================================================================
+   Repara.ai — Design System Tokens & Global Styles
+   Editorial Premium Aesthetics (Warm Neutral + Electric Blue Accent)
+   ========================================================================== */
+
+:root {
+  /* Paleta de Color Intencional */
+  --bg-primary: #FAFAF8;         /* Blanco cálido natural */
+  --text-primary: #1A1A1A;       /* Negro suave de alto contraste */
+  --text-secondary: #6B6B6B;     /* Gris medio neutral para metadata */
+  --surface-elevated: #EDEBE6;   /* Superficie sutil para inputs y badges */
+  --border-subtle: #E5E3DD;      /* Borde sutil delimitador (1px) */
+  --border-hover: #C5C3BC;       /* Borde intensificado en hover */
+  --accent-electric: #2454FF;    /* Azul eléctrico protagonista */
+  --accent-hover: #1B44DC;       /* Hover de acento con brillo sutil */
+  --accent-focus-ring: rgba(36, 84, 255, 0.18);
+  --status-success: #0F5132;     /* Verde de confirmación estricto */
+  --status-success-bg: rgba(15, 81, 50, 0.08);
+  --status-success-border: rgba(15, 81, 50, 0.22);
+  --status-error: #B02A37;
+  --status-error-bg: rgba(176, 42, 55, 0.08);
+
+  /* Border Radii */
+  --radius-input: 8px;
+  --radius-button: 8px;
+  --radius-card: 10px;
+  --radius-modal: 12px;
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --tracking-tight: -0.025em;
+  --line-height-body: 1.6;
+
+  /* Glassmorphism Header */
+  --header-bg: rgba(250, 250, 248, 0.85);
+  --header-blur: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   CSS Reset & Base Rules
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: var(--line-height-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  margin-top: 0;
+}
+
+h1 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+p {
+  color: var(--text-secondary);
+  margin-top: 0;
+}
+
+a {
+  color: var(--accent-electric);
+  text-decoration: none;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--accent-hover);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Utility Classes & Layout Helpers
+   -------------------------------------------------------------------------- */
+.liquid-glass-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: var(--header-bg);
+  backdrop-filter: blur(var(--header-blur));
+  -webkit-backdrop-filter: blur(var(--header-blur));
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.repara-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--border-hover);
+  }
+}
+
+.badge-neutral {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+
+.badge-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  background-color: var(--status-success-bg);
+  border: 1px solid var(--status-success-border);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--status-success);
+}
+
+.price-text {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+/* --------------------------------------------------------------------------
+   Clean PrimeNG Overrides (Eliminación de sombras pesadas y ajuste a tokens)
+   -------------------------------------------------------------------------- */
+
+/* Buttons */
+.p-button {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  border-radius: var(--radius-button);
+  box-shadow: none !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  letter-spacing: -0.01em;
+}
+
+.p-button-primary,
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary) {
+  background-color: var(--accent-electric) !important;
+  border: 1px solid var(--accent-electric) !important;
+  color: #FFFFFF !important;
+
+  &:hover {
+    background-color: var(--accent-hover) !important;
+    border-color: var(--accent-hover) !important;
+  }
+
+  &:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 3px var(--accent-focus-ring) !important;
+  }
+}
+
+.p-button.p-button-outlined {
+  background-color: transparent !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+
+  &:hover {
+    background-color: var(--surface-elevated) !important;
+    border-color: var(--border-hover) !important;
+  }
+}
+
+/* Inputs & Form Controls */
+.p-inputtext,
+input[type="text"],
+input[type="search"],
+input[type="password"],
+input[type="email"] {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-input);
+  color: var(--text-primary);
+  box-shadow: none !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: var(--border-hover);
+  }
+
+  &:focus,
+  &:focus-visible {
+    border-color: var(--accent-electric) !important;
+    box-shadow: 0 0 0 3px var(--accent-focus-ring) !important;
+    outline: none !important;
+  }
+
+  &::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.8;
+  }
+}
+
+/* Dialog / Modals */
+.p-dialog {
+  border-radius: var(--radius-modal) !important;
+  border: 1px solid var(--border-subtle) !important;
+  background-color: var(--bg-primary) !important;
+  box-shadow: 0 16px 36px rgba(26, 26, 26, 0.08) !important;
+  overflow: hidden;
+
+  .p-dialog-header,
+  .p-dialog-content,
+  .p-dialog-footer {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .p-dialog-header {
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .p-dialog-content {
+    padding: 1.5rem;
+  }
+
+  .p-dialog-footer {
+    border-top: 1px solid var(--border-subtle);
+    padding: 1rem 1.5rem;
+  }
+}
+
+/* Drawer / Sidebar */
+.p-drawer,
+.p-sidebar {
+  background-color: var(--bg-primary) !important;
+  border-left: 1px solid var(--border-subtle) !important;
+  box-shadow: -8px 0 32px rgba(26, 26, 26, 0.06) !important;
+
+  .p-drawer-header,
+  .p-drawer-content,
+  .p-drawer-footer {
+    background-color: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .p-drawer-header {
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 1.25rem 1.5rem;
+  }
+}
+
+/* Chips & Badges */
+.p-chip {
+  background-color: var(--surface-elevated) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 6px !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
