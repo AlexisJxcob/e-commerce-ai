@@ -1,0 +1,107 @@
+.app-header {
+  height: 4.25rem;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.header-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.15rem;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+
+  .brand-name {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 1.35rem;
+    letter-spacing: -0.035em;
+    color: var(--text-primary);
+  }
+
+  .brand-dot {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 1.35rem;
+    letter-spacing: -0.035em;
+    color: var(--accent-electric);
+  }
+
+  .brand-tagline {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-left: 0.75rem;
+    padding-left: 0.75rem;
+    border-left: 1px solid var(--border-subtle);
+    display: none;
+
+    @media (min-width: 640px) {
+      display: inline-block;
+    }
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.75rem;
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-button);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+
+  .user-icon {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .user-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.admin-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.1rem 0.35rem;
+  background-color: rgba(36, 84, 255, 0.1);
+  color: var(--accent-electric);
+  border-radius: 4px;
+}
+
+.login-button,
+.logout-button,
+.register-button {
+  font-size: 0.8125rem !important;
+  padding: 0.45rem 0.9rem !important;
+  font-weight: 500 !important;
+}

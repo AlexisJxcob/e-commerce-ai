@@ -1,0 +1,44 @@
+<header class="liquid-glass-header app-header">
+  <div class="header-container">
+    <a routerLink="/" class="brand-logo" aria-label="Repara.ai Inicio">
+      <span class="brand-name">Repara</span><span class="brand-dot">.ai</span>
+      <span class="brand-tagline">Ferretería Inteligente</span>
+    </a>
+
+    <nav class="header-actions">
+      @if (authService.isAuthenticated()) {
+        <div class="user-badge">
+          <i class="pi pi-user user-icon" aria-hidden="true"></i>
+          <span class="user-name">{{ authService.currentUser()?.username }}</span>
+          @if (authService.isAdmin()) {
+            <span class="admin-badge">Admin</span>
+          }
+        </div>
+
+        <button
+          pButton
+          type="button"
+          label="Cerrar sesión"
+          class="p-button-outlined p-button-sm logout-button"
+          (click)="logout()"
+        ></button>
+      } @else {
+        <button
+          pButton
+          type="button"
+          label="Ingresar"
+          class="p-button-outlined p-button-sm login-button"
+          (click)="openLogin()"
+        ></button>
+
+        <button
+          pButton
+          type="button"
+          label="Registrarse"
+          class="p-button-primary p-button-sm register-button"
+          (click)="openRegister()"
+        ></button>
+      }
+    </nav>
+  </div>
+</header>
