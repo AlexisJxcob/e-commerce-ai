@@ -1,0 +1,63 @@
+<section class="hero-section" [class.hero-compact]="compact()">
+  <div class="hero-container">
+    @if (!compact()) {
+      <div class="hero-header">
+        <div class="hero-pill">
+          <i class="pi pi-sparkles pill-icon" aria-hidden="true"></i>
+          <span>Asistente Técnico Especializado</span>
+        </div>
+        <h1 class="hero-title">¿Qué vas a reparar hoy?</h1>
+        <p class="hero-subtitle">
+          Describe tu problema en lenguaje cotidiano. Nuestra inteligencia artificial identifica los repuestos exactos,
+          herramientas necesarias y productos recomendados al instante.
+        </p>
+      </div>
+    }
+
+    <form class="hero-search-form" (ngSubmit)="onSearchSubmit()">
+      <div class="search-input-wrapper">
+        <i class="pi pi-search search-icon" aria-hidden="true"></i>
+        <input
+          pInputText
+          type="text"
+          class="hero-search-input"
+          [ngModel]="queryText()"
+          (ngModelChange)="queryText.set($event)"
+          name="query"
+          appTypewriter
+          [disabled]="loading()"
+          autocomplete="off"
+          aria-label="Describe el problema de reparación"
+        />
+        <button
+          pButton
+          type="submit"
+          class="p-button-primary hero-submit-button"
+          [disabled]="!queryText().trim() || loading()"
+          [loading]="loading()"
+        >
+          <i class="pi pi-sparkles button-icon" aria-hidden="true"></i>
+          <span class="button-label">Diagnosticar</span>
+        </button>
+      </div>
+    </form>
+
+    @if (!compact()) {
+      <div class="quick-suggestions">
+        <span class="suggestions-label">Casos frecuentes:</span>
+        <div class="suggestions-chips">
+          @for (item of quickSuggestions; track item) {
+            <button
+              type="button"
+              class="suggestion-chip"
+              (click)="selectSuggestion(item)"
+              [disabled]="loading()"
+            >
+              {{ item }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</section>
