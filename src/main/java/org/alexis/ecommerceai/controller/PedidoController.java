@@ -1,10 +1,12 @@
 package org.alexis.ecommerceai.controller;
 
 import jakarta.validation.Valid;
+import org.alexis.ecommerceai.dto.CheckoutResponseDTO;
 import org.alexis.ecommerceai.dto.EstadoPedidoRequestDTO;
 import org.alexis.ecommerceai.dto.PedidoRequestDTO;
 import org.alexis.ecommerceai.dto.PedidoResponseDTO;
 import org.alexis.ecommerceai.service.PedidoService;
+import org.alexis.ecommerceai.service.WebpayService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -24,9 +26,11 @@ import java.util.List;
 public class PedidoController {
 
     private final PedidoService pedidoService;
+    private final WebpayService webpayService;
 
-    public PedidoController(PedidoService pedidoService) {
+    public PedidoController(PedidoService pedidoService, WebpayService webpayService) {
         this.pedidoService = pedidoService;
+        this.webpayService = webpayService;
     }
 
     @PostMapping
@@ -70,5 +74,13 @@ public class PedidoController {
         boolean esAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         return ResponseEntity.ok(pedidoService.obtener(auth.getName(), esAdmin, id));
+    }
+
+    @PostMapping("/{id}/pagar")
+    public ResponseEntity<CheckoutResponseDTO> pagar(@PathVariable Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean esAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return ResponseEntity.ok(webpayService.crearTransaccion(id, auth.getName(), esAdmin));
     }
 }

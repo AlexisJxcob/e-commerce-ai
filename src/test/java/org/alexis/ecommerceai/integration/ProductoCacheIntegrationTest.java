@@ -51,6 +51,9 @@ class ProductoCacheIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private CacheManager cacheManager;
 
+    @Autowired
+    private org.alexis.ecommerceai.repository.ProductoRepository productoRepository;
+
     @MockitoBean
     private HuggingFaceChatService huggingFaceChatService;
 
@@ -63,6 +66,13 @@ class ProductoCacheIntegrationTest extends AbstractIntegrationTest {
         hibernateStats = sessionFactory.getStatistics();
         hibernateStats.clear();
         // Clear all caches before each test
+        cacheManager.getCacheNames().forEach(name ->
+                Objects.requireNonNull(cacheManager.getCache(name)).clear());
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        productoRepository.deleteAll();
         cacheManager.getCacheNames().forEach(name ->
                 Objects.requireNonNull(cacheManager.getCache(name)).clear());
     }

@@ -9,6 +9,11 @@ public record PedidoResponseDTO(
         String estado,
         BigDecimal total,
         LocalDateTime fechaCreacion,
-        List<ItemPedidoResponseDTO> items
+        List<ItemPedidoResponseDTO> items,
+        String webpayToken,
+        String estadoPago
 ) {
+    public PedidoResponseDTO(Long id, String estado, BigDecimal total, LocalDateTime fechaCreacion, List<ItemPedidoResponseDTO> items) {
+        this(id, estado, total, fechaCreacion, items, null, "PENDIENTE");
+    }
 }

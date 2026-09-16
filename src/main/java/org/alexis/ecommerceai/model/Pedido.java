@@ -49,6 +49,16 @@ public class Pedido {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
 
+    @Column(name = "webpay_token", unique = true)
+    private String webpayToken;
+
+    @Column(name = "webpay_authorization_code", length = 50)
+    private String webpayAuthorizationCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_pago", nullable = false, length = 20)
+    private EstadoPago estadoPago = EstadoPago.PENDIENTE;
+
     @OneToMany(mappedBy = "pedido", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemPedido> items = new ArrayList<>();
 }

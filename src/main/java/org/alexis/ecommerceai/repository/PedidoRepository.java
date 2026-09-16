@@ -28,4 +28,6 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     @EntityGraph(attributePaths = {"items", "usuario"})
     @Query("SELECT p FROM Pedido p WHERE p.id = :id")
     Optional<Pedido> findConItemsById(@Param("id") Long id);
+
+    Optional<Pedido> findByWebpayToken(String webpayToken);
 }

@@ -11,6 +11,7 @@ import org.alexis.ecommerceai.exception.StockUpdateConflictException;
 import org.alexis.ecommerceai.exception.TransicionEstadoInvalidaException;
 import org.alexis.ecommerceai.model.Carrito;
 import org.alexis.ecommerceai.model.CarritoItem;
+import org.alexis.ecommerceai.model.EstadoPago;
 import org.alexis.ecommerceai.model.EstadoPedido;
 import org.alexis.ecommerceai.model.Pedido;
 import org.alexis.ecommerceai.model.Producto;
@@ -345,5 +346,61 @@ class PedidoServiceTest {
 
         assertThat(response.estado()).isEqualTo("PENDIENTE");
         verify(pedidoRepository, never()).save(any(Pedido.class));
+    }
+
+    @Test
+    void marcarComoPagado_conPedidoPendiente_actualizaAConfirmadoYPagado() {
+        Pedido pedido = pedidoConEstado(EstadoPedido.PENDIENTE);
+        pedido.setEstadoPago(EstadoPago.PENDIENTE);
+        when(pedidoRepository.findConItemsById(7L)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PedidoResponseDTO response = pedidoService.marcarComoPagado(7L, "auth_code_123");
+
+        assertThat(response.estado()).isEqualTo("CONFIRMADO");
+        assertThat(response.estadoPago()).isEqualTo("PAGADO");
+        assertThat(pedido.getEstado()).isEqualTo(EstadoPedido.CONFIRMADO);
+        assertThat(pedido.getEstadoPago()).isEqualTo(EstadoPago.PAGADO);
+        assertThat(pedido.getWebpayAuthorizationCode()).isEqualTo("auth_code_123");
+    }
+
+    @Test
+    void marcarComoPagado_conPedidoYaPagado_esIdempotente() {
+        Pedido pedido = pedidoConEstado(EstadoPedido.CONFIRMADO);
+        pedido.setEstadoPago(EstadoPago.PAGADO);
+        pedido.setWebpayAuthorizationCode("auth_code_123");
+        when(pedidoRepository.findConItemsById(7L)).thenReturn(Optional.of(pedido));
+
+        PedidoResponseDTO response = pedidoService.marcarComoPagado(7L, "auth_code_123");
+
+        assertThat(response.estado()).isEqualTo("CONFIRMADO");
+        assertThat(response.estadoPago()).isEqualTo("PAGADO");
+        verify(pedidoRepository, never()).save(any(Pedido.class));
+    }
+
+    @Test
+    void marcarComoPagado_conPedidoCancelado_lanzaTransicionEstadoInvalidaException() {
+        Pedido pedido = pedidoConEstado(EstadoPedido.CANCELADO);
+        pedido.setEstadoPago(EstadoPago.PENDIENTE);
+        when(pedidoRepository.findConItemsById(7L)).thenReturn(Optional.of(pedido));
+
+        assertThatThrownBy(() -> pedidoService.marcarComoPagado(7L, "auth_code_123"))
+                .isInstanceOf(TransicionEstadoInvalidaException.class)
+                .hasMessageContaining("Transición inválida");
+        assertThat(pedido.getEstado()).isEqualTo(EstadoPedido.CANCELADO);
+        assertThat(pedido.getEstadoPago()).isEqualTo(EstadoPago.PENDIENTE);
+    }
+
+    @Test
+    void marcarComoFallido_conPedidoPendiente_actualizaAFallido() {
+        Pedido pedido = pedidoConEstado(EstadoPedido.PENDIENTE);
+        pedido.setEstadoPago(EstadoPago.PENDIENTE);
+        when(pedidoRepository.findConItemsById(7L)).thenReturn(Optional.of(pedido));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PedidoResponseDTO response = pedidoService.marcarComoFallido(7L);
+
+        assertThat(response.estadoPago()).isEqualTo("FALLIDO");
+        assertThat(pedido.getEstadoPago()).isEqualTo(EstadoPago.FALLIDO);
     }
 }
