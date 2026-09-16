@@ -1,0 +1,63 @@
+<section class="skeleton-container" aria-busy="true" aria-label="Cargando diagnóstico técnico y productos">
+  <div class="skeleton-status">
+    <span class="status-pulse"></span>
+    <span class="status-text">Analizando problema técnico con IA e identificando herramientas y repuestos...</span>
+  </div>
+
+  <div class="asymmetric-layout">
+    <!-- Columna Izquierda: Diagnóstico técnico (40%) -->
+    <aside class="col-diagnosis">
+      <div class="diagnosis-card">
+        <p-skeleton width="120px" height="24px" borderRadius="12px" styleClass="mb-3"></p-skeleton>
+        <p-skeleton width="85%" height="28px" borderRadius="6px" styleClass="mb-4"></p-skeleton>
+
+        <div class="text-block mb-4">
+          <p-skeleton width="100%" height="16px" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="95%" height="16px" styleClass="mb-2"></p-skeleton>
+          <p-skeleton width="70%" height="16px"></p-skeleton>
+        </div>
+
+        <div class="section-block mb-4">
+          <p-skeleton width="140px" height="18px" styleClass="mb-2"></p-skeleton>
+          <div class="chips-row">
+            <p-skeleton width="90px" height="28px" borderRadius="6px"></p-skeleton>
+            <p-skeleton width="110px" height="28px" borderRadius="6px"></p-skeleton>
+            <p-skeleton width="80px" height="28px" borderRadius="6px"></p-skeleton>
+          </div>
+        </div>
+
+        <div class="section-block mb-4">
+          <p-skeleton width="130px" height="18px" styleClass="mb-2"></p-skeleton>
+          <div class="chips-row">
+            <p-skeleton width="100px" height="28px" borderRadius="6px"></p-skeleton>
+            <p-skeleton width="85px" height="28px" borderRadius="6px"></p-skeleton>
+          </div>
+        </div>
+
+        <p-skeleton width="100%" height="44px" borderRadius="8px"></p-skeleton>
+      </div>
+    </aside>
+
+    <!-- Columna Derecha: Grilla de productos (60%) -->
+    <main class="col-products">
+      <div class="products-header">
+        <p-skeleton width="180px" height="24px"></p-skeleton>
+        <p-skeleton width="90px" height="20px"></p-skeleton>
+      </div>
+
+      <div class="products-grid">
+        @for (item of [1, 2, 3, 4]; track item) {
+          <div class="product-skeleton-card">
+            <p-skeleton width="100%" height="160px" borderRadius="8px" styleClass="mb-3"></p-skeleton>
+            <p-skeleton width="60%" height="14px" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="90%" height="20px" styleClass="mb-3"></p-skeleton>
+            <div class="card-bottom">
+              <p-skeleton width="45%" height="24px"></p-skeleton>
+              <p-skeleton width="38px" height="34px" borderRadius="8px"></p-skeleton>
+            </div>
+          </div>
+        }
+      </div>
+    </main>
+  </div>
+</section>

@@ -1,0 +1,111 @@
+<main class="home-container">
+  <app-hero-search
+    [loading]="asistente.isLoading()"
+    [compact]="isCompact()"
+    (search)="onSearch($event)"
+  ></app-hero-search>
+
+  @if (asistente.isLoading()) {
+    <app-search-skeleton></app-search-skeleton>
+  }
+
+  @if (asistente.error()) {
+    <section class="error-section">
+      <div class="error-card">
+        <div class="error-header">
+          <i class="pi pi-exclamation-circle error-icon" aria-hidden="true"></i>
+          <div>
+            <h3 class="error-title">No fue posible completar el análisis</h3>
+            <p class="error-desc">{{ asistente.error() }}</p>
+          </div>
+        </div>
+        <div class="error-actions">
+          <button
+            pButton
+            type="button"
+            label="Reintentar"
+            class="p-button-primary p-button-sm"
+            (click)="retry()"
+          ></button>
+          <button
+            pButton
+            type="button"
+            label="Nueva consulta"
+            class="p-button-outlined p-button-sm"
+            (click)="reset()"
+          ></button>
+        </div>
+      </div>
+    </section>
+  }
+
+  @if (!asistente.isLoading() && asistente.hasResult()) {
+    <section class="results-preview-section">
+      <div class="results-preview-header">
+        <div class="preview-badge">
+          <i class="pi pi-check-circle" aria-hidden="true"></i>
+          <span>Diagnóstico generado para: "{{ asistente.currentQuery() }}"</span>
+        </div>
+        <button
+          pButton
+          type="button"
+          label="Nueva búsqueda"
+          class="p-button-outlined p-button-sm"
+          (click)="reset()"
+        ></button>
+      </div>
+
+      <div class="results-asymmetric-wrapper">
+        <div class="placeholder-diagnosis repara-card">
+          <span class="badge-neutral">Diagnóstico Técnico</span>
+          <h2 class="placeholder-title">Resumen del problema</h2>
+          <div class="meta-section">
+            <strong>Palabras clave:</strong>
+            <div class="tags-container">
+              @for (kw of asistente.sugerencia()?.palabrasClave; track kw) {
+                <span class="badge-neutral">{{ kw }}</span>
+              }
+            </div>
+          </div>
+          <div class="meta-section">
+            <strong>Herramientas sugeridas:</strong>
+            <div class="tags-container">
+              @for (tool of asistente.sugerencia()?.herramientas; track tool) {
+                <span class="badge-neutral">{{ tool }}</span>
+              }
+            </div>
+          </div>
+          <div class="meta-section">
+            <strong>Repuestos recomendados:</strong>
+            <div class="tags-container">
+              @for (part of asistente.sugerencia()?.repuestos; track part) {
+                <span class="badge-neutral">{{ part }}</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="placeholder-products">
+          <div class="products-count-bar">
+            <span>{{ asistente.productos().length }} productos encontrados</span>
+          </div>
+          <div class="products-preview-grid">
+            @for (prod of asistente.productos(); track prod.id) {
+              <div class="repara-card product-preview-item">
+                <div class="product-info">
+                  <span class="product-sku">{{ prod.sku }}</span>
+                  <h4 class="product-title">{{ prod.nombre }}</h4>
+                  <p class="product-desc">{{ prod.descripcionColoquial }}</p>
+                </div>
+                <div class="product-footer">
+                  <span class="price-text">${{ prod.precio }}</span>
+                  <span class="badge-stock">Stock: {{ prod.stock }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+  }
+</main>
