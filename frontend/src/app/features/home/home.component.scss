@@ -9,7 +9,7 @@
   max-width: 780px;
   margin: 1rem auto 3rem;
   padding: 0 1.5rem;
-  animation: fadeIn 0.25s ease;
+  animation: layoutEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .error-card {
@@ -51,15 +51,18 @@
   justify-content: flex-end;
 }
 
-.results-preview-section {
+/* ==========================================================================
+   Layout Asimétrico 40 / 60 (Transición intencional única)
+   ========================================================================== */
+.results-section {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 1.5rem;
-  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 1.5rem 1.5rem 4rem;
+  animation: layoutEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.results-preview-header {
+.results-header-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -67,120 +70,71 @@
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-subtle);
 
-  .preview-badge {
+  .results-meta {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9375rem;
-    font-weight: 500;
-    color: var(--text-primary);
+    gap: 0.6rem;
 
-    i {
-      color: var(--accent-electric);
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-electric);
+      box-shadow: 0 0 0 3px var(--accent-focus-ring);
     }
+
+    .results-meta-text {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+
+      .query-text {
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+    }
+  }
+
+  .reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
   }
 }
 
-.results-asymmetric-wrapper {
+.results-asymmetric-layout {
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
+  align-items: start;
 
   @media (min-width: 960px) {
-    grid-template-columns: 4fr 6fr;
+    /* Proporción asimétrica exacta 40% / 60% */
+    grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+    gap: 2.25rem;
   }
 }
 
-.placeholder-diagnosis {
-  padding: 1.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+.diagnosis-column {
+  width: 100%;
 
-  .placeholder-title {
-    font-size: 1.35rem;
-    margin: 0;
-  }
-
-  .meta-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-
-    strong {
-      font-size: 0.8125rem;
-      color: var(--text-secondary);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-  }
-
-  .tags-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+  @media (min-width: 960px) {
+    position: sticky;
+    top: 5.5rem;
   }
 }
 
-.placeholder-products {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+.products-column {
+  width: 100%;
+  min-width: 0;
 }
 
-.products-count-bar {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.products-preview-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.25rem;
-
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
+@keyframes layoutEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
-}
-
-.product-preview-item {
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  .product-sku {
-    font-size: 0.6875rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-
-  .product-title {
-    font-size: 1rem;
-    margin: 0.25rem 0 0.5rem;
-  }
-
-  .product-desc {
-    font-size: 0.8125rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-  }
-
-  .product-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 1rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--border-subtle);
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
 }

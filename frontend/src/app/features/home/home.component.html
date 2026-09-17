@@ -40,70 +40,45 @@
   }
 
   @if (!asistente.isLoading() && asistente.hasResult()) {
-    <section class="results-preview-section">
-      <div class="results-preview-header">
-        <div class="preview-badge">
-          <i class="pi pi-check-circle" aria-hidden="true"></i>
-          <span>Diagnóstico generado para: "{{ asistente.currentQuery() }}"</span>
+    <section class="results-section">
+      <div class="results-header-bar">
+        <div class="results-meta">
+          <span class="status-indicator" aria-hidden="true"></span>
+          <span class="results-meta-text">
+            Diagnóstico completado para:
+            <strong class="query-text">"{{ asistente.currentQuery() }}"</strong>
+          </span>
         </div>
         <button
           pButton
           type="button"
-          label="Nueva búsqueda"
-          class="p-button-outlined p-button-sm"
+          label="Nueva consulta"
+          class="p-button-outlined p-button-sm reset-btn"
           (click)="reset()"
-        ></button>
+        >
+          <i class="pi pi-refresh" aria-hidden="true"></i>
+          <span>Nueva consulta</span>
+        </button>
       </div>
 
-      <div class="results-asymmetric-wrapper">
-        <div class="placeholder-diagnosis repara-card">
-          <span class="badge-neutral">Diagnóstico Técnico</span>
-          <h2 class="placeholder-title">Resumen del problema</h2>
-          <div class="meta-section">
-            <strong>Palabras clave:</strong>
-            <div class="tags-container">
-              @for (kw of asistente.sugerencia()?.palabrasClave; track kw) {
-                <span class="badge-neutral">{{ kw }}</span>
-              }
-            </div>
-          </div>
-          <div class="meta-section">
-            <strong>Herramientas sugeridas:</strong>
-            <div class="tags-container">
-              @for (tool of asistente.sugerencia()?.herramientas; track tool) {
-                <span class="badge-neutral">{{ tool }}</span>
-              }
-            </div>
-          </div>
-          <div class="meta-section">
-            <strong>Repuestos recomendados:</strong>
-            <div class="tags-container">
-              @for (part of asistente.sugerencia()?.repuestos; track part) {
-                <span class="badge-neutral">{{ part }}</span>
-              }
-            </div>
-          </div>
+      <div class="results-asymmetric-layout">
+        <!-- Columna Izquierda (40%): Diagnóstico técnico y botón de kit -->
+        <div class="diagnosis-column">
+          <app-ai-diagnosis
+            [query]="asistente.currentQuery()"
+            [sugerencia]="asistente.sugerencia()"
+            [productCount]="asistente.productos().length"
+            (addKit)="onAddKit()"
+          ></app-ai-diagnosis>
         </div>
 
-        <div class="placeholder-products">
-          <div class="products-count-bar">
-            <span>{{ asistente.productos().length }} productos encontrados</span>
-          </div>
-          <div class="products-preview-grid">
-            @for (prod of asistente.productos(); track prod.id) {
-              <div class="repara-card product-preview-item">
-                <div class="product-info">
-                  <span class="product-sku">{{ prod.sku }}</span>
-                  <h4 class="product-title">{{ prod.nombre }}</h4>
-                  <p class="product-desc">{{ prod.descripcionColoquial }}</p>
-                </div>
-                <div class="product-footer">
-                  <span class="price-text">${{ prod.precio }}</span>
-                  <span class="badge-stock">Stock: {{ prod.stock }}</span>
-                </div>
-              </div>
-            }
-          </div>
+        <!-- Columna Derecha (60%): Grilla de productos compatibles -->
+        <div class="products-column">
+          <app-product-grid
+            [productos]="asistente.productos()"
+            [query]="asistente.currentQuery()"
+            (addToCart)="onAddToCart($event)"
+          ></app-product-grid>
         </div>
       </div>
     </section>
