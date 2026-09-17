@@ -5,7 +5,9 @@ import { CartDrawerComponent } from './cart-drawer.component';
 import { CarritoService } from '../../../core/services/carrito.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthModalService } from '../../../core/auth/auth-modal.service';
+import { PedidoService } from '../../../core/services/pedido.service';
 import { Carrito } from '../../../core/models/carrito.models';
+import { Pedido, CheckoutResponse } from '../../../core/models/pedido.models';
 import { of } from 'rxjs';
 
 describe('CartDrawerComponent', () => {
@@ -14,6 +16,7 @@ describe('CartDrawerComponent', () => {
   let mockCarritoService: jasmine.SpyObj<CarritoService>;
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockAuthModalService: jasmine.SpyObj<AuthModalService>;
+  let mockPedidoService: jasmine.SpyObj<PedidoService>;
 
   const mockCart: Carrito = {
     items: [
@@ -29,10 +32,23 @@ describe('CartDrawerComponent', () => {
     total: 2400
   };
 
+  const mockPedido: Pedido = {
+    id: 99,
+    estado: 'PENDIENTE',
+    total: 2400,
+    fechaCreacion: '2026-09-16T21:00:00Z',
+    items: []
+  };
+
+  const mockCheckout: CheckoutResponse = {
+    token: 'token-abc',
+    url: 'https://webpay3gint.transbank.cl/webpayserver/initTransaction'
+  };
+
   beforeEach(async () => {
     mockCarritoService = jasmine.createSpyObj(
       'CarritoService',
-      ['cerrarCarrito', 'abrirCarrito', 'actualizarCantidad', 'eliminarItem', 'vaciarCarrito'],
+      ['cerrarCarrito', 'abrirCarrito', 'actualizarCantidad', 'eliminarItem', 'vaciarCarrito', 'sincronizarCarritoInvitado'],
       {
         carrito: signal<Carrito | null>(mockCart),
         isOpen: signal<boolean>(true),
@@ -46,11 +62,16 @@ describe('CartDrawerComponent', () => {
     mockCarritoService.actualizarCantidad.and.returnValue(of(null));
     mockCarritoService.eliminarItem.and.returnValue(of(void 0));
     mockCarritoService.vaciarCarrito.and.returnValue(of(void 0));
+    mockCarritoService.sincronizarCarritoInvitado.and.returnValue(of(void 0));
 
     mockAuthService = jasmine.createSpyObj('AuthService', ['isAuthenticated']);
     mockAuthService.isAuthenticated.and.returnValue(true);
 
-    mockAuthModalService = jasmine.createSpyObj('AuthModalService', ['openLogin']);
+    mockAuthModalService = jasmine.createSpyObj('AuthModalService', ['openLogin', 'setPendingAction']);
+
+    mockPedidoService = jasmine.createSpyObj('PedidoService', ['crearDesdeCarrito', 'iniciarPago', 'redirigirAWebpay']);
+    mockPedidoService.crearDesdeCarrito.and.returnValue(of(mockPedido));
+    mockPedidoService.iniciarPago.and.returnValue(of(mockCheckout));
 
     await TestBed.configureTestingModule({
       imports: [CartDrawerComponent],
@@ -58,7 +79,8 @@ describe('CartDrawerComponent', () => {
         provideNoopAnimations(),
         { provide: CarritoService, useValue: mockCarritoService },
         { provide: AuthService, useValue: mockAuthService },
-        { provide: AuthModalService, useValue: mockAuthModalService }
+        { provide: AuthModalService, useValue: mockAuthModalService },
+        { provide: PedidoService, useValue: mockPedidoService }
       ]
     }).compileComponents();
 
@@ -96,13 +118,19 @@ describe('CartDrawerComponent', () => {
     expect(mockCarritoService.vaciarCarrito).toHaveBeenCalled();
   });
 
-  it('should emit checkoutTriggered on checkout click', () => {
-    let triggered = false;
-    component.checkoutTriggered.subscribe(() => {
-      triggered = true;
-    });
-
+  it('should open login and set pending action if guest clicks checkout', () => {
+    mockAuthService.isAuthenticated.and.returnValue(false);
     component.onCheckout();
-    expect(triggered).toBeTrue();
+    expect(mockAuthModalService.setPendingAction).toHaveBeenCalled();
+    expect(mockAuthModalService.openLogin).toHaveBeenCalled();
+  });
+
+  it('should orchestrate webpay checkout if authenticated', () => {
+    mockAuthService.isAuthenticated.and.returnValue(true);
+    component.onCheckout();
+
+    expect(mockPedidoService.crearDesdeCarrito).toHaveBeenCalled();
+    expect(mockPedidoService.iniciarPago).toHaveBeenCalledWith(99);
+    expect(mockPedidoService.redirigirAWebpay).toHaveBeenCalledWith('token-abc', mockCheckout.url);
   });
 });

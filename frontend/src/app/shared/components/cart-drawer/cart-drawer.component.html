@@ -104,6 +104,13 @@
           Pago 100% seguro procesado por Transbank Webpay Plus
         </p>
 
+        @if (errorMessage()) {
+          <div class="checkout-error-banner" role="alert">
+            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
         <div class="footer-actions">
           <button
             pButton

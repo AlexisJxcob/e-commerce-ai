@@ -229,6 +229,22 @@
     }
   }
 
+  .checkout-error-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-input);
+    background-color: var(--status-error-bg);
+    border: 1px solid rgba(176, 42, 55, 0.2);
+    color: var(--status-error);
+    font-size: 0.8125rem;
+
+    i {
+      font-size: 0.875rem;
+    }
+  }
+
   .footer-actions {
     display: flex;
     flex-direction: column;

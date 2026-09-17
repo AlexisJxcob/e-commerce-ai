@@ -62,6 +62,7 @@ export class AuthModalComponent {
     this.isLoading.set(false);
     this.loginForm.reset();
     this.registerForm.reset();
+    this.authModalService.clearPendingAction();
     this.authModalService.close();
   }
 
@@ -77,7 +78,8 @@ export class AuthModalComponent {
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.close();
+        this.authModalService.close();
+        this.authModalService.executePendingAction();
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -109,7 +111,8 @@ export class AuthModalComponent {
         this.authService.login({ username, password }).subscribe({
           next: () => {
             this.isLoading.set(false);
-            this.close();
+            this.authModalService.close();
+            this.authModalService.executePendingAction();
           },
           error: () => {
             this.isLoading.set(false);

@@ -5,6 +5,7 @@ import { ButtonModule } from 'primeng/button';
 import { CarritoService } from '../../../core/services/carrito.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthModalService } from '../../../core/auth/auth-modal.service';
+import { PedidoService } from '../../../core/services/pedido.service';
 import { ClpPipe } from '../../pipes/clp.pipe';
 
 @Component({
@@ -18,8 +19,10 @@ export class CartDrawerComponent {
   readonly carritoService = inject(CarritoService);
   readonly authService = inject(AuthService);
   readonly authModalService = inject(AuthModalService);
+  readonly pedidoService = inject(PedidoService);
 
   readonly isProcessingCheckout = signal<boolean>(false);
+  readonly errorMessage = signal<string | null>(null);
   readonly checkoutTriggered = output<void>();
 
   readonly isOpen = computed(() => this.carritoService.isOpen());
@@ -31,6 +34,7 @@ export class CartDrawerComponent {
   onVisibleChange(visible: boolean): void {
     if (!visible) {
       this.carritoService.cerrarCarrito();
+      this.errorMessage.set(null);
     }
   }
 
@@ -60,5 +64,47 @@ export class CartDrawerComponent {
     }
 
     this.checkoutTriggered.emit();
+
+    if (!this.authService.isAuthenticated()) {
+      this.authModalService.setPendingAction(() => {
+        this.procederCheckout();
+      });
+      this.authModalService.openLogin();
+      return;
+    }
+
+    this.procederCheckout();
+  }
+
+  procederCheckout(): void {
+    this.isProcessingCheckout.set(true);
+    this.errorMessage.set(null);
+
+    this.carritoService.sincronizarCarritoInvitado().subscribe({
+      next: () => {
+        this.pedidoService.crearDesdeCarrito().subscribe({
+          next: (pedido) => {
+            this.pedidoService.iniciarPago(pedido.id).subscribe({
+              next: (checkout) => {
+                this.pedidoService.redirigirAWebpay(checkout.token, checkout.url);
+              },
+              error: () => {
+                this.isProcessingCheckout.set(false);
+                this.errorMessage.set('Error al conectar con la pasarela Webpay. Intenta nuevamente.');
+              }
+            });
+          },
+          error: (err) => {
+            this.isProcessingCheckout.set(false);
+            const msg = err?.error?.message ?? 'No se pudo generar el pedido desde el carrito.';
+            this.errorMessage.set(msg);
+          }
+        });
+      },
+      error: () => {
+        this.isProcessingCheckout.set(false);
+        this.errorMessage.set('Error al sincronizar el carrito antes del pago.');
+      }
+    });
   }
 }
