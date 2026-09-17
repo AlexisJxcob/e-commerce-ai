@@ -1,0 +1,37 @@
+<section class="products-container" aria-label="Productos sugeridos para reparación">
+  <header class="products-header">
+    <div class="header-left">
+      <h3 class="products-title">Productos compatibles</h3>
+      <span class="products-count-chip" aria-label="Total de productos">{{ count() }} disponibles</span>
+    </div>
+    <div class="header-right">
+      <span class="catalog-badge">
+        <i class="pi pi-shield-check" aria-hidden="true"></i>
+        <span>Stock en tienda</span>
+      </span>
+    </div>
+  </header>
+
+  @if (hasProducts()) {
+    <div class="products-grid" role="list">
+      @for (prod of productos(); track prod.id) {
+        <div class="grid-item" role="listitem">
+          <app-product-card
+            [producto]="prod"
+            (addToCart)="onAddToCart($event)"
+          ></app-product-card>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="empty-state repara-card">
+      <div class="empty-icon-wrap">
+        <i class="pi pi-box empty-icon" aria-hidden="true"></i>
+      </div>
+      <h4 class="empty-title">Sin productos compatibles exactos</h4>
+      <p class="empty-desc">
+        No encontramos repuestos o herramientas en catálogo que coincidan directamente con este criterio. Intenta reformular tu consulta o buscar con términos más generales.
+      </p>
+    </div>
+  }
+</section>

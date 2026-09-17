@@ -1,0 +1,43 @@
+<article class="product-card repara-card" [class.is-out-of-stock]="!hasStock()">
+  <header class="card-header">
+    <span class="product-sku">{{ producto().sku }}</span>
+    @if (hasStock()) {
+      <span class="badge-stock" aria-label="Stock disponible">
+        <i class="pi pi-check" aria-hidden="true"></i>
+        <span>Stock: {{ producto().stock }}</span>
+      </span>
+    } @else {
+      <span class="badge-out-of-stock" aria-label="Sin stock disponible">
+        <span>Sin stock</span>
+      </span>
+    }
+  </header>
+
+  <div class="card-body">
+    <h4 class="product-name" [title]="producto().nombre">{{ producto().nombre }}</h4>
+    @if (producto().descripcionColoquial) {
+      <p class="product-description">{{ producto().descripcionColoquial }}</p>
+    } @else if (producto().descripcionTecnica) {
+      <p class="product-description">{{ producto().descripcionTecnica }}</p>
+    }
+  </div>
+
+  <footer class="card-footer">
+    <div class="price-wrapper">
+      <span class="price-label">Precio</span>
+      <span class="price-text">{{ producto().precio | clp }}</span>
+    </div>
+
+    <button
+      pButton
+      type="button"
+      class="p-button-outlined quick-buy-btn"
+      [disabled]="!hasStock()"
+      (click)="onQuickBuy()"
+      aria-label="Agregar producto al carrito"
+    >
+      <i class="pi pi-cart-plus btn-icon" aria-hidden="true"></i>
+      <span class="btn-text">Agregar</span>
+    </button>
+  </footer>
+</article>
