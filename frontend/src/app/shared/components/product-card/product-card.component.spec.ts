@@ -68,6 +68,6 @@ describe('ProductCardComponent', () => {
     });
 
     component.onQuickBuy();
-    expect(emittedProduct).toEqual(mockProduct);
+    expect(emittedProduct as unknown as Producto).toEqual(mockProduct);
   });
 });

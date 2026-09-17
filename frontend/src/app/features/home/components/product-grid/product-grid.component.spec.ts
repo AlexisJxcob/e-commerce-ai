@@ -67,6 +67,6 @@ describe('ProductGridComponent', () => {
     });
 
     component.onAddToCart(mockProducts[0]);
-    expect(capturedProduct).toEqual(mockProducts[0]);
+    expect(capturedProduct as unknown as Producto).toEqual(mockProducts[0]);
   });
 });
