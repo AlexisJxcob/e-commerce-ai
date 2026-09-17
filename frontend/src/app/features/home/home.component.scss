@@ -1,0 +1,140 @@
+.home-container {
+  min-height: calc(100vh - 4.25rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.error-section {
+  width: 100%;
+  max-width: 780px;
+  margin: 1rem auto 3rem;
+  padding: 0 1.5rem;
+  animation: layoutEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.error-card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--status-error);
+  border-radius: var(--radius-card);
+  padding: 1.5rem;
+}
+
+.error-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  .error-icon {
+    font-size: 1.5rem;
+    color: var(--status-error);
+    margin-top: 0.15rem;
+  }
+
+  .error-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+  }
+
+  .error-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+}
+
+.error-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* ==========================================================================
+   Layout Asimétrico 40 / 60 (Transición intencional única)
+   ========================================================================== */
+.results-section {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 4rem;
+  animation: layoutEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.results-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+
+  .results-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-electric);
+      box-shadow: 0 0 0 3px var(--accent-focus-ring);
+    }
+
+    .results-meta-text {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+
+      .query-text {
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+    }
+  }
+
+  .reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+}
+
+.results-asymmetric-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+
+  @media (min-width: 960px) {
+    /* Proporción asimétrica exacta 40% / 60% */
+    grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+    gap: 2.25rem;
+  }
+}
+
+.diagnosis-column {
+  width: 100%;
+
+  @media (min-width: 960px) {
+    position: sticky;
+    top: 5.5rem;
+  }
+}
+
+.products-column {
+  width: 100%;
+  min-width: 0;
+}
+
+@keyframes layoutEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

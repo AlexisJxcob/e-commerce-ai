@@ -1,0 +1,205 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.diagnosis-panel {
+  text-align: left;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--border-hover);
+  }
+}
+
+.diagnosis-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  text-align: left;
+}
+
+.diagnosis-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  background-color: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-electric);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+
+  .badge-icon {
+    font-size: 0.75rem;
+  }
+}
+
+.diagnosis-title {
+  font-family: var(--font-sans);
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.diagnosis-summary {
+  font-size: 0.9375rem;
+  line-height: var(--line-height-body); /* 1.6 */
+  color: var(--text-secondary);
+  margin: 0;
+
+  .query-highlight {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+}
+
+.diagnosis-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  text-align: left;
+}
+
+.breakdown-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+
+  .section-icon {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+  }
+}
+
+.section-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  text-align: left;
+}
+
+.diagnosis-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  background-color: var(--surface-elevated); /* #EDEBE6 */
+  border: 1px solid var(--border-subtle);   /* #E5E3DD */
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--border-hover);
+    background-color: #E6E4DF;
+  }
+
+  .chip-bullet {
+    color: var(--accent-electric);
+    font-size: 0.75rem;
+  }
+
+  &.chip-secondary {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    background-color: var(--bg-primary);
+  }
+}
+
+.empty-hint {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0;
+  font-style: italic;
+}
+
+.diagnosis-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  text-align: left;
+}
+
+.kit-button {
+  width: 100%;
+  padding: 0.85rem 1.25rem !important;
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+  border-radius: var(--radius-button) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: var(--accent-electric) !important; /* #2454FF */
+  border: 1px solid var(--accent-electric) !important;
+  color: #FFFFFF !important;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background-color: var(--accent-hover) !important;
+    border-color: var(--accent-hover) !important;
+  }
+
+  &:disabled {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+  }
+
+  .button-icon {
+    font-size: 1rem;
+  }
+
+  .kit-count-badge {
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: 0.1rem 0.4rem;
+    border-radius: 12px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+}
+
+.kit-note {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin: 0;
+  text-align: center;
+  line-height: 1.4;
+}

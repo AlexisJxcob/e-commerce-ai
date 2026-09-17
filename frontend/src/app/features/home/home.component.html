@@ -1,0 +1,86 @@
+<main class="home-container">
+  <app-hero-search
+    [loading]="asistente.isLoading()"
+    [compact]="isCompact()"
+    (search)="onSearch($event)"
+  ></app-hero-search>
+
+  @if (asistente.isLoading()) {
+    <app-search-skeleton></app-search-skeleton>
+  }
+
+  @if (asistente.error()) {
+    <section class="error-section">
+      <div class="error-card">
+        <div class="error-header">
+          <i class="pi pi-exclamation-circle error-icon" aria-hidden="true"></i>
+          <div>
+            <h3 class="error-title">No fue posible completar el análisis</h3>
+            <p class="error-desc">{{ asistente.error() }}</p>
+          </div>
+        </div>
+        <div class="error-actions">
+          <button
+            pButton
+            type="button"
+            label="Reintentar"
+            class="p-button-primary p-button-sm"
+            (click)="retry()"
+          ></button>
+          <button
+            pButton
+            type="button"
+            label="Nueva consulta"
+            class="p-button-outlined p-button-sm"
+            (click)="reset()"
+          ></button>
+        </div>
+      </div>
+    </section>
+  }
+
+  @if (!asistente.isLoading() && asistente.hasResult()) {
+    <section class="results-section">
+      <div class="results-header-bar">
+        <div class="results-meta">
+          <span class="status-indicator" aria-hidden="true"></span>
+          <span class="results-meta-text">
+            Diagnóstico completado para:
+            <strong class="query-text">"{{ asistente.currentQuery() }}"</strong>
+          </span>
+        </div>
+        <button
+          pButton
+          type="button"
+          label="Nueva consulta"
+          class="p-button-outlined p-button-sm reset-btn"
+          (click)="reset()"
+        >
+          <i class="pi pi-refresh" aria-hidden="true"></i>
+          <span>Nueva consulta</span>
+        </button>
+      </div>
+
+      <div class="results-asymmetric-layout">
+        <!-- Columna Izquierda (40%): Diagnóstico técnico y botón de kit -->
+        <div class="diagnosis-column">
+          <app-ai-diagnosis
+            [query]="asistente.currentQuery()"
+            [sugerencia]="asistente.sugerencia()"
+            [productCount]="asistente.productos().length"
+            (addKit)="onAddKit()"
+          ></app-ai-diagnosis>
+        </div>
+
+        <!-- Columna Derecha (60%): Grilla de productos compatibles -->
+        <div class="products-column">
+          <app-product-grid
+            [productos]="asistente.productos()"
+            [query]="asistente.currentQuery()"
+            (addToCart)="onAddToCart($event)"
+          ></app-product-grid>
+        </div>
+      </div>
+    </section>
+  }
+</main>

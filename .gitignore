@@ -64,3 +64,8 @@ openapi-bruno.json
 # Restos corruptos de un target/ previo (no borrables desde Linux, rompen git/rg)
 target_corrupted_tmp/
 
+### Frontend (Angular / Repara.ai) ###
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.cache/
