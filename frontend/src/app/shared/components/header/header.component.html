@@ -19,12 +19,16 @@
       </button>
 
       @if (authService.isAuthenticated()) {
+        @if (authService.isAdmin()) {
+          <a routerLink="/admin" class="admin-nav-link" aria-label="Panel de administración">
+            <i class="pi pi-cog" aria-hidden="true"></i>
+            <span>Admin</span>
+          </a>
+        }
+
         <div class="user-badge">
           <i class="pi pi-user user-icon" aria-hidden="true"></i>
           <span class="user-name">{{ authService.currentUser()?.username }}</span>
-          @if (authService.isAdmin()) {
-            <span class="admin-badge">Admin</span>
-          }
         </div>
 
         <button

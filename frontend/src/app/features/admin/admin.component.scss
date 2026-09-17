@@ -1,0 +1,23 @@
+.admin-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+.admin-header {
+  margin-bottom: 2rem;
+
+  .admin-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    letter-spacing: var(--tracking-tight);
+    color: var(--text-primary);
+  }
+
+  .admin-subtitle {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+}

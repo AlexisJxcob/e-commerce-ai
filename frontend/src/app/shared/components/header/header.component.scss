@@ -87,15 +87,29 @@
   }
 }
 
-.admin-badge {
-  font-size: 0.6875rem;
+.admin-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background-color: rgba(36, 84, 255, 0.08);
+  border: 1px solid rgba(36, 84, 255, 0.25);
+  border-radius: var(--radius-button);
+  font-size: 0.8125rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.1rem 0.35rem;
-  background-color: rgba(36, 84, 255, 0.1);
   color: var(--accent-electric);
-  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(36, 84, 255, 0.14);
+    border-color: var(--accent-electric);
+    color: var(--accent-hover);
+  }
+
+  i {
+    font-size: 0.75rem;
+  }
 }
 
 .login-button,
