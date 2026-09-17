@@ -14,3 +14,9 @@ export interface BusquedaInteligenteResponse {
 export interface DiagnoseRequest {
   problema: string;
 }
+
+export interface ReindexacionResponse {
+  procesados: number;
+  pendientes: number;
+}
+
