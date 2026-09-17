@@ -7,6 +7,16 @@ export const routes: Routes = [
     component: HomeComponent
   },
   {
+    path: 'checkout/resultado',
+    loadComponent: () =>
+      import('./features/checkout').then((m) => m.CheckoutResultadoComponent)
+  },
+  {
+    path: 'pedidos',
+    loadComponent: () =>
+      import('./features/checkout').then((m) => m.CheckoutResultadoComponent)
+  },
+  {
     path: '**',
     redirectTo: ''
   }
