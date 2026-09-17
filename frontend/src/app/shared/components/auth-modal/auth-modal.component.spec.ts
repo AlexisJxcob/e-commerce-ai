@@ -107,4 +107,63 @@ describe('AuthModalComponent', () => {
     });
     expect(authModalService.isOpen()).toBeFalse();
   });
+
+  it('should display friendly message instead of raw SyntaxError when backend returns non-JSON', () => {
+    const syntaxError = new SyntaxError('JSON.parse: unexpected character at line 1 column 1 of the JSON data');
+    authServiceSpy.register.and.returnValue(
+      throwError(() => ({ error: syntaxError, status: 500 }))
+    );
+
+    component.setMode('register');
+    component.registerForm.setValue({
+      username: 'newuser',
+      password: 'password123',
+      email: 'user@test.com'
+    });
+
+    component.onRegisterSubmit();
+
+    expect(component.errorMessage()).not.toContain('JSON.parse');
+    expect(component.errorMessage()).toBe('El servicio no está disponible en este momento. Intenta de nuevo más tarde.');
+  });
+
+  it('should display connection message when backend is unreachable (status 0)', () => {
+    authServiceSpy.register.and.returnValue(
+      throwError(() => ({ status: 0 }))
+    );
+
+    component.setMode('register');
+    component.registerForm.setValue({
+      username: 'newuser',
+      password: 'password123',
+      email: 'user@test.com'
+    });
+
+    component.onRegisterSubmit();
+
+    expect(component.errorMessage()).toBe('No se pudo conectar con el servidor. Verifica que el backend esté en ejecución.');
+  });
+
+  it('should display field error when backend returns validation errors', () => {
+    authServiceSpy.register.and.returnValue(
+      throwError(() => ({
+        error: {
+          status: 400,
+          message: 'Error de validación',
+          fieldErrors: { password: 'La contraseña debe tener al menos 8 caracteres' }
+        }
+      }))
+    );
+
+    component.setMode('register');
+    component.registerForm.setValue({
+      username: 'newuser',
+      password: 'password123',
+      email: 'user@test.com'
+    });
+
+    component.onRegisterSubmit();
+
+    expect(component.errorMessage()).toBe('La contraseña debe tener al menos 8 caracteres');
+  });
 });

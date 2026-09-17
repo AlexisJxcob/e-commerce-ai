@@ -11,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "huggingface.chat")
 public class HuggingFaceChatProperties {
 
-    public static final String DEFAULT_MODEL = "Meta-Llama/Llama-3.2-3B-Instruct";
+    public static final String DEFAULT_MODEL = "meta-llama/Llama-3.1-8B-Instruct";
     public static final String DEFAULT_BASE_URL = "https://router.huggingface.co/v1";
 
     /**
