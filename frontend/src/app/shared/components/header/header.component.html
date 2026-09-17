@@ -6,6 +6,18 @@
     </a>
 
     <nav class="header-actions">
+      <button
+        type="button"
+        class="cart-trigger-btn"
+        (click)="openCart()"
+        aria-label="Abrir carrito de compras"
+      >
+        <i class="pi pi-shopping-bag cart-icon" aria-hidden="true"></i>
+        @if (carritoService.itemCount() > 0) {
+          <span class="cart-count-badge">{{ carritoService.itemCount() }}</span>
+        }
+      </button>
+
       @if (authService.isAuthenticated()) {
         <div class="user-badge">
           <i class="pi pi-user user-icon" aria-hidden="true"></i>

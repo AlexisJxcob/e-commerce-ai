@@ -6,6 +6,7 @@ import { SearchSkeletonComponent } from './components/search-skeleton';
 import { AiDiagnosisComponent } from './components/ai-diagnosis';
 import { ProductGridComponent } from './components/product-grid';
 import { AsistenteService } from '../../core/services/asistente.service';
+import { CarritoService } from '../../core/services/carrito.service';
 import { Producto } from '../../core/models/producto.models';
 
 @Component({
@@ -24,6 +25,7 @@ import { Producto } from '../../core/models/producto.models';
 })
 export class HomeComponent {
   readonly asistente = inject(AsistenteService);
+  readonly carritoService = inject(CarritoService);
 
   readonly isCompact = computed(() => {
     return this.asistente.isLoading() || this.asistente.hasResult() || !!this.asistente.error();
@@ -49,15 +51,17 @@ export class HomeComponent {
   }
 
   onAddKit(): void {
-    // Emitted from AiDiagnosisComponent; prepares kit products for cart in Block 5
     const prods = this.asistente.productos();
-    if (prods.length > 0) {
-      // Future integration with CarritoService in Block 5
+    const available = prods.filter((p) => p.stock > 0);
+    if (available.length > 0) {
+      available.forEach((prod) => {
+        this.carritoService.agregarProducto(prod, 1);
+      });
+      this.carritoService.abrirCarrito();
     }
   }
 
   onAddToCart(producto: Producto): void {
-    // Emitted from ProductGridComponent / ProductCardComponent
-    // Future integration with CarritoService in Block 5
+    this.carritoService.agregarProducto(producto, 1);
   }
 }

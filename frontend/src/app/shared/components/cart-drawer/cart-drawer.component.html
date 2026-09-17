@@ -1,0 +1,130 @@
+<p-drawer
+  [visible]="isOpen()"
+  (visibleChange)="onVisibleChange($event)"
+  position="right"
+  [modal]="true"
+  [blockScroll]="true"
+  styleClass="repara-cart-drawer"
+  ariaLabel="Carrito de compras"
+>
+  <ng-template pTemplate="header">
+    <div class="drawer-header-content">
+      <div class="header-title-group">
+        <i class="pi pi-shopping-bag cart-title-icon" aria-hidden="true"></i>
+        <h2 class="drawer-title">Tu Carrito</h2>
+        <span class="badge-neutral" aria-label="Cantidad de productos">
+          {{ itemCount() }} {{ itemCount() === 1 ? 'ítem' : 'ítems' }}
+        </span>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="cart-drawer-body">
+    @if (isEmpty()) {
+      <div class="cart-empty-state">
+        <div class="empty-icon-wrapper">
+          <i class="pi pi-shopping-cart empty-icon" aria-hidden="true"></i>
+        </div>
+        <h3 class="empty-title">Tu carrito está vacío</h3>
+        <p class="empty-description">
+          Describe tu proyecto o avería en el buscador inteligente para obtener
+          un kit personalizado de herramientas y repuestos.
+        </p>
+        <button
+          pButton
+          type="button"
+          label="Explorar herramientas"
+          icon="pi pi-search"
+          class="p-button-outlined explore-btn"
+          (click)="seguirComprando()"
+        ></button>
+      </div>
+    } @else {
+      <ul class="cart-items-list" role="list">
+        @for (item of items(); track item.id) {
+          <li class="cart-item-row repara-card">
+            <div class="item-info">
+              <span class="item-name">{{ item.nombre }}</span>
+              <span class="item-unit-price">
+                Precio unitario: {{ item.precioUnitario | clp }}
+              </span>
+            </div>
+
+            <div class="item-actions">
+              <div class="quantity-stepper" aria-label="Selector de cantidad">
+                <button
+                  type="button"
+                  class="stepper-btn minus-btn"
+                  (click)="decrementar(item.id, item.cantidad)"
+                  [attr.aria-label]="'Disminuir cantidad de ' + item.nombre"
+                >
+                  <i class="pi pi-minus" aria-hidden="true"></i>
+                </button>
+
+                <span class="stepper-value" aria-live="polite">{{ item.cantidad }}</span>
+
+                <button
+                  type="button"
+                  class="stepper-btn plus-btn"
+                  (click)="incrementar(item.id, item.cantidad)"
+                  [attr.aria-label]="'Aumentar cantidad de ' + item.nombre"
+                >
+                  <i class="pi pi-plus" aria-hidden="true"></i>
+                </button>
+              </div>
+
+              <div class="item-subtotal-group">
+                <span class="item-subtotal price-text">{{ item.subtotal | clp }}</span>
+                <button
+                  type="button"
+                  class="delete-item-btn"
+                  (click)="eliminar(item.id)"
+                  [attr.aria-label]="'Eliminar ' + item.nombre + ' del carrito'"
+                >
+                  <i class="pi pi-trash" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  @if (!isEmpty()) {
+    <ng-template pTemplate="footer">
+      <div class="cart-drawer-footer">
+        <div class="total-summary-row">
+          <span class="total-label">Total estimado</span>
+          <span class="total-amount price-text">{{ total() | clp }}</span>
+        </div>
+
+        <p class="transbank-note">
+          <i class="pi pi-shield" aria-hidden="true"></i>
+          Pago 100% seguro procesado por Transbank Webpay Plus
+        </p>
+
+        <div class="footer-actions">
+          <button
+            pButton
+            type="button"
+            label="Pagar con Webpay Plus"
+            icon="pi pi-lock"
+            class="p-button-primary checkout-action-btn"
+            [loading]="isProcessingCheckout()"
+            (click)="onCheckout()"
+          ></button>
+
+          <button
+            pButton
+            type="button"
+            label="Vaciar carrito"
+            icon="pi pi-trash"
+            class="p-button-outlined clear-cart-btn"
+            (click)="vaciar()"
+          ></button>
+        </div>
+      </div>
+    </ng-template>
+  }
+</p-drawer>
