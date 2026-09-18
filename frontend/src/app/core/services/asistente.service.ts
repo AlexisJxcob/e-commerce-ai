@@ -43,9 +43,9 @@ export class AsistenteService {
       }),
       catchError((err) => {
         this.isLoading.set(false);
-        const errorBody: ErrorResponse | undefined = err.error;
+        const errorBody = err?.error;
         const message =
-          errorBody?.message ??
+          (errorBody && typeof errorBody === 'object' && !(errorBody instanceof Error) && typeof errorBody.message === 'string' && errorBody.message) ||
           'No pudimos procesar tu consulta técnica con el asistente. Intenta nuevamente.';
         this.error.set(message);
         return throwError(() => err);

@@ -1,0 +1,409 @@
+<main class="admin-container">
+  <header class="admin-header">
+    <div class="header-titles">
+      <h1 class="admin-title">Panel de Administración</h1>
+      <p class="admin-subtitle">
+        Gestión de catálogo editorial, niveles de stock en tiempo real y motor de IA vectorial.
+      </p>
+    </div>
+
+    <nav class="admin-nav-tabs" role="tablist">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'productos'"
+        (click)="setTab('productos')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'productos'"
+      >
+        <i class="pi pi-box" aria-hidden="true"></i>
+        <span>Inventario y Stock</span>
+        <span class="tab-badge">{{ productos().length }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'categorias'"
+        (click)="setTab('categorias')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'categorias'"
+      >
+        <i class="pi pi-tags" aria-hidden="true"></i>
+        <span>Categorías</span>
+        <span class="tab-badge">{{ categorias().length }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab() === 'ia'"
+        (click)="setTab('ia')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'ia'"
+      >
+        <i class="pi pi-sparkles" aria-hidden="true"></i>
+        <span>Motor de IA y Vectorial</span>
+      </button>
+    </nav>
+  </header>
+
+  @if (successMessage()) {
+    <div class="alert-banner success-banner" role="status">
+      <i class="pi pi-check-circle" aria-hidden="true"></i>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="alert-banner error-banner" role="alert">
+      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <!-- TAB: PRODUCTOS & STOCK -->
+  @if (activeTab() === 'productos') {
+    <section class="admin-tab-content">
+      <div class="toolbar-row">
+        <div class="search-input-wrapper">
+          <i class="pi pi-search search-icon" aria-hidden="true"></i>
+          <input
+            pInputText
+            type="text"
+            placeholder="Buscar por SKU, nombre o descripción..."
+            [value]="searchQuery()"
+            (input)="searchQuery.set($any($event.target).value)"
+            class="admin-search-input"
+          />
+        </div>
+
+        <button
+          pButton
+          type="button"
+          label="Nuevo Producto"
+          icon="pi pi-plus"
+          class="p-button-primary"
+          (click)="abrirCrearProducto()"
+        ></button>
+      </div>
+
+      <div class="table-container repara-card">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th scope="col">SKU</th>
+              <th scope="col">Producto</th>
+              <th scope="col">Categoría</th>
+              <th scope="col">Precio</th>
+              <th scope="col">Stock Disponible</th>
+              <th scope="col" class="th-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (prod of filteredProductos(); track prod.id) {
+              <tr>
+                <td class="cell-sku">{{ prod.sku }}</td>
+                <td class="cell-name">
+                  <div class="name-group">
+                    <span class="product-name">{{ prod.nombre }}</span>
+                    <span class="product-desc">{{ prod.descripcionTecnica }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge-neutral">{{ getNombreCategoria(prod.categoriaId) }}</span>
+                </td>
+                <td class="cell-price price-text">{{ prod.precio | clp }}</td>
+                <td class="cell-stock">
+                  <div class="stock-editor-inline">
+                    <input
+                      type="number"
+                      min="0"
+                      [value]="stockEditingMap()[prod.id] ?? prod.stock"
+                      (input)="onStockInputChange(prod.id, $event)"
+                      class="stock-inline-input"
+                      [attr.aria-label]="'Stock para ' + prod.nombre"
+                    />
+                    <button
+                      type="button"
+                      class="save-stock-btn"
+                      (click)="guardarStock(prod)"
+                      title="Actualizar stock (PATCH)"
+                    >
+                      Guardar
+                    </button>
+                    @if (prod.stock > 0) {
+                      <span class="badge-stock">{{ prod.stock }} un.</span>
+                    } @else {
+                      <span class="badge-error-sm">Sin stock</span>
+                    }
+                  </div>
+                </td>
+                <td class="cell-actions">
+                  <button
+                    type="button"
+                    class="action-icon-btn edit-btn"
+                    (click)="abrirEditarProducto(prod)"
+                    [attr.aria-label]="'Editar ' + prod.nombre"
+                  >
+                    <i class="pi pi-pencil" aria-hidden="true"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="action-icon-btn delete-btn"
+                    (click)="eliminarProducto(prod)"
+                    [attr.aria-label]="'Eliminar ' + prod.nombre"
+                  >
+                    <i class="pi pi-trash" aria-hidden="true"></i>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="empty-table-cell">
+                  No se encontraron productos registrados o coincidentes con la búsqueda.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  <!-- TAB: CATEGORÍAS -->
+  @if (activeTab() === 'categorias') {
+    <section class="admin-tab-content">
+      <div class="toolbar-row">
+        <p class="tab-explanation">
+          Estructura de catálogo jerárquica con soporte para categorías padre y subcategorías.
+        </p>
+
+        <button
+          pButton
+          type="button"
+          label="Nueva Categoría"
+          icon="pi pi-plus"
+          class="p-button-primary"
+          (click)="abrirCrearCategoria()"
+        ></button>
+      </div>
+
+      <div class="categories-grid">
+        @for (cat of categorias(); track cat.id) {
+          <div class="category-card repara-card">
+            <div class="category-card-header">
+              <span class="category-id">#{{ cat.id }}</span>
+              <h2 class="category-name">{{ cat.nombre }}</h2>
+              @if (cat.padreId) {
+                <span class="badge-neutral">Subcategoría de #{{ cat.padreId }}</span>
+              } @else {
+                <span class="badge-neutral">Categoría Principal</span>
+              }
+            </div>
+
+            <p class="category-desc">
+              {{ cat.descripcion || 'Sin descripción adicional registrada.' }}
+            </p>
+
+            <div class="category-card-actions">
+              <button
+                type="button"
+                class="category-delete-btn"
+                (click)="eliminarCategoria(cat)"
+              >
+                <i class="pi pi-trash" aria-hidden="true"></i>
+                <span>Eliminar</span>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <p class="empty-state-text">No hay categorías configuradas en la base de datos.</p>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- TAB: MOTOR DE IA Y VECTORIAL -->
+  @if (activeTab() === 'ia') {
+    <section class="admin-tab-content ai-tab-container">
+      <div class="ai-overview-card repara-card">
+        <div class="ai-overview-header">
+          <div class="ai-icon-box">
+            <i class="pi pi-database" aria-hidden="true"></i>
+          </div>
+          <div class="ai-overview-text">
+            <h2 class="ai-card-title">Mantenimiento de pgvector & Embeddings</h2>
+            <p class="ai-card-desc">
+              El buscador inteligente utiliza representaciones vectoriales densas generadas con el modelo
+              <strong>sentence-transformers/all-MiniLM-L6-v2</strong> (384 dimensiones) indexadas en
+              PostgreSQL mediante el operador de similitud de cosenos <code>&lt;=&gt;</code>.
+            </p>
+          </div>
+        </div>
+
+        <div class="ai-action-box">
+          <button
+            pButton
+            type="button"
+            label="Reindexar Embeddings Pendientes"
+            icon="pi pi-sync"
+            class="p-button-primary reindex-btn"
+            [loading]="isReindexing()"
+            (click)="reindexarEmbeddings()"
+          ></button>
+
+          <p class="ai-action-note">
+            Genera y persiste el vector semántico para todos los productos con embedding nulo.
+          </p>
+        </div>
+
+        @if (reindexResult()) {
+          <div class="reindex-result-banner">
+            <div class="result-metric">
+              <span class="metric-num">{{ reindexResult()?.procesados }}</span>
+              <span class="metric-label">Productos procesados</span>
+            </div>
+            <div class="result-metric">
+              <span class="metric-num">{{ reindexResult()?.pendientes }}</span>
+              <span class="metric-label">Pendientes de indexación</span>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- MODAL: PRODUCTO -->
+  <p-dialog
+    [(visible)]="isProductModalVisible"
+    [modal]="true"
+    [header]="editingProductId() ? 'Editar Producto' : 'Nuevo Producto en Catálogo'"
+    [style]="{ width: '560px', maxWidth: '92vw' }"
+  >
+    <form [formGroup]="productForm" (ngSubmit)="guardarProducto()" class="admin-modal-form">
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label for="p-sku">SKU *</label>
+          <input id="p-sku" pInputText type="text" formControlName="sku" placeholder="Ej: TUB-PVC-001" />
+        </div>
+
+        <div class="form-field">
+          <label for="p-nombre">Nombre Comercial *</label>
+          <input id="p-nombre" pInputText type="text" formControlName="nombre" placeholder="Ej: Tubo PVC 1/2 pulgada" />
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-field">
+          <label for="p-precio">Precio (CLP) *</label>
+          <input id="p-precio" pInputText type="number" formControlName="precio" min="1" />
+        </div>
+
+        <div class="form-field">
+          <label for="p-stock">Stock Inicial *</label>
+          <input id="p-stock" pInputText type="number" formControlName="stock" min="0" />
+        </div>
+
+        <div class="form-field">
+          <label for="p-cat">Categoría *</label>
+          <select id="p-cat" formControlName="categoriaId" class="admin-select">
+            @for (cat of categorias(); track cat.id) {
+              <option [value]="cat.id">{{ cat.nombre }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="p-tec">Descripción Técnica *</label>
+        <textarea
+          id="p-tec"
+          formControlName="descripcionTecnica"
+          rows="3"
+          class="admin-textarea"
+          placeholder="Especificaciones, material, medidas normalizadas..."
+        ></textarea>
+      </div>
+
+      <div class="form-field">
+        <label for="p-col">Descripción Coloquial (Alimenta el índice IA) *</label>
+        <textarea
+          id="p-col"
+          formControlName="descripcionColoquial"
+          rows="3"
+          class="admin-textarea"
+          placeholder="Términos comunes usados por clientes: cañería, fuga, empalme plástico..."
+        ></textarea>
+      </div>
+
+      <div class="modal-footer-actions">
+        <button
+          pButton
+          type="button"
+          label="Cancelar"
+          class="p-button-outlined"
+          (click)="cerrarProductModal()"
+        ></button>
+        <button
+          pButton
+          type="submit"
+          label="Guardar Producto"
+          class="p-button-primary"
+        ></button>
+      </div>
+    </form>
+  </p-dialog>
+
+  <!-- MODAL: CATEGORÍA -->
+  <p-dialog
+    [(visible)]="isCategoryModalVisible"
+    [modal]="true"
+    [header]="editingCategoryId() ? 'Editar Categoría' : 'Nueva Categoría'"
+    [style]="{ width: '480px', maxWidth: '92vw' }"
+  >
+    <form [formGroup]="categoryForm" (ngSubmit)="guardarCategoria()" class="admin-modal-form">
+      <div class="form-field">
+        <label for="c-nombre">Nombre de la Categoría *</label>
+        <input id="c-nombre" pInputText type="text" formControlName="nombre" placeholder="Ej: Gasfitería" />
+      </div>
+
+      <div class="form-field">
+        <label for="c-desc">Descripción</label>
+        <textarea
+          id="c-desc"
+          formControlName="descripcion"
+          rows="3"
+          class="admin-textarea"
+          placeholder="Descripción opcional del rubro..."
+        ></textarea>
+      </div>
+
+      <div class="form-field">
+        <label for="c-padre">Categoría Padre (opcional)</label>
+        <select id="c-padre" formControlName="padreId" class="admin-select">
+          <option [ngValue]="null">Ninguna (Categoría Raíz)</option>
+          @for (cat of categorias(); track cat.id) {
+            <option [value]="cat.id">{{ cat.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="modal-footer-actions">
+        <button
+          pButton
+          type="button"
+          label="Cancelar"
+          class="p-button-outlined"
+          (click)="cerrarCategoryModal()"
+        ></button>
+        <button
+          pButton
+          type="submit"
+          label="Guardar Categoría"
+          class="p-button-primary"
+        ></button>
+      </div>
+    </form>
+  </p-dialog>
+</main>

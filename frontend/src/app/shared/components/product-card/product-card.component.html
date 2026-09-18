@@ -1,4 +1,12 @@
-<article class="product-card repara-card" [class.is-out-of-stock]="!hasStock()">
+<article
+  class="product-card repara-card"
+  [class.is-out-of-stock]="!hasStock()"
+  role="link"
+  tabindex="0"
+  (click)="onCardClick()"
+  (keydown)="onCardKeydown($event)"
+  [attr.aria-label]="'Ver detalle de ' + producto().nombre"
+>
   <header class="card-header">
     <span class="product-sku">{{ producto().sku }}</span>
     @if (hasStock()) {
@@ -33,7 +41,7 @@
       type="button"
       class="p-button-outlined quick-buy-btn"
       [disabled]="!hasStock()"
-      (click)="onQuickBuy()"
+      (click)="onQuickBuy($event)"
       aria-label="Agregar producto al carrito"
     >
       <i class="pi pi-cart-plus btn-icon" aria-hidden="true"></i>

@@ -1,0 +1,139 @@
+<main class="checkout-resultado-container">
+  @if (status() === 'exito') {
+    <section class="voucher-card repara-card" aria-labelledby="voucher-title">
+      <div class="voucher-header">
+        <div class="icon-indicator success-indicator">
+          <i class="pi pi-check" aria-hidden="true"></i>
+        </div>
+        <span class="badge-stock">Transacción Aprobada</span>
+        <h1 id="voucher-title" class="voucher-headline">¡Gracias por tu compra!</h1>
+        <p class="voucher-subtitle">
+          El pago fue procesado correctamente a través de Webpay Plus. Tu pedido ya está en preparación.
+        </p>
+      </div>
+
+      <div class="voucher-receipt">
+        <div class="receipt-row">
+          <span class="receipt-label">Orden de Compra</span>
+          <span class="receipt-value receipt-highlight">#{{ buyOrder() ?? '—' }}</span>
+        </div>
+
+        <div class="receipt-row">
+          <span class="receipt-label">Fecha y Hora</span>
+          <span class="receipt-value">{{ transactionDate | date: 'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+
+        <div class="receipt-row">
+          <span class="receipt-label">Medio de Pago</span>
+          <span class="receipt-value">Transbank Webpay Plus</span>
+        </div>
+
+        @if (token()) {
+          <div class="receipt-row">
+            <span class="receipt-label">Código de Transacción</span>
+            <span class="receipt-value code-value">{{ token() | slice: 0: 24 }}...</span>
+          </div>
+        }
+
+        <div class="receipt-row">
+          <span class="receipt-label">Estado</span>
+          <span class="receipt-value status-approved">
+            <i class="pi pi-circle-fill dot-icon" aria-hidden="true"></i>
+            Aprobado
+          </span>
+        </div>
+
+        @if (pedido()) {
+          <div class="receipt-items-section">
+            <h2 class="items-headline">Detalle de Productos</h2>
+            <ul class="receipt-items-list" role="list">
+              @for (item of pedido()?.items; track item.productoId) {
+                <li class="receipt-item-row">
+                  <span class="item-name-qty">
+                    {{ item.cantidad }}x Producto #{{ item.productoId }}
+                  </span>
+                  <span class="item-subtotal price-text">
+                    {{ item.subtotal | clp }}
+                  </span>
+                </li>
+              }
+            </ul>
+
+            <div class="receipt-total-row">
+              <span class="total-label">Total Pagado</span>
+              <span class="total-amount price-text">{{ pedido()?.total | clp }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="voucher-actions">
+        <a routerLink="/" class="p-button p-button-primary action-btn">
+          <i class="pi pi-arrow-left" aria-hidden="true"></i>
+          <span>Volver a la tienda</span>
+        </a>
+      </div>
+    </section>
+  } @else {
+    <section class="voucher-card repara-card" aria-labelledby="voucher-error-title">
+      <div class="voucher-header">
+        <div class="icon-indicator error-indicator">
+          <i class="pi pi-times" aria-hidden="true"></i>
+        </div>
+        <span class="badge-error">Transacción no completada</span>
+
+        <h1 id="voucher-error-title" class="voucher-headline">
+          @if (status() === 'rechazado') {
+            Pago Rechazado
+          } @else if (status() === 'cancelado') {
+            Pago Cancelado
+          } @else {
+            Error en la Transacción
+          }
+        </h1>
+
+        <p class="voucher-subtitle">
+          @if (status() === 'rechazado') {
+            La transacción fue rechazada por la entidad bancaria emisora de tu tarjeta.
+          } @else if (status() === 'cancelado') {
+            Has cancelado el proceso de pago en la pasarela de Webpay.
+          } @else {
+            Ocurrió un error inesperado al validar la transacción con Transbank.
+          }
+        </p>
+      </div>
+
+      <div class="voucher-receipt">
+        <div class="receipt-row">
+          <span class="receipt-label">Orden de Compra</span>
+          <span class="receipt-value">#{{ buyOrder() ?? '—' }}</span>
+        </div>
+
+        <div class="receipt-row">
+          <span class="receipt-label">Fecha</span>
+          <span class="receipt-value">{{ transactionDate | date: 'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+
+        <div class="receipt-row">
+          <span class="receipt-label">Cobro Realizado</span>
+          <span class="receipt-value">$ 0 (Sin cargos)</span>
+        </div>
+      </div>
+
+      <div class="voucher-actions">
+        <button
+          type="button"
+          class="p-button p-button-primary action-btn"
+          (click)="reintentar()"
+        >
+          <i class="pi pi-refresh" aria-hidden="true"></i>
+          <span>Reintentar compra</span>
+        </button>
+
+        <a routerLink="/" class="p-button p-button-outlined action-btn secondary-btn">
+          <span>Volver al catálogo</span>
+        </a>
+      </div>
+    </section>
+  }
+</main>

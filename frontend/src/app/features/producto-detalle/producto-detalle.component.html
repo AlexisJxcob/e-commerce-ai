@@ -1,0 +1,324 @@
+<main class="detail-page-container">
+  <!-- Breadcrumbs & Navegación -->
+  <nav class="breadcrumb-bar" aria-label="Navegación secundaria">
+    <button
+      type="button"
+      class="back-btn"
+      (click)="volverAlCatalogo()"
+      aria-label="Volver a la página principal"
+    >
+      <i class="pi pi-arrow-left" aria-hidden="true"></i>
+      <span>Volver al catálogo</span>
+    </button>
+    <span class="breadcrumb-separator" aria-hidden="true">/</span>
+    <span class="breadcrumb-current" [title]="producto()?.nombre ?? 'Detalle'">
+      {{ producto()?.nombre ?? 'Cargando producto...' }}
+    </span>
+  </nav>
+
+  <!-- Estado de Carga (Skeleton) -->
+  @if (isLoading()) {
+    <section class="loading-container" aria-busy="true" aria-label="Cargando detalles del producto">
+      <div class="detail-grid">
+        <div class="visual-card skeleton-box skeleton-visual"></div>
+        <div class="info-card skeleton-box skeleton-info">
+          <div class="skeleton-line skeleton-chip"></div>
+          <div class="skeleton-line skeleton-title"></div>
+          <div class="skeleton-line skeleton-rating"></div>
+          <div class="skeleton-line skeleton-price"></div>
+          <div class="skeleton-line skeleton-actions"></div>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- Estado de Error -->
+  @if (!isLoading() && error()) {
+    <section class="error-container repara-card" role="alert">
+      <div class="error-icon-wrap">
+        <i class="pi pi-exclamation-circle error-icon" aria-hidden="true"></i>
+      </div>
+      <h2 class="error-title">No pudimos cargar el producto</h2>
+      <p class="error-message">{{ error() }}</p>
+      <button
+        pButton
+        type="button"
+        class="p-button-outlined"
+        (click)="volverAlCatalogo()"
+      >
+        <i class="pi pi-home" aria-hidden="true"></i>
+        <span>Ir a la tienda</span>
+      </button>
+    </section>
+  }
+
+  <!-- Detalle del Producto -->
+  @if (!isLoading() && producto(); as prod) {
+    <!-- Panel Principal de Producto -->
+    <article class="detail-grid">
+      <!-- Columna Izquierda: Showcase Visual Contextual -->
+      <div class="visual-column">
+        <div class="visual-showcase repara-card">
+          <div class="visual-badge">
+            <i [class]="visualInfo().icono" aria-hidden="true"></i>
+            <span>{{ visualInfo().etiqueta }}</span>
+          </div>
+
+          <div class="icon-hero-circle">
+            <i [class]="visualInfo().icono" class="hero-icon" aria-hidden="true"></i>
+          </div>
+
+          <div class="visual-features">
+            <div class="feature-tag">
+              <i class="pi pi-check-circle" aria-hidden="true"></i>
+              <span>Repuesto certificado</span>
+            </div>
+            <div class="feature-tag">
+              <i class="pi pi-shield" aria-hidden="true"></i>
+              <span>Garantía de compatibilidad</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna Derecha: Información, Precios y Compra -->
+      <div class="info-column">
+        <div class="product-metadata">
+          <span class="product-sku">SKU: {{ prod.sku }}</span>
+          @if (hasStock()) {
+            <span class="badge-stock" aria-label="Stock disponible">
+              <i class="pi pi-check" aria-hidden="true"></i>
+              <span>En stock ({{ prod.stock }} unidades)</span>
+            </span>
+          } @else {
+            <span class="badge-out-of-stock" aria-label="Sin stock disponible">
+              <i class="pi pi-times" aria-hidden="true"></i>
+              <span>Sin stock</span>
+            </span>
+          }
+        </div>
+
+        <h1 class="product-title">{{ prod.nombre }}</h1>
+
+        <!-- Calificación Promedio -->
+        @if (resumenCalificaciones(); as resumen) {
+          <div class="rating-bar-summary" aria-label="Calificación promedio">
+            <div class="stars-row" aria-hidden="true">
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <i
+                  class="pi pi-star-fill star-icon"
+                  [class.is-filled]="star <= Math.round(resumen.promedio)"
+                ></i>
+              }
+            </div>
+            <span class="rating-score">{{ resumen.promedio }}</span>
+            <span class="rating-count">({{ resumen.totalResenas }} opiniones)</span>
+          </div>
+        }
+
+        <!-- Precios -->
+        <div class="price-section">
+          <span class="price-caption">Precio por unidad (IVA incluido)</span>
+          <div class="price-value">{{ prod.precio | clp }}</div>
+        </div>
+
+        <!-- Acciones de Compra -->
+        <div class="purchase-box">
+          <div class="quantity-selector" [class.is-disabled]="!hasStock()">
+            <span class="quantity-label">Cantidad</span>
+            <div class="quantity-controls" role="group" aria-label="Selector de cantidad">
+              <button
+                type="button"
+                class="qty-btn"
+                (click)="decrementQuantity()"
+                [disabled]="!hasStock() || cantidad() <= 1"
+                aria-label="Disminuir cantidad"
+              >
+                <i class="pi pi-minus" aria-hidden="true"></i>
+              </button>
+              <span class="qty-display" aria-live="polite">{{ cantidad() }}</span>
+              <button
+                type="button"
+                class="qty-btn"
+                (click)="incrementQuantity()"
+                [disabled]="!hasStock() || cantidad() >= stockDisponible()"
+                aria-label="Aumentar cantidad"
+              >
+                <i class="pi pi-plus" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="add-to-cart-wrapper">
+            <button
+              pButton
+              type="button"
+              class="add-to-cart-btn"
+              [disabled]="!hasStock() || isAddingToCart()"
+              (click)="addToCart()"
+            >
+              @if (isAddingToCart()) {
+                <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+                <span>Agregando...</span>
+              } @else {
+                <i class="pi pi-cart-plus" aria-hidden="true"></i>
+                <span>Agregar al carrito</span>
+              }
+            </button>
+
+            @if (addedSuccess()) {
+              <div class="added-feedback" role="status">
+                <i class="pi pi-check" aria-hidden="true"></i>
+                <span>¡Producto agregado al carrito!</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Ficha Técnica y Descripción de Uso -->
+    <section class="details-section" aria-label="Descripciones y especificaciones">
+      <div class="specs-grid">
+        <!-- Especificaciones Técnicas -->
+        <div class="spec-card repara-card">
+          <header class="spec-header">
+            <i class="pi pi-sliders-h spec-icon" aria-hidden="true"></i>
+            <h2 class="spec-title">Especificaciones Técnicas</h2>
+          </header>
+          <div class="spec-content">
+            @if (prod.descripcionTecnica) {
+              <p class="spec-text">{{ prod.descripcionTecnica }}</p>
+            } @else {
+              <p class="spec-empty">No se han registrado especificaciones adicionales para este artículo.</p>
+            }
+
+            <dl class="meta-list">
+              <div class="meta-item">
+                <dt>Código SKU</dt>
+                <dd>{{ prod.sku }}</dd>
+              </div>
+              <div class="meta-item">
+                <dt>Disponibilidad</dt>
+                <dd>{{ prod.stock > 0 ? prod.stock + ' en bodega' : 'Agotado' }}</dd>
+              </div>
+              <div class="meta-item">
+                <dt>Garantía</dt>
+                <dd>6 meses legal</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+
+        <!-- Recomendación de Uso Coloquial / Reparación -->
+        <div class="spec-card repara-card advice-card">
+          <header class="spec-header">
+            <i class="pi pi-bolt spec-icon advice-icon" aria-hidden="true"></i>
+            <h2 class="spec-title">¿Cómo y cuándo usarlo?</h2>
+          </header>
+          <div class="spec-content">
+            @if (prod.descripcionColoquial) {
+              <p class="advice-text">{{ prod.descripcionColoquial }}</p>
+            } @else {
+              <p class="advice-text">Producto apto para uso residencial y proyectos de mantención general en el hogar o taller.</p>
+            }
+            <div class="ai-tip-box">
+              <i class="pi pi-sparkles" aria-hidden="true"></i>
+              <span>Recomendación Repara.ai: asegúrate de cortar el suministro antes de intervenir líneas de agua o luz.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sección de Reseñas y Calificaciones -->
+    <section class="reviews-section" aria-label="Opiniones de clientes">
+      <header class="section-heading">
+        <h2 class="section-title">Opiniones y experiencia de uso</h2>
+        <span class="section-subtitle">Testimonios y evaluaciones de compradores que realizaron esta reparación</span>
+      </header>
+
+      @if (resumenCalificaciones(); as resumen) {
+        <div class="reviews-layout">
+          <!-- Columna Resumen Gráfico -->
+          <div class="ratings-overview repara-card">
+            <div class="overview-score">{{ resumen.promedio }}</div>
+            <div class="overview-stars" aria-hidden="true">
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <i
+                  class="pi pi-star-fill star-icon"
+                  [class.is-filled]="star <= Math.round(resumen.promedio)"
+                ></i>
+              }
+            </div>
+            <div class="overview-count">{{ resumen.totalResenas }} evaluaciones verificadas</div>
+
+            <div class="distribution-bars">
+              @for (dist of resumen.distribucion; track dist.estrellas) {
+                <div class="dist-row">
+                  <span class="dist-stars">{{ dist.estrellas }} <i class="pi pi-star-fill"></i></span>
+                  <div class="dist-progress-track">
+                    <div class="dist-progress-fill" [style.width.%]="dist.porcentaje"></div>
+                  </div>
+                  <span class="dist-pct">{{ dist.porcentaje }}%</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Columna Lista de Reseñas -->
+          <div class="reviews-list">
+            @for (res of resenas(); track res.id) {
+              <div class="review-item repara-card">
+                <div class="review-header">
+                  <div class="author-info">
+                    <span class="author-name">{{ res.autor }}</span>
+                    @if (res.compraVerificada) {
+                      <span class="verified-badge">
+                        <i class="pi pi-check-circle" aria-hidden="true"></i>
+                        <span>Compra verificada</span>
+                      </span>
+                    }
+                  </div>
+                  <span class="review-date">{{ res.fecha }}</span>
+                </div>
+
+                <div class="review-stars" aria-hidden="true">
+                  @for (star of [1, 2, 3, 4, 5]; track star) {
+                    <i
+                      class="pi pi-star-fill star-icon"
+                      [class.is-filled]="star <= res.calificacion"
+                    ></i>
+                  }
+                </div>
+
+                <p class="review-comment">{{ res.comentario }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- Sección de Productos Relacionados de la Misma Categoría -->
+    @if (productosRelacionados().length > 0) {
+      <section class="related-section" aria-label="Productos relacionados">
+        <header class="section-heading">
+          <h2 class="section-title">Productos compatibles de la misma categoría</h2>
+          <span class="section-subtitle">Repuestos y herramientas complementarias para completar este trabajo</span>
+        </header>
+
+        <div class="related-grid" role="list">
+          @for (rel of productosRelacionados(); track rel.id) {
+            <div class="grid-item" role="listitem">
+              <app-product-card
+                [producto]="rel"
+                (addToCart)="onAddToCartRelacionado($event)"
+              ></app-product-card>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  }
+</main>

@@ -9,6 +9,8 @@ export class AuthModalService {
   readonly isOpen = signal<boolean>(false);
   readonly mode = signal<AuthModalMode>('login');
 
+  private pendingAction: (() => void) | null = null;
+
   open(mode: AuthModalMode = 'login'): void {
     this.mode.set(mode);
     this.isOpen.set(true);
@@ -24,5 +26,21 @@ export class AuthModalService {
 
   close(): void {
     this.isOpen.set(false);
+  }
+
+  setPendingAction(action: () => void): void {
+    this.pendingAction = action;
+  }
+
+  executePendingAction(): void {
+    if (this.pendingAction) {
+      const action = this.pendingAction;
+      this.pendingAction = null;
+      action();
+    }
+  }
+
+  clearPendingAction(): void {
+    this.pendingAction = null;
   }
 }

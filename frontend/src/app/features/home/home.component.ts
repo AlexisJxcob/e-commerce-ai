@@ -1,11 +1,16 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
+import { SkeletonModule } from 'primeng/skeleton';
 import { HeroSearchComponent } from './components/hero-search';
 import { SearchSkeletonComponent } from './components/search-skeleton';
 import { AiDiagnosisComponent } from './components/ai-diagnosis';
 import { ProductGridComponent } from './components/product-grid';
+import { CategoryCarouselComponent } from './components/category-carousel';
 import { AsistenteService } from '../../core/services/asistente.service';
+import { CarritoService } from '../../core/services/carrito.service';
+import { CatalogoService } from '../../core/services/catalogo.service';
+import { CategoriaConProductos } from '../../core/models/categoria.models';
 import { Producto } from '../../core/models/producto.models';
 
 @Component({
@@ -14,20 +19,49 @@ import { Producto } from '../../core/models/producto.models';
   imports: [
     CommonModule,
     ButtonModule,
+    SkeletonModule,
     HeroSearchComponent,
     SearchSkeletonComponent,
     AiDiagnosisComponent,
-    ProductGridComponent
+    ProductGridComponent,
+    CategoryCarouselComponent
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   readonly asistente = inject(AsistenteService);
+  readonly carritoService = inject(CarritoService);
+  readonly catalogoService = inject(CatalogoService);
+
+  readonly catalogo = signal<CategoriaConProductos[]>([]);
+  readonly isCatalogoLoading = signal<boolean>(true);
+  readonly catalogoError = signal<string | null>(null);
 
   readonly isCompact = computed(() => {
     return this.asistente.isLoading() || this.asistente.hasResult() || !!this.asistente.error();
   });
+
+  ngOnInit(): void {
+    this.cargarCatalogo();
+  }
+
+  cargarCatalogo(): void {
+    this.isCatalogoLoading.set(true);
+    this.catalogoError.set(null);
+
+    this.catalogoService.getCatalogoAgrupado().subscribe({
+      next: (grupos) => {
+        this.catalogo.set(grupos);
+        this.isCatalogoLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar catálogo:', err);
+        this.catalogoError.set('No fue posible cargar el catálogo de productos.');
+        this.isCatalogoLoading.set(false);
+      }
+    });
+  }
 
   onSearch(query: string): void {
     this.asistente.buscar(query).subscribe({
@@ -49,15 +83,17 @@ export class HomeComponent {
   }
 
   onAddKit(): void {
-    // Emitted from AiDiagnosisComponent; prepares kit products for cart in Block 5
     const prods = this.asistente.productos();
-    if (prods.length > 0) {
-      // Future integration with CarritoService in Block 5
+    const available = prods.filter((p) => p.stock > 0);
+    if (available.length > 0) {
+      available.forEach((prod) => {
+        this.carritoService.agregarProducto(prod, 1);
+      });
+      this.carritoService.abrirCarrito();
     }
   }
 
   onAddToCart(producto: Producto): void {
-    // Emitted from ProductGridComponent / ProductCardComponent
-    // Future integration with CarritoService in Block 5
+    this.carritoService.agregarProducto(producto, 1);
   }
 }

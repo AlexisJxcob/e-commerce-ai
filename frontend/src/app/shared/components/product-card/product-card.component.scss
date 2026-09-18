@@ -13,10 +13,19 @@
   border: 1px solid var(--border-subtle); /* #E5E3DD */
   border-radius: var(--radius-card);       /* 10px */
   box-shadow: none !important;             /* Sin sombras difusas */
-  transition: border-color 0.2s ease;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
     border-color: var(--border-hover);     /* #C5C3BC */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  &:focus-visible {
+    border-color: var(--accent-electric);
+    box-shadow: 0 0 0 3px var(--accent-focus-ring) !important;
   }
 
   &.is-out-of-stock {

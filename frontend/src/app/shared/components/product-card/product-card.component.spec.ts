@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { ProductCardComponent } from './product-card.component';
 import { Producto } from '../../../core/models/producto.models';
 
 describe('ProductCardComponent', () => {
   let component: ProductCardComponent;
   let fixture: ComponentFixture<ProductCardComponent>;
+  let router: Router;
 
   const mockProduct: Producto = {
     id: 1,
@@ -19,8 +21,12 @@ describe('ProductCardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ProductCardComponent]
+      imports: [ProductCardComponent],
+      providers: [provideRouter([])]
     }).compileComponents();
+
+    router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
 
     fixture = TestBed.createComponent(ProductCardComponent);
     component = fixture.componentInstance;
@@ -68,6 +74,26 @@ describe('ProductCardComponent', () => {
     });
 
     component.onQuickBuy();
-    expect(emittedProduct).toEqual(mockProduct);
+    expect(emittedProduct as unknown as Producto).toEqual(mockProduct);
+  });
+
+  it('should navigate to product detail on card click', () => {
+    const card = fixture.nativeElement.querySelector('.product-card') as HTMLElement;
+    card.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/productos', mockProduct.id]);
+  });
+
+  it('should navigate to product detail on Enter keydown', () => {
+    const card = fixture.nativeElement.querySelector('.product-card') as HTMLElement;
+    const event = new KeyboardEvent('keydown', { key: 'Enter' });
+    card.dispatchEvent(event);
+    expect(router.navigate).toHaveBeenCalledWith(['/productos', mockProduct.id]);
+  });
+
+  it('should not navigate when clicking quick-buy button', () => {
+    const button = fixture.nativeElement.querySelector('.quick-buy-btn') as HTMLButtonElement;
+    button.click();
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 });
+

@@ -7,6 +7,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthModalService, AuthModalMode } from '../../../core/auth/auth-modal.service';
 import { ErrorResponse } from '../../../core/models/error.models';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-auth-modal',
@@ -62,6 +63,7 @@ export class AuthModalComponent {
     this.isLoading.set(false);
     this.loginForm.reset();
     this.registerForm.reset();
+    this.authModalService.clearPendingAction();
     this.authModalService.close();
   }
 
@@ -77,12 +79,12 @@ export class AuthModalComponent {
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.close();
+        this.authModalService.close();
+        this.authModalService.executePendingAction();
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorBody: ErrorResponse | undefined = err.error;
-        this.errorMessage.set(errorBody?.message ?? 'Credenciales inválidas. Revisa usuario y contraseña.');
+        this.errorMessage.set(this.extractErrorMessage(err, 'Credenciales inválidas. Revisa usuario y contraseña.'));
       }
     });
   }
@@ -109,7 +111,8 @@ export class AuthModalComponent {
         this.authService.login({ username, password }).subscribe({
           next: () => {
             this.isLoading.set(false);
-            this.close();
+            this.authModalService.close();
+            this.authModalService.executePendingAction();
           },
           error: () => {
             this.isLoading.set(false);
@@ -121,14 +124,48 @@ export class AuthModalComponent {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const errorBody: ErrorResponse | undefined = err.error;
-        if (errorBody?.fieldErrors) {
-          const firstError = Object.values(errorBody.fieldErrors)[0];
-          this.errorMessage.set(firstError ?? errorBody.message);
-        } else {
-          this.errorMessage.set(errorBody?.message ?? 'Error al registrar la cuenta. Intenta de nuevo.');
-        }
+        this.errorMessage.set(this.extractErrorMessage(err, 'Error al registrar la cuenta. Intenta de nuevo.'));
       }
     });
+  }
+
+  private extractErrorMessage(err: unknown, fallbackMessage: string): string {
+    const errorObj = err as any;
+    const errorBody = errorObj?.error;
+
+    // 1. Backend structured ErrorResponse (plain object, not JS Error or SyntaxError)
+    if (errorBody && typeof errorBody === 'object' && !(errorBody instanceof Error)) {
+      if (errorBody.fieldErrors && typeof errorBody.fieldErrors === 'object') {
+        const firstError = Object.values(errorBody.fieldErrors)[0];
+        if (typeof firstError === 'string' && firstError.trim().length > 0) {
+          return firstError;
+        }
+      }
+      if (typeof errorBody.message === 'string' && errorBody.message.trim().length > 0) {
+        return errorBody.message;
+      }
+    }
+
+    // 2. HTTP status-specific fallback messages
+    const status = errorObj?.status;
+    if (typeof status === 'number') {
+      if (status === 0) {
+        return 'No se pudo conectar con el servidor. Verifica que el backend esté en ejecución.';
+      }
+      if (status === 409) {
+        return 'Ya existe una cuenta con este nombre de usuario o correo electrónico.';
+      }
+      if (status === 401) {
+        return 'Credenciales inválidas. Revisa usuario y contraseña.';
+      }
+      if (status === 403) {
+        return 'No tienes permisos para realizar esta acción.';
+      }
+      if (status >= 500) {
+        return 'El servicio no está disponible en este momento. Intenta de nuevo más tarde.';
+      }
+    }
+
+    return fallbackMessage;
   }
 }

@@ -1,0 +1,36 @@
+<section class="category-carousel-section" [attr.aria-label]="categoria().nombre">
+  <header class="section-header">
+    <div class="header-content">
+      <div class="title-row">
+        <h3 class="category-title">{{ categoria().nombre }}</h3>
+        <span class="product-count-badge">
+          {{ productos().length }} {{ productos().length === 1 ? 'producto' : 'productos' }}
+        </span>
+      </div>
+      @if (categoria().descripcion) {
+        <p class="category-desc">{{ categoria().descripcion }}</p>
+      }
+    </div>
+  </header>
+
+  <div class="carousel-wrapper">
+    <p-carousel
+      [value]="productos()"
+      [numVisible]="5"
+      [numScroll]="1"
+      [circular]="false"
+      [responsiveOptions]="responsiveOptions"
+      [showIndicators]="productos().length > 5"
+      indicatorsContentClass="custom-indicators"
+    >
+      <ng-template #item let-producto>
+        <div class="carousel-card-item">
+          <app-product-card
+            [producto]="producto"
+            (addToCart)="addToCart.emit($event)"
+          ></app-product-card>
+        </div>
+      </ng-template>
+    </p-carousel>
+  </div>
+</section>

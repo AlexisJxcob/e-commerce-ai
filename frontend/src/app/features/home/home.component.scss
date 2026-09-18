@@ -128,6 +128,97 @@
   min-width: 0;
 }
 
+/* ==========================================================================
+   Catálogo por Categorías (Sección Inferior del Home)
+   ========================================================================== */
+.catalog-section {
+  width: 100%;
+  max-width: 1320px;
+  margin: 2.5rem auto 4rem;
+  padding: 0 1.5rem;
+  animation: layoutEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.catalog-header-bar {
+  margin-bottom: 2.5rem;
+  text-align: left;
+
+  .catalog-main-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 0.4rem;
+    letter-spacing: var(--tracking-tight);
+  }
+
+  .catalog-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+}
+
+.catalog-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+
+  .category-skeleton-block {
+    .skeleton-header {
+      margin-bottom: 1.25rem;
+    }
+
+    .skeleton-cards-row {
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: 1rem;
+
+      @media (min-width: 576px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      @media (min-width: 768px) {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      @media (min-width: 992px) {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      @media (min-width: 1400px) {
+        grid-template-columns: repeat(5, 1fr);
+      }
+    }
+
+    .skeleton-product-item {
+      padding: 1.25rem;
+      background-color: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-card);
+
+      .skeleton-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+      }
+    }
+  }
+}
+
+.catalog-error-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem;
+  background-color: var(--bg-primary);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-card);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
 @keyframes layoutEnter {
   from {
     opacity: 0;

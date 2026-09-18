@@ -50,4 +50,10 @@ describe('HeaderComponent', () => {
     component.logout();
     expect(authService.logout).toHaveBeenCalled();
   });
+
+  it('should call carritoService.abrirCarrito when clicking openCart', () => {
+    spyOn(component.carritoService, 'abrirCarrito');
+    component.openCart();
+    expect(component.carritoService.abrirCarrito).toHaveBeenCalled();
+  });
 });

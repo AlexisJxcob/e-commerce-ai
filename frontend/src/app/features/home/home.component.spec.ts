@@ -1,15 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of } from 'rxjs';
 import { HomeComponent } from './home.component';
 import { AsistenteService } from '../../core/services/asistente.service';
+import { CatalogoService } from '../../core/services/catalogo.service';
 import { BusquedaInteligenteResponse } from '../../core/models/asistente.models';
 import { Producto } from '../../core/models/producto.models';
+import { CategoriaConProductos } from '../../core/models/categoria.models';
 
 describe('HomeComponent', () => {
   let component: HomeComponent;
   let fixture: ComponentFixture<HomeComponent>;
   let asistenteService: AsistenteService;
+  let catalogoService: jasmine.SpyObj<CatalogoService>;
 
   const mockProduct: Producto = {
     id: 10,
@@ -31,11 +35,22 @@ describe('HomeComponent', () => {
     productos: [mockProduct]
   };
 
+  const mockCatalogoGrupos: CategoriaConProductos[] = [
+    {
+      categoria: { id: 1, nombre: 'Herramientas', descripcion: 'Manuales', padreId: null },
+      productos: [mockProduct]
+    }
+  ];
+
   beforeEach(async () => {
+    const catalogoSpy = jasmine.createSpyObj('CatalogoService', ['getCatalogoAgrupado']);
+    catalogoSpy.getCatalogoAgrupado.and.returnValue(of(mockCatalogoGrupos));
+
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
       providers: [
         AsistenteService,
+        { provide: CatalogoService, useValue: catalogoSpy },
         provideHttpClient(),
         provideHttpClientTesting()
       ]
@@ -44,6 +59,7 @@ describe('HomeComponent', () => {
     fixture = TestBed.createComponent(HomeComponent);
     component = fixture.componentInstance;
     asistenteService = TestBed.inject(AsistenteService);
+    catalogoService = TestBed.inject(CatalogoService) as jasmine.SpyObj<CatalogoService>;
     fixture.detectChanges();
   });
 
@@ -94,5 +110,21 @@ describe('HomeComponent', () => {
 
     expect(() => component.onAddKit()).not.toThrow();
     expect(() => component.onAddToCart(mockProduct)).not.toThrow();
+  });
+
+  it('should render catalog section with category carousels when not searching', () => {
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.catalog-section')).toBeTruthy();
+    expect(el.querySelector('app-category-carousel')).toBeTruthy();
+  });
+
+  it('should hide catalog section when search has result', () => {
+    asistenteService.response.set(mockResponse);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.catalog-section')).toBeFalsy();
   });
 });
