@@ -12,6 +12,7 @@ import {
   generarResumenCalificaciones,
   obtenerIconoVisual
 } from './utils/reviews-generator.util';
+import { getProductPresentation, ProductPresentation } from '../../core/utils/product-presentation.util';
 
 @Component({
   selector: 'app-producto-detalle',
@@ -56,6 +57,23 @@ export class ProductoDetalleComponent {
     const prod = this.producto();
     return prod ? obtenerIconoVisual(prod) : { icono: 'pi pi-box', etiqueta: 'Ferretería & Repuestos' };
   });
+
+  readonly presentation = computed<ProductPresentation | null>(() => {
+    const prod = this.producto();
+    return prod ? getProductPresentation(prod) : null;
+  });
+
+  readonly imageLoadFailed = signal<boolean>(false);
+
+  readonly currentHeroImage = computed<string>(() => {
+    const pres = this.presentation();
+    if (!pres) return '';
+    return this.imageLoadFailed() ? pres.fallbackSvg : pres.imagenUrl;
+  });
+
+  onHeroImageError(): void {
+    this.imageLoadFailed.set(true);
+  }
 
   constructor() {
     effect(
