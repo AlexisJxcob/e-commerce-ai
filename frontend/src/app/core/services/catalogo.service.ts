@@ -19,6 +19,16 @@ export class CatalogoService {
     return this.http.get<PageResponse<Producto>>('/api/v1/productos', { params });
   }
 
+  getProductoById(id: number): Observable<Producto> {
+    return this.http.get<Producto>(`/api/v1/productos/${id}`);
+  }
+
+  getProductosPorCategoria(categoriaId: number, limite: number = 8): Observable<Producto[]> {
+    return this.getProductos(0, 100).pipe(
+      map((page) => (page.content ?? []).filter((p) => p.categoriaId === categoriaId).slice(0, limite))
+    );
+  }
+
   getCatalogoAgrupado(): Observable<CategoriaConProductos[]> {
     return forkJoin({
       categorias: this.getCategorias(),

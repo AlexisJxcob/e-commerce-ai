@@ -136,4 +136,26 @@ describe('CatalogoService', () => {
     const reqProd = httpMock.expectOne('/api/v1/productos?page=0&size=100');
     reqProd.flush(mockPage);
   });
+
+  it('should fetch single product by id', () => {
+    service.getProductoById(101).subscribe((product) => {
+      expect(product).toEqual(mockProducts[0]);
+    });
+
+    const req = httpMock.expectOne('/api/v1/productos/101');
+    expect(req.request.method).toBe('GET');
+    req.flush(mockProducts[0]);
+  });
+
+  it('should filter products by category id', () => {
+    service.getProductosPorCategoria(2).subscribe((products) => {
+      expect(products.length).toBe(1);
+      expect(products[0].id).toBe(102);
+    });
+
+    const req = httpMock.expectOne('/api/v1/productos?page=0&size=100');
+    expect(req.request.method).toBe('GET');
+    req.flush(mockPage);
+  });
 });
+
