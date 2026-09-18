@@ -83,4 +83,61 @@
       </div>
     </section>
   }
+
+  <!-- Catálogo por Categorías con Carruseles (visible en la vista inicial sin búsqueda activa) -->
+  @if (!isCompact()) {
+    <section class="catalog-section" aria-label="Catálogo de productos por categoría">
+      <div class="catalog-header-bar">
+        <h2 class="catalog-main-title">Explorá nuestro catálogo</h2>
+        <p class="catalog-subtitle">Herramientas, materiales y repuestos organizados por categoría</p>
+      </div>
+
+      @if (isCatalogoLoading()) {
+        <div class="catalog-skeleton-list">
+          @for (placeholder of [1, 2]; track placeholder) {
+            <div class="category-skeleton-block">
+              <div class="skeleton-header mb-3">
+                <p-skeleton width="220px" height="28px" borderRadius="6px"></p-skeleton>
+                <p-skeleton width="320px" height="16px" styleClass="mt-2" borderRadius="4px"></p-skeleton>
+              </div>
+              <div class="skeleton-cards-row">
+                @for (item of [1, 2, 3, 4, 5]; track item) {
+                  <div class="skeleton-product-item">
+                    <p-skeleton width="100%" height="150px" borderRadius="8px" styleClass="mb-2"></p-skeleton>
+                    <p-skeleton width="50%" height="14px" styleClass="mb-2"></p-skeleton>
+                    <p-skeleton width="90%" height="20px" styleClass="mb-3"></p-skeleton>
+                    <div class="skeleton-footer">
+                      <p-skeleton width="40%" height="22px"></p-skeleton>
+                      <p-skeleton width="36px" height="32px" borderRadius="6px"></p-skeleton>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else if (catalogoError()) {
+        <div class="catalog-error-box">
+          <p>{{ catalogoError() }}</p>
+          <button
+            pButton
+            type="button"
+            label="Reintentar catálogo"
+            class="p-button-outlined p-button-sm"
+            (click)="cargarCatalogo()"
+          ></button>
+        </div>
+      } @else {
+        <div class="catalog-carousels">
+          @for (grupo of catalogo(); track grupo.categoria.id) {
+            <app-category-carousel
+              [categoria]="grupo.categoria"
+              [productos]="grupo.productos"
+              (addToCart)="onAddToCart($event)"
+            ></app-category-carousel>
+          }
+        </div>
+      }
+    </section>
+  }
 </main>
