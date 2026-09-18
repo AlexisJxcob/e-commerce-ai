@@ -1,5 +1,6 @@
 import { Component, computed, inject, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { ButtonModule } from 'primeng/button';
 import { CarritoService } from '../../../core/services/carrito.service';
@@ -16,6 +17,7 @@ import { ClpPipe } from '../../pipes/clp.pipe';
   styleUrl: './cart-drawer.component.scss'
 })
 export class CartDrawerComponent {
+  private readonly router = inject(Router);
   readonly carritoService = inject(CarritoService);
   readonly authService = inject(AuthService);
   readonly authModalService = inject(AuthModalService);
@@ -64,16 +66,8 @@ export class CartDrawerComponent {
     }
 
     this.checkoutTriggered.emit();
-
-    if (!this.authService.isAuthenticated()) {
-      this.authModalService.setPendingAction(() => {
-        this.procederCheckout();
-      });
-      this.authModalService.openLogin();
-      return;
-    }
-
-    this.procederCheckout();
+    this.carritoService.cerrarCarrito();
+    this.router.navigate(['/checkout']);
   }
 
   procederCheckout(): void {

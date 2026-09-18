@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { Router } from '@angular/router';
 import { CartDrawerComponent } from './cart-drawer.component';
 import { CarritoService } from '../../../core/services/carrito.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -17,6 +18,7 @@ describe('CartDrawerComponent', () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockAuthModalService: jasmine.SpyObj<AuthModalService>;
   let mockPedidoService: jasmine.SpyObj<PedidoService>;
+  let mockRouter: jasmine.SpyObj<Router>;
 
   const mockCart: Carrito = {
     items: [
@@ -73,6 +75,8 @@ describe('CartDrawerComponent', () => {
     mockPedidoService.crearDesdeCarrito.and.returnValue(of(mockPedido));
     mockPedidoService.iniciarPago.and.returnValue(of(mockCheckout));
 
+    mockRouter = jasmine.createSpyObj('Router', ['navigate']);
+
     await TestBed.configureTestingModule({
       imports: [CartDrawerComponent],
       providers: [
@@ -80,7 +84,8 @@ describe('CartDrawerComponent', () => {
         { provide: CarritoService, useValue: mockCarritoService },
         { provide: AuthService, useValue: mockAuthService },
         { provide: AuthModalService, useValue: mockAuthModalService },
-        { provide: PedidoService, useValue: mockPedidoService }
+        { provide: PedidoService, useValue: mockPedidoService },
+        { provide: Router, useValue: mockRouter }
       ]
     }).compileComponents();
 
@@ -118,16 +123,14 @@ describe('CartDrawerComponent', () => {
     expect(mockCarritoService.vaciarCarrito).toHaveBeenCalled();
   });
 
-  it('should open login and set pending action if guest clicks checkout', () => {
-    mockAuthService.isAuthenticated.and.returnValue(false);
+  it('should close cart drawer and navigate to /checkout on onCheckout', () => {
     component.onCheckout();
-    expect(mockAuthModalService.setPendingAction).toHaveBeenCalled();
-    expect(mockAuthModalService.openLogin).toHaveBeenCalled();
+    expect(mockCarritoService.cerrarCarrito).toHaveBeenCalled();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/checkout']);
   });
 
-  it('should orchestrate webpay checkout if authenticated', () => {
-    mockAuthService.isAuthenticated.and.returnValue(true);
-    component.onCheckout();
+  it('should orchestrate webpay checkout when procederCheckout is called directly', () => {
+    component.procederCheckout();
 
     expect(mockPedidoService.crearDesdeCarrito).toHaveBeenCalled();
     expect(mockPedidoService.iniciarPago).toHaveBeenCalledWith(99);

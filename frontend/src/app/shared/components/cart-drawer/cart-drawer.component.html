@@ -91,8 +91,8 @@
     }
   </div>
 
-  @if (!isEmpty()) {
-    <ng-template pTemplate="footer">
+  <ng-template pTemplate="footer">
+    @if (!isEmpty()) {
       <div class="cart-drawer-footer">
         <div class="total-summary-row">
           <span class="total-label">Total estimado</span>
@@ -115,8 +115,9 @@
           <button
             pButton
             type="button"
-            label="Pagar con Webpay Plus"
-            icon="pi pi-lock"
+            label="Ir a pagar"
+            icon="pi pi-arrow-right"
+            iconPos="right"
             class="p-button-primary checkout-action-btn"
             [loading]="isProcessingCheckout()"
             (click)="onCheckout()"
@@ -132,6 +133,6 @@
           ></button>
         </div>
       </div>
-    </ng-template>
-  }
+    }
+  </ng-template>
 </p-drawer>
