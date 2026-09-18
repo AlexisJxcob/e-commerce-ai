@@ -13,9 +13,18 @@ export const routes: Routes = [
       import('./features/producto-detalle').then((m) => m.ProductoDetalleComponent)
   },
   {
+    path: 'checkout',
+    loadComponent: () =>
+      import('./features/checkout').then((m) => m.CheckoutComponent)
+  },
+  {
     path: 'checkout/resultado',
     loadComponent: () =>
       import('./features/checkout').then((m) => m.CheckoutResultadoComponent)
+  },
+  {
+    path: 'carrito',
+    redirectTo: 'checkout'
   },
   {
     path: 'pedidos',

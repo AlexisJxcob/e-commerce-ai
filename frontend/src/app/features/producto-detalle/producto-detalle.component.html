@@ -64,8 +64,13 @@
             <span>{{ visualInfo().etiqueta }}</span>
           </div>
 
-          <div class="icon-hero-circle">
-            <i [class]="visualInfo().icono" class="hero-icon" aria-hidden="true"></i>
+          <div class="product-hero-image-wrap">
+            <img
+              [src]="currentHeroImage()"
+              [alt]="prod.nombre"
+              class="product-hero-image"
+              (error)="onHeroImageError()"
+            />
           </div>
 
           <div class="visual-features">
@@ -84,6 +89,9 @@
       <!-- Columna Derecha: Información, Precios y Compra -->
       <div class="info-column">
         <div class="product-metadata">
+          @if (presentation()?.marca; as marca) {
+            <span class="product-brand-chip">{{ marca }}</span>
+          }
           <span class="product-sku">SKU: {{ prod.sku }}</span>
           @if (hasStock()) {
             <span class="badge-stock" aria-label="Stock disponible">
@@ -116,10 +124,46 @@
           </div>
         }
 
-        <!-- Precios -->
+        <!-- Precios Sodimac Style -->
         <div class="price-section">
           <span class="price-caption">Precio por unidad (IVA incluido)</span>
-          <div class="price-value">{{ prod.precio | clp }}</div>
+          <div class="detail-price-row">
+            <div class="price-value">{{ prod.precio | clp }}</div>
+            @if (presentation()?.descuentoPorcentaje; as desc) {
+              @if (desc > 0) {
+                <span class="discount-pill">-{{ desc }}%</span>
+              }
+            }
+          </div>
+          @if (presentation()?.precioAnterior; as anterior) {
+            @if (anterior > prod.precio) {
+              <div class="previous-price-row">
+                <span class="previous-price">Normal: {{ anterior | clp }}</span>
+              </div>
+            }
+          }
+          <div class="financing-tag">
+            <span class="card-type-chip">CMR</span>
+            <span class="financing-text">Hasta {{ presentation()?.cuotasSinInteres ?? 6 }} cuotas sin interés</span>
+          </div>
+        </div>
+
+        <!-- Opciones de Entrega / Despacho estilo Sodimac -->
+        <div class="shipping-info-card">
+          <div class="shipping-item">
+            <i class="pi pi-building shipping-icon" aria-hidden="true"></i>
+            <div class="shipping-details">
+              <span class="shipping-title">Retiro en tienda GRATIS</span>
+              <span class="shipping-subtitle">Disponible en sucursal principal</span>
+            </div>
+          </div>
+          <div class="shipping-item">
+            <i class="pi pi-truck shipping-icon" aria-hidden="true"></i>
+            <div class="shipping-details">
+              <span class="shipping-title">Despacho a domicilio</span>
+              <span class="shipping-subtitle">Envío prioritario en 24-48 hrs</span>
+            </div>
+          </div>
         </div>
 
         <!-- Acciones de Compra -->

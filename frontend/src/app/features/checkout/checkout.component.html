@@ -1,0 +1,706 @@
+<div class="checkout-page-container">
+  <!-- Stepper Header (Inspirado en el flujo Entel) -->
+  <header class="checkout-stepper-header">
+    <div class="stepper-nav-wrapper">
+      <button type="button" class="back-link-btn" (click)="seguirComprando()">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i>
+        <span>Volver a la tienda</span>
+      </button>
+
+      <nav class="stepper-track" aria-label="Progreso de la compra">
+        <ol class="stepper-list">
+          @for (step of steps; track step.id) {
+            <li
+              class="stepper-item"
+              [class.active]="currentStep() === step.id"
+              [class.completed]="isStepCompleted(step.id)"
+              (click)="setStep(step.id)"
+            >
+              <div class="step-indicator">
+                @if (isStepCompleted(step.id)) {
+                  <i class="pi pi-check step-check" aria-hidden="true"></i>
+                } @else {
+                  <span class="step-num">{{ step.number }}</span>
+                }
+              </div>
+              <span class="step-title">{{ step.label }}</span>
+            </li>
+          }
+        </ol>
+      </nav>
+    </div>
+  </header>
+
+  @if (isEmpty()) {
+    <!-- Empty Cart State -->
+    <main class="checkout-empty-container">
+      <div class="empty-card repara-card">
+        <div class="empty-icon-circle">
+          <i class="pi pi-shopping-cart" aria-hidden="true"></i>
+        </div>
+        <h2>Tu carrito está vacío</h2>
+        <p>No tienes productos en el carrito para procesar una compra.</p>
+        <button
+          pButton
+          type="button"
+          label="Explorar catálogo de ferretería"
+          icon="pi pi-search"
+          class="p-button-primary"
+          (click)="seguirComprando()"
+        ></button>
+      </div>
+    </main>
+  } @else {
+    <!-- Main Checkout Grid -->
+    <main class="checkout-main-grid">
+      <!-- Left Column: Current Step Content -->
+      <section class="checkout-steps-column">
+        <!-- ================= PASO 1: RESUMEN ================= -->
+        @if (currentStep() === 'resumen') {
+          <div class="step-card repara-card">
+            <div class="step-card-header">
+              <div class="header-icon-box">
+                <i class="pi pi-shopping-bag" aria-hidden="true"></i>
+              </div>
+              <div>
+                <h1 class="step-main-title">Resumen de tu compra</h1>
+                <p class="step-sub-title">Revisa los productos de ferretería agregados antes de continuar con tus datos.</p>
+              </div>
+            </div>
+
+            <div class="cart-items-table">
+              <div class="table-head">
+                <span>Producto</span>
+                <span>Cantidad</span>
+                <span class="text-right">Subtotal</span>
+              </div>
+
+              <div class="table-body">
+                @for (item of items(); track item.id) {
+                  <div class="item-table-row">
+                    <div class="item-meta">
+                      <div class="product-badge-icon">
+                        <i class="pi pi-wrench" aria-hidden="true"></i>
+                      </div>
+                      <div class="item-details">
+                        <span class="item-name">{{ item.nombre }}</span>
+                        <span class="item-unit-price">Precio unitario: {{ item.precioUnitario | clp }}</span>
+                      </div>
+                    </div>
+
+                    <div class="quantity-control">
+                      <div class="stepper-box">
+                        <button
+                          type="button"
+                          class="step-btn"
+                          (click)="decrementar(item.id, item.cantidad)"
+                          [attr.aria-label]="'Disminuir ' + item.nombre"
+                        >
+                          <i class="pi pi-minus" aria-hidden="true"></i>
+                        </button>
+                        <span class="step-val">{{ item.cantidad }}</span>
+                        <button
+                          type="button"
+                          class="step-btn"
+                          (click)="incrementar(item.id, item.cantidad)"
+                          [attr.aria-label]="'Aumentar ' + item.nombre"
+                        >
+                          <i class="pi pi-plus" aria-hidden="true"></i>
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        class="remove-btn"
+                        (click)="eliminar(item.id)"
+                        title="Eliminar producto"
+                      >
+                        <i class="pi pi-trash" aria-hidden="true"></i>
+                      </button>
+                    </div>
+
+                    <div class="item-subtotal-cell text-right">
+                      <span class="subtotal-val price-text">{{ item.subtotal | clp }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="step-actions">
+              <button
+                type="button"
+                class="btn-secondary-custom"
+                (click)="seguirComprando()"
+              >
+                <i class="pi pi-plus" aria-hidden="true"></i>
+                <span>Agregar más productos</span>
+              </button>
+
+              <button
+                pButton
+                type="button"
+                label="Continuar a mis datos"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                class="p-button-primary step-next-btn"
+                (click)="avanzarADatos()"
+              ></button>
+            </div>
+          </div>
+        }
+
+        <!-- ================= PASO 2: DATOS DEL CLIENTE ================= -->
+        @if (currentStep() === 'datos') {
+          <div class="step-card repara-card">
+            <div class="step-card-header">
+              <div class="header-icon-box">
+                <i class="pi pi-user" aria-hidden="true"></i>
+              </div>
+              <div>
+                <h1 class="step-main-title">Datos del comprador</h1>
+                <p class="step-sub-title">Ingresa tus datos personales para la emisión de la boleta y entrega de tu pedido.</p>
+              </div>
+            </div>
+
+            <form [formGroup]="datosForm" (ngSubmit)="avanzarAEntrega()" class="checkout-form">
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="nombres" class="form-label">Nombres <span class="required-star">*</span></label>
+                  <input
+                    id="nombres"
+                    type="text"
+                    pInputText
+                    formControlName="nombres"
+                    placeholder="Ej. Alexis"
+                    class="form-input"
+                    [class.ng-invalid]="datosForm.get('nombres')?.invalid && datosForm.get('nombres')?.touched"
+                  />
+                  @if (datosForm.get('nombres')?.invalid && datosForm.get('nombres')?.touched) {
+                    <span class="error-text">Ingresa tus nombres (mínimo 2 caracteres).</span>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="apellidos" class="form-label">Apellidos <span class="required-star">*</span></label>
+                  <input
+                    id="apellidos"
+                    type="text"
+                    pInputText
+                    formControlName="apellidos"
+                    placeholder="Ej. González Silva"
+                    class="form-input"
+                    [class.ng-invalid]="datosForm.get('apellidos')?.invalid && datosForm.get('apellidos')?.touched"
+                  />
+                  @if (datosForm.get('apellidos')?.invalid && datosForm.get('apellidos')?.touched) {
+                    <span class="error-text">Ingresa tus apellidos completos.</span>
+                  }
+                </div>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label for="rut" class="form-label">RUT <span class="required-star">*</span></label>
+                  <input
+                    id="rut"
+                    type="text"
+                    pInputText
+                    formControlName="rut"
+                    placeholder="12.345.678-K"
+                    (blur)="onRutBlur()"
+                    class="form-input"
+                    [class.ng-invalid]="datosForm.get('rut')?.invalid && datosForm.get('rut')?.touched"
+                  />
+                  @if (datosForm.get('rut')?.invalid && datosForm.get('rut')?.touched) {
+                    <span class="error-text">Ingresa un RUT chileno válido con dígito verificador.</span>
+                  }
+                </div>
+
+                <div class="form-group">
+                  <label for="telefono" class="form-label">Teléfono de contacto <span class="required-star">*</span></label>
+                  <input
+                    id="telefono"
+                    type="tel"
+                    pInputText
+                    formControlName="telefono"
+                    placeholder="+56 9 1234 5678"
+                    class="form-input"
+                    [class.ng-invalid]="datosForm.get('telefono')?.invalid && datosForm.get('telefono')?.touched"
+                  />
+                  @if (datosForm.get('telefono')?.invalid && datosForm.get('telefono')?.touched) {
+                    <span class="error-text">Ingresa un número telefónico de contacto válido.</span>
+                  }
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="email" class="form-label">Correo electrónico <span class="required-star">*</span></label>
+                <input
+                  id="email"
+                  type="email"
+                  pInputText
+                  formControlName="email"
+                  placeholder="ejemplo@correo.cl"
+                  class="form-input"
+                  [class.ng-invalid]="datosForm.get('email')?.invalid && datosForm.get('email')?.touched"
+                />
+                <span class="input-hint">Te enviaremos el comprobante y detalle de retiro/envío a este correo.</span>
+                @if (datosForm.get('email')?.invalid && datosForm.get('email')?.touched) {
+                  <span class="error-text">Ingresa un correo electrónico válido.</span>
+                }
+              </div>
+
+              <div class="step-actions">
+                <button
+                  type="button"
+                  class="btn-secondary-custom"
+                  (click)="setStep('resumen')"
+                >
+                  <i class="pi pi-arrow-left" aria-hidden="true"></i>
+                  <span>Volver al resumen</span>
+                </button>
+
+                <button
+                  pButton
+                  type="submit"
+                  label="Continuar a método de entrega"
+                  icon="pi pi-arrow-right"
+                  iconPos="right"
+                  class="p-button-primary step-next-btn"
+                ></button>
+              </div>
+            </form>
+          </div>
+        }
+
+        <!-- ================= PASO 3: ENTREGA ================= -->
+        @if (currentStep() === 'entrega') {
+          <div class="step-card repara-card">
+            <div class="step-card-header">
+              <div class="header-icon-box">
+                <i class="pi pi-map-marker" aria-hidden="true"></i>
+              </div>
+              <div>
+                <h1 class="step-main-title">Método de entrega</h1>
+                <p class="step-sub-title">Elige si prefieres retirar gratuitamente en nuestro local o recibir en tu domicilio.</p>
+              </div>
+            </div>
+
+            <!-- Delivery Choice Cards (Estilo Entel) -->
+            <div class="delivery-options-grid">
+              <!-- Opción 1: Retiro en Local -->
+              <div
+                class="delivery-choice-card"
+                [class.selected]="metodoEntrega() === 'retiro'"
+                (click)="metodoEntrega.set('retiro')"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="metodoEntrega.set('retiro')"
+              >
+                <div class="choice-card-header">
+                  <div class="radio-indicator">
+                    <span class="radio-dot" [class.active]="metodoEntrega() === 'retiro'"></span>
+                  </div>
+                  <div class="choice-title-group">
+                    <div class="title-with-badge">
+                      <span class="choice-title">Retiro en local</span>
+                      <span class="badge-free">Gratis</span>
+                    </div>
+                    <span class="choice-subtitle">Listo para retirar en 2 horas hábiles</span>
+                  </div>
+                </div>
+
+                <div class="branch-info-box">
+                  <div class="branch-name">
+                    <i class="pi pi-building" aria-hidden="true"></i>
+                    <strong>{{ sucursalLocal.nombre }}</strong>
+                  </div>
+                  <p class="branch-address">{{ sucursalLocal.direccion }}, {{ sucursalLocal.comuna }}</p>
+                  <div class="branch-schedule">
+                    <i class="pi pi-clock" aria-hidden="true"></i>
+                    <span>{{ sucursalLocal.horario }}</span>
+                  </div>
+                  <div class="branch-phone">
+                    <i class="pi pi-phone" aria-hidden="true"></i>
+                    <span>Mesa de ayuda sucursal: {{ sucursalLocal.telefono }}</span>
+                  </div>
+                </div>
+
+                <div class="branch-pickup-terms">
+                  <i class="pi pi-info-circle" aria-hidden="true"></i>
+                  <span>Para retirar, solo debes presentar tu cédula de identidad y el número de pedido enviado a tu correo.</span>
+                </div>
+              </div>
+
+              <!-- Opción 2: Despacho a Domicilio -->
+              <div
+                class="delivery-choice-card"
+                [class.selected]="metodoEntrega() === 'despacho'"
+                (click)="metodoEntrega.set('despacho')"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="metodoEntrega.set('despacho')"
+              >
+                <div class="choice-card-header">
+                  <div class="radio-indicator">
+                    <span class="radio-dot" [class.active]="metodoEntrega() === 'despacho'"></span>
+                  </div>
+                  <div class="choice-title-group">
+                    <div class="title-with-badge">
+                      <span class="choice-title">Despacho a domicilio</span>
+                      <span class="badge-shipping-cost">
+                        {{ costoDespacho() === 0 ? 'Envío Gratis' : (costoDespacho() | clp) }}
+                      </span>
+                    </div>
+                    <span class="choice-subtitle">Entrega estimada en 24 a 48 horas hábiles</span>
+                  </div>
+                </div>
+
+                @if (metodoEntrega() === 'despacho') {
+                  <form [formGroup]="despachoForm" class="despacho-form-inner" (click)="$event.stopPropagation()">
+                    <div class="form-row-2">
+                      <div class="form-group">
+                        <label for="region" class="form-label">Región <span class="required-star">*</span></label>
+                        <select id="region" formControlName="region" class="form-select">
+                          @for (reg of regionesChile; track reg) {
+                            <option [value]="reg">{{ reg }}</option>
+                          }
+                        </select>
+                      </div>
+
+                      <div class="form-group">
+                        <label for="comuna" class="form-label">Comuna <span class="required-star">*</span></label>
+                        <input
+                          id="comuna"
+                          type="text"
+                          pInputText
+                          formControlName="comuna"
+                          placeholder="Ej. Providencia, Las Condes, Santiago"
+                          class="form-input"
+                          [class.ng-invalid]="despachoForm.get('comuna')?.invalid && despachoForm.get('comuna')?.touched"
+                        />
+                        @if (despachoForm.get('comuna')?.invalid && despachoForm.get('comuna')?.touched) {
+                          <span class="error-text">Indica la comuna de despacho.</span>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label for="direccion" class="form-label">Calle y número <span class="required-star">*</span></label>
+                      <input
+                        id="direccion"
+                        type="text"
+                        pInputText
+                        formControlName="direccion"
+                        placeholder="Ej. Av. Andrés Bello 2450"
+                        class="form-input"
+                        [class.ng-invalid]="despachoForm.get('direccion')?.invalid && despachoForm.get('direccion')?.touched"
+                      />
+                      @if (despachoForm.get('direccion')?.invalid && despachoForm.get('direccion')?.touched) {
+                        <span class="error-text">Indica tu dirección completa.</span>
+                      }
+                    </div>
+
+                    <div class="form-row-2">
+                      <div class="form-group">
+                        <label for="depto" class="form-label">Depto / Casa / Oficina (Opcional)</label>
+                        <input
+                          id="depto"
+                          type="text"
+                          pInputText
+                          formControlName="depto"
+                          placeholder="Ej. Depto 402, Torre B"
+                          class="form-input"
+                        />
+                      </div>
+
+                      <div class="form-group">
+                        <label for="referencias" class="form-label">Referencias para el repartidor (Opcional)</label>
+                        <input
+                          id="referencias"
+                          type="text"
+                          pInputText
+                          formControlName="referencias"
+                          placeholder="Ej. Dejar en conserjería"
+                          class="form-input"
+                        />
+                      </div>
+                    </div>
+                  </form>
+                }
+              </div>
+            </div>
+
+            <!-- Retiro por un tercero -->
+            @if (metodoEntrega() === 'retiro') {
+              <div class="third-party-box">
+                <label class="checkbox-container">
+                  <input
+                    type="checkbox"
+                    [checked]="retiraTercero()"
+                    (change)="toggleRetiraTercero($event)"
+                  />
+                  <span class="checkbox-label-text">Autorizar a otra persona para retirar el pedido</span>
+                </label>
+
+                @if (retiraTercero()) {
+                  <form [formGroup]="terceroForm" class="tercero-form-inner">
+                    <div class="form-row-2">
+                      <div class="form-group">
+                        <label for="nombreTercero" class="form-label">Nombre completo de quien retira</label>
+                        <input
+                          id="nombreTercero"
+                          type="text"
+                          pInputText
+                          formControlName="nombreTercero"
+                          placeholder="Ej. Carlos Valenzuela"
+                          class="form-input"
+                        />
+                      </div>
+                      <div class="form-group">
+                        <label for="rutTercero" class="form-label">RUT de quien retira</label>
+                        <input
+                          id="rutTercero"
+                          type="text"
+                          pInputText
+                          formControlName="rutTercero"
+                          placeholder="11.222.333-4"
+                          (blur)="onTerceroRutBlur()"
+                          class="form-input"
+                        />
+                      </div>
+                    </div>
+                  </form>
+                }
+              </div>
+            }
+
+            <div class="step-actions">
+              <button
+                type="button"
+                class="btn-secondary-custom"
+                (click)="setStep('datos')"
+              >
+                <i class="pi pi-arrow-left" aria-hidden="true"></i>
+                <span>Volver a mis datos</span>
+              </button>
+
+              <button
+                pButton
+                type="button"
+                label="Continuar al pago"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                class="p-button-primary step-next-btn"
+                (click)="avanzarAPago()"
+              ></button>
+            </div>
+          </div>
+        }
+
+        <!-- ================= PASO 4: PAGO WEBPAY PLUS ================= -->
+        @if (currentStep() === 'pago') {
+          <div class="step-card repara-card">
+            <div class="step-card-header">
+              <div class="header-icon-box">
+                <i class="pi pi-credit-card" aria-hidden="true"></i>
+              </div>
+              <div>
+                <h1 class="step-main-title">Confirmación y Medio de Pago</h1>
+                <p class="step-sub-title">Revisa el resumen final y paga de forma segura a través de Webpay Plus.</p>
+              </div>
+            </div>
+
+            <!-- Gateway Card -->
+            <div class="payment-gateway-card selected">
+              <div class="gateway-header">
+                <div class="gateway-title-row">
+                  <div class="radio-indicator">
+                    <span class="radio-dot active"></span>
+                  </div>
+                  <div class="gateway-brand">
+                    <span class="gateway-name">Transbank Webpay Plus</span>
+                    <span class="badge-official">Pasarela Oficial</span>
+                  </div>
+                </div>
+
+                <div class="card-badges-row">
+                  <span class="card-badge redcompra">Redcompra</span>
+                  <span class="card-badge visa">Visa</span>
+                  <span class="card-badge mastercard">Mastercard</span>
+                  <span class="card-badge amex">Amex</span>
+                </div>
+              </div>
+
+              <div class="gateway-body">
+                <p class="gateway-description">
+                  Paga al instante con tarjetas de débito, crédito o prepago de cualquier banco nacional.
+                  Serás redirigido a la pasarela segura de Transbank para ingresar tus claves de forma encriptada.
+                </p>
+                <div class="security-seal">
+                  <i class="pi pi-shield" aria-hidden="true"></i>
+                  <span>Encriptación TLS 256 bits y certificación PCI-DSS</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confirmation Review Boxes -->
+            <div class="review-boxes-grid">
+              <div class="review-box">
+                <div class="review-box-header">
+                  <span class="review-box-title">
+                    <i class="pi pi-user" aria-hidden="true"></i>
+                    Datos de contacto
+                  </span>
+                  <button type="button" class="btn-edit-step" (click)="setStep('datos')">
+                    Editar
+                  </button>
+                </div>
+                <div class="review-box-content">
+                  <strong>{{ datosForm.get('nombres')?.value }} {{ datosForm.get('apellidos')?.value }}</strong>
+                  <span>RUT: {{ datosForm.get('rut')?.value }}</span>
+                  <span>Email: {{ datosForm.get('email')?.value }}</span>
+                  <span>Tel: {{ datosForm.get('telefono')?.value }}</span>
+                </div>
+              </div>
+
+              <div class="review-box">
+                <div class="review-box-header">
+                  <span class="review-box-title">
+                    <i class="pi pi-map-marker" aria-hidden="true"></i>
+                    Entrega
+                  </span>
+                  <button type="button" class="btn-edit-step" (click)="setStep('entrega')">
+                    Editar
+                  </button>
+                </div>
+                <div class="review-box-content">
+                  @if (metodoEntrega() === 'retiro') {
+                    <span class="delivery-highlight">Retiro en local (Gratis)</span>
+                    <span>{{ sucursalLocal.nombre }}</span>
+                    <span>{{ sucursalLocal.direccion }}, {{ sucursalLocal.comuna }}</span>
+                    @if (retiraTercero() && terceroForm.get('nombreTercero')?.value) {
+                      <span class="third-party-note">
+                        Autorizado: {{ terceroForm.get('nombreTercero')?.value }} ({{ terceroForm.get('rutTercero')?.value }})
+                      </span>
+                    }
+                  } @else {
+                    <span class="delivery-highlight">Despacho a domicilio</span>
+                    <span>{{ despachoForm.get('direccion')?.value }}</span>
+                    @if (despachoForm.get('depto')?.value) {
+                      <span>{{ despachoForm.get('depto')?.value }}</span>
+                    }
+                    <span>{{ despachoForm.get('comuna')?.value }}, {{ despachoForm.get('region')?.value }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="terms-acceptance-box">
+              <label class="checkbox-container">
+                <input
+                  type="checkbox"
+                  [checked]="terminosAceptados()"
+                  (change)="toggleTerminos($event)"
+                />
+                <span class="checkbox-label-text">
+                  Declaro que he leído y acepto los <strong>Términos y Condiciones de compra</strong> y las
+                  <strong>Políticas de Privacidad</strong> de Repara.ai.
+                </span>
+              </label>
+            </div>
+
+            @if (errorMessage()) {
+              <div class="checkout-error-banner" role="alert">
+                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                <span>{{ errorMessage() }}</span>
+              </div>
+            }
+
+            <div class="step-actions">
+              <button
+                type="button"
+                class="btn-secondary-custom"
+                (click)="setStep('entrega')"
+                [disabled]="isProcessing()"
+              >
+                <i class="pi pi-arrow-left" aria-hidden="true"></i>
+                <span>Volver a entrega</span>
+              </button>
+
+              <button
+                pButton
+                type="button"
+                label="Pagar con Webpay Plus"
+                icon="pi pi-lock"
+                class="p-button-primary pay-now-btn"
+                [loading]="isProcessing()"
+                [disabled]="!terminosAceptados() || isProcessing()"
+                (click)="procesarPago()"
+              ></button>
+            </div>
+          </div>
+        }
+      </section>
+
+      <!-- Right Column: Sticky Order Summary (Sidebar estilo Entel) -->
+      <aside class="checkout-summary-sidebar">
+        <div class="summary-card repara-card sticky-sidebar">
+          <div class="summary-card-header">
+            <h2 class="summary-title">Resumen de compra</h2>
+            <span class="badge-neutral">{{ itemCount() }} {{ itemCount() === 1 ? 'producto' : 'productos' }}</span>
+          </div>
+
+          <ul class="summary-items-list" role="list">
+            @for (item of items(); track item.id) {
+              <li class="summary-item-row">
+                <div class="summary-item-info">
+                  <span class="summary-item-name">{{ item.nombre }}</span>
+                  <span class="summary-item-qty">Cant: {{ item.cantidad }} × {{ item.precioUnitario | clp }}</span>
+                </div>
+                <span class="summary-item-subtotal price-text">{{ item.subtotal | clp }}</span>
+              </li>
+            }
+          </ul>
+
+          <div class="summary-totals-breakdown">
+            <div class="totals-line">
+              <span class="totals-label">Subtotal productos</span>
+              <span class="totals-val">{{ subtotal() | clp }}</span>
+            </div>
+
+            <div class="totals-line">
+              <span class="totals-label">Entrega / Despacho</span>
+              @if (costoDespacho() === 0) {
+                <span class="totals-val free-highlight">Gratis</span>
+              } @else {
+                <span class="totals-val">{{ costoDespacho() | clp }}</span>
+              }
+            </div>
+
+            <div class="totals-line-final">
+              <span class="final-label">Total a pagar</span>
+              <span class="final-val price-text">{{ total() | clp }}</span>
+            </div>
+          </div>
+
+          <div class="summary-trust-assurances">
+            <div class="assurance-item">
+              <i class="pi pi-shield" aria-hidden="true"></i>
+              <span>Pago 100% protegido con Transbank</span>
+            </div>
+            <div class="assurance-item">
+              <i class="pi pi-verified" aria-hidden="true"></i>
+              <span>Boleta o Factura electrónica automática</span>
+            </div>
+            <div class="assurance-item">
+              <i class="pi pi-replay" aria-hidden="true"></i>
+              <span>Garantía técnica de ferretería en todos los productos</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  }
+</div>

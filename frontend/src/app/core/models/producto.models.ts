@@ -7,6 +7,14 @@ export interface Producto {
   precio: number;
   stock: number;
   categoriaId: number | null;
+  imagenUrl?: string | null;
+  marca?: string | null;
+  precioAnterior?: number | null;
+  descuentoPorcentaje?: number | null;
+  rating?: number | null;
+  reviewCount?: number | null;
+  cuotasSinInteres?: number | null;
+  patrocinado?: boolean | null;
 }
 
 export interface ProductoRequest {
