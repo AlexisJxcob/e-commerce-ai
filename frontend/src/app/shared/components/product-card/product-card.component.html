@@ -7,35 +7,78 @@
   (keydown)="onCardKeydown($event)"
   [attr.aria-label]="'Ver detalle de ' + producto().nombre"
 >
-  <header class="card-header">
-    <span class="product-sku">{{ producto().sku }}</span>
-    @if (hasStock()) {
-      <span class="badge-stock" aria-label="Stock disponible">
-        <i class="pi pi-check" aria-hidden="true"></i>
-        <span>Stock: {{ producto().stock }}</span>
-      </span>
-    } @else {
-      <span class="badge-out-of-stock" aria-label="Sin stock disponible">
-        <span>Sin stock</span>
-      </span>
-    }
-  </header>
-
-  <div class="card-body">
-    <h4 class="product-name" [title]="producto().nombre">{{ producto().nombre }}</h4>
-    @if (producto().descripcionColoquial) {
-      <p class="product-description">{{ producto().descripcionColoquial }}</p>
-    } @else if (producto().descripcionTecnica) {
-      <p class="product-description">{{ producto().descripcionTecnica }}</p>
-    }
-  </div>
-
-  <footer class="card-footer">
-    <div class="price-wrapper">
-      <span class="price-label">Precio</span>
-      <span class="price-text">{{ producto().precio | clp }}</span>
+  <!-- Contenedor Visual de Imagen (1:1 Cuadrado limpio estilo Sodimac) -->
+  <div class="card-media">
+    <div class="card-badges">
+      @if (hasStock()) {
+        <span class="badge-stock" aria-label="Stock disponible">
+          <i class="pi pi-check" aria-hidden="true"></i>
+          <span>Stock: {{ producto().stock }}</span>
+        </span>
+      } @else {
+        <span class="badge-out-of-stock" aria-label="Sin stock disponible">
+          <span>Sin stock</span>
+        </span>
+      }
     </div>
 
+    <img
+      [src]="currentImage()"
+      [alt]="producto().nombre"
+      (error)="onImageError()"
+      class="product-thumb"
+      loading="lazy"
+    />
+  </div>
+
+  <!-- Información del Producto -->
+  <div class="card-body">
+    <div class="brand-row">
+      <span class="product-brand">{{ presentation().marca }}</span>
+      <span class="product-sku">{{ producto().sku }}</span>
+    </div>
+
+    <h4 class="product-name" [title]="producto().nombre">{{ producto().nombre }}</h4>
+
+    <!-- Calificación / Estrellas -->
+    <div class="rating-row" [attr.aria-label]="'Calificación ' + presentation().rating + ' de 5'">
+      <div class="stars-list" aria-hidden="true">
+        @for (star of [1, 2, 3, 4, 5]; track star) {
+          <i
+            class="pi pi-star-fill star-icon"
+            [class.is-filled]="star <= Math.round(presentation().rating)"
+          ></i>
+        }
+      </div>
+      <span class="rating-score">{{ presentation().rating }}</span>
+      <span class="rating-count">({{ presentation().reviewCount }})</span>
+    </div>
+
+    <!-- Jerarquía de Precios Sodimac -->
+    <div class="pricing-block">
+      <div class="main-price-line">
+        <span class="price-text">{{ producto().precio | clp }}</span>
+        @if (presentation().descuentoPorcentaje > 0) {
+          <span class="discount-pill">-{{ presentation().descuentoPorcentaje }}%</span>
+        }
+      </div>
+
+      @if (presentation().precioAnterior > producto().precio) {
+        <div class="previous-price-line">
+          <span class="previous-price">{{ presentation().precioAnterior | clp }}</span>
+        </div>
+      }
+    </div>
+
+    <!-- Tag de Cuotas / Financiamiento -->
+    <div class="financing-tag">
+      <span class="card-type-chip">CMR</span>
+      <span class="financing-text">{{ presentation().cuotasSinInteres }} cuotas sin interés</span>
+    </div>
+  </div>
+
+  <!-- Footer con botón de compra rápida y sponsor -->
+  <footer class="card-footer">
     <button
       pButton
       type="button"
@@ -47,5 +90,9 @@
       <i class="pi pi-cart-plus btn-icon" aria-hidden="true"></i>
       <span class="btn-text">Agregar</span>
     </button>
+
+    @if (presentation().patrocinado) {
+      <span class="sponsored-label">Patrocinado</span>
+    }
   </footer>
 </article>
