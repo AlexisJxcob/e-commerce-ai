@@ -12,6 +12,8 @@ import { BadgeModule } from 'primeng/badge';
 import { TableModule } from 'primeng/table';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { SelectModule } from 'primeng/select';
+import { TextareaModule } from 'primeng/textarea';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { AdminService } from '../../core/services/admin.service';
 import { Producto, ProductoRequest } from '../../core/models/producto.models';
@@ -37,6 +39,8 @@ export type AdminTab = 'productos' | 'categorias' | 'ia';
     TableModule,
     IconFieldModule,
     InputIconModule,
+    SelectModule,
+    TextareaModule,
     ClpPipe
 ],
     templateUrl: './admin.component.html',
@@ -101,6 +105,15 @@ export class AdminComponent implements OnInit {
         p.sku.toLowerCase().includes(q) ||
         p.descripcionColoquial.toLowerCase().includes(q)
     );
+  });
+
+  // Categories available to be chosen as parent (prevent cyclic self-parenting)
+  readonly categoriasDisponiblesComoPadre = computed(() => {
+    const currentId = this.editingCategoryId();
+    if (!currentId) {
+      return this.categorias();
+    }
+    return this.categorias().filter((c) => c.id !== currentId);
   });
 
   ngOnInit(): void {
@@ -234,10 +247,20 @@ export class AdminComponent implements OnInit {
             list.map((p) => (p.id === updated.id ? updated : p))
           );
           this.cerrarProductModal();
-          this.successMessage.set(`Producto "${updated.nombre}" modificado.`);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Producto actualizado',
+            detail: `Producto "${updated.nombre}" actualizado correctamente.`,
+            life: 3000
+          });
         },
         error: (err) => {
-          this.errorMessage.set(err?.error?.message ?? 'Error al actualizar producto.');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al actualizar',
+            detail: err?.error?.message ?? 'Error al actualizar producto.',
+            life: 4000
+          });
         }
       });
     } else {
@@ -245,10 +268,20 @@ export class AdminComponent implements OnInit {
         next: (created) => {
           this.productos.update((list) => [created, ...list]);
           this.cerrarProductModal();
-          this.successMessage.set(`Producto "${created.nombre}" creado exitosamente.`);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Producto creado',
+            detail: `Producto "${created.nombre}" creado exitosamente.`,
+            life: 3000
+          });
         },
         error: (err) => {
-          this.errorMessage.set(err?.error?.message ?? 'Error al crear producto.');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al crear',
+            detail: err?.error?.message ?? 'Error al crear producto.',
+            life: 4000
+          });
         }
       });
     }
@@ -325,10 +358,20 @@ export class AdminComponent implements OnInit {
             list.map((c) => (c.id === updated.id ? updated : c))
           );
           this.cerrarCategoryModal();
-          this.successMessage.set(`Categoría "${updated.nombre}" actualizada.`);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Categoría actualizada',
+            detail: `Categoría "${updated.nombre}" actualizada.`,
+            life: 3000
+          });
         },
         error: (err) => {
-          this.errorMessage.set(err?.error?.message ?? 'Error al actualizar categoría.');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al actualizar',
+            detail: err?.error?.message ?? 'Error al actualizar categoría.',
+            life: 4000
+          });
         }
       });
     } else {
@@ -336,10 +379,20 @@ export class AdminComponent implements OnInit {
         next: (created) => {
           this.categorias.update((list) => [...list, created]);
           this.cerrarCategoryModal();
-          this.successMessage.set(`Categoría "${created.nombre}" creada.`);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Categoría creada',
+            detail: `Categoría "${created.nombre}" creada con éxito.`,
+            life: 3000
+          });
         },
         error: (err) => {
-          this.errorMessage.set(err?.error?.message ?? 'Error al crear categoría.');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al crear',
+            detail: err?.error?.message ?? 'Error al crear categoría.',
+            life: 4000
+          });
         }
       });
     }

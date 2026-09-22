@@ -294,39 +294,47 @@
     [(visible)]="isProductModalVisible"
     [modal]="true"
     [header]="editingProductId() ? 'Editar Producto' : 'Nuevo Producto en Catálogo'"
-    [style]="{ width: '560px', maxWidth: '92vw' }"
+    [style]="{ width: '580px', maxWidth: '94vw' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="cerrarProductModal()"
   >
     <form [formGroup]="productForm" (ngSubmit)="guardarProducto()" class="admin-modal-form">
       <div class="form-grid-2">
         <div class="form-field">
           <label for="p-sku">SKU *</label>
-          <input id="p-sku" pInputText type="text" formControlName="sku" placeholder="Ej: TUB-PVC-001" />
+          <input id="p-sku" pInputText type="text" formControlName="sku" placeholder="Ej: TUB-PVC-001" class="w-full" />
         </div>
 
         <div class="form-field">
           <label for="p-nombre">Nombre Comercial *</label>
-          <input id="p-nombre" pInputText type="text" formControlName="nombre" placeholder="Ej: Tubo PVC 1/2 pulgada" />
+          <input id="p-nombre" pInputText type="text" formControlName="nombre" placeholder="Ej: Tubo PVC 1/2 pulgada" class="w-full" />
         </div>
       </div>
 
       <div class="form-grid-3">
         <div class="form-field">
           <label for="p-precio">Precio (CLP) *</label>
-          <input id="p-precio" pInputText type="number" formControlName="precio" min="1" />
+          <p-inputnumber id="p-precio" formControlName="precio" [min]="1" prefix="$ " styleClass="w-full"></p-inputnumber>
         </div>
 
         <div class="form-field">
           <label for="p-stock">Stock Inicial *</label>
-          <input id="p-stock" pInputText type="number" formControlName="stock" min="0" />
+          <p-inputnumber id="p-stock" formControlName="stock" [min]="0" styleClass="w-full"></p-inputnumber>
         </div>
 
         <div class="form-field">
           <label for="p-cat">Categoría *</label>
-          <select id="p-cat" formControlName="categoriaId" class="admin-select">
-            @for (cat of categorias(); track cat.id) {
-              <option [value]="cat.id">{{ cat.nombre }}</option>
-            }
-          </select>
+          <p-select
+            id="p-cat"
+            formControlName="categoriaId"
+            [options]="categorias()"
+            optionLabel="nombre"
+            optionValue="id"
+            placeholder="Seleccionar categoría"
+            styleClass="w-full"
+            appendTo="body"
+          ></p-select>
         </div>
       </div>
 
@@ -334,9 +342,11 @@
         <label for="p-tec">Descripción Técnica *</label>
         <textarea
           id="p-tec"
+          pTextarea
           formControlName="descripcionTecnica"
           rows="3"
-          class="admin-textarea"
+          class="w-full"
+          [autoResize]="true"
           placeholder="Especificaciones, material, medidas normalizadas..."
         ></textarea>
       </div>
@@ -345,27 +355,29 @@
         <label for="p-col">Descripción Coloquial (Alimenta el índice IA) *</label>
         <textarea
           id="p-col"
+          pTextarea
           formControlName="descripcionColoquial"
           rows="3"
-          class="admin-textarea"
+          class="w-full"
+          [autoResize]="true"
           placeholder="Términos comunes usados por clientes: cañería, fuga, empalme plástico..."
         ></textarea>
       </div>
 
       <div class="modal-footer-actions">
-        <button
-          pButton
+        <p-button
           type="button"
           label="Cancelar"
-          class="p-button-outlined"
-          (click)="cerrarProductModal()"
-        ></button>
-        <button
-          pButton
+          [outlined]="true"
+          severity="secondary"
+          (onClick)="cerrarProductModal()"
+        ></p-button>
+        <p-button
           type="submit"
           label="Guardar Producto"
-          class="p-button-primary"
-        ></button>
+          icon="pi pi-check"
+          severity="primary"
+        ></p-button>
       </div>
     </form>
   </p-dialog>
@@ -375,49 +387,59 @@
     [(visible)]="isCategoryModalVisible"
     [modal]="true"
     [header]="editingCategoryId() ? 'Editar Categoría' : 'Nueva Categoría'"
-    [style]="{ width: '480px', maxWidth: '92vw' }"
+    [style]="{ width: '480px', maxWidth: '94vw' }"
+    [draggable]="false"
+    [resizable]="false"
+    (onHide)="cerrarCategoryModal()"
   >
     <form [formGroup]="categoryForm" (ngSubmit)="guardarCategoria()" class="admin-modal-form">
       <div class="form-field">
         <label for="c-nombre">Nombre de la Categoría *</label>
-        <input id="c-nombre" pInputText type="text" formControlName="nombre" placeholder="Ej: Gasfitería" />
+        <input id="c-nombre" pInputText type="text" formControlName="nombre" placeholder="Ej: Gasfitería" class="w-full" />
       </div>
 
       <div class="form-field">
         <label for="c-desc">Descripción</label>
         <textarea
           id="c-desc"
+          pTextarea
           formControlName="descripcion"
           rows="3"
-          class="admin-textarea"
+          class="w-full"
+          [autoResize]="true"
           placeholder="Descripción opcional del rubro..."
         ></textarea>
       </div>
 
       <div class="form-field">
         <label for="c-padre">Categoría Padre (opcional)</label>
-        <select id="c-padre" formControlName="padreId" class="admin-select">
-          <option [ngValue]="null">Ninguna (Categoría Raíz)</option>
-          @for (cat of categorias(); track cat.id) {
-            <option [value]="cat.id">{{ cat.nombre }}</option>
-          }
-        </select>
+        <p-select
+          id="c-padre"
+          formControlName="padreId"
+          [options]="categoriasDisponiblesComoPadre()"
+          optionLabel="nombre"
+          optionValue="id"
+          placeholder="Ninguna (Categoría Raíz)"
+          [showClear]="true"
+          styleClass="w-full"
+          appendTo="body"
+        ></p-select>
       </div>
 
       <div class="modal-footer-actions">
-        <button
-          pButton
+        <p-button
           type="button"
           label="Cancelar"
-          class="p-button-outlined"
-          (click)="cerrarCategoryModal()"
-        ></button>
-        <button
-          pButton
+          [outlined]="true"
+          severity="secondary"
+          (onClick)="cerrarCategoryModal()"
+        ></p-button>
+        <p-button
           type="submit"
           label="Guardar Categoría"
-          class="p-button-primary"
-        ></button>
+          icon="pi pi-check"
+          severity="primary"
+        ></p-button>
       </div>
     </form>
   </p-dialog>
