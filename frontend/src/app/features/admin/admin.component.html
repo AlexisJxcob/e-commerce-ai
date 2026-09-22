@@ -191,34 +191,35 @@
           Estructura de catálogo jerárquica con soporte para categorías padre y subcategorías.
         </p>
 
-        <button
-          pButton
+        <p-button
           type="button"
           label="Nueva Categoría"
           icon="pi pi-plus"
-          class="p-button-primary"
-          (click)="abrirCrearCategoria()"
-        ></button>
+          severity="primary"
+          (onClick)="abrirCrearCategoria()"
+        ></p-button>
       </div>
 
       <div class="categories-grid">
         @for (cat of categorias(); track cat.id) {
-          <div class="category-card repara-card">
+          <p-card styleClass="category-card">
             <div class="category-card-header">
-              <span class="category-id">#{{ cat.id }}</span>
-              <h2 class="category-name">{{ cat.nombre }}</h2>
-              @if (cat.padreId) {
-                <span class="badge-neutral">Subcategoría de #{{ cat.padreId }}</span>
-              } @else {
-                <span class="badge-neutral">Categoría Principal</span>
-              }
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <span class="category-id font-mono text-sm font-bold text-color-secondary">#{{ cat.id }}</span>
+                @if (cat.padreId) {
+                  <p-tag [value]="'Subcategoría de #' + cat.padreId" severity="secondary"></p-tag>
+                } @else {
+                  <p-tag value="Categoría Principal" severity="info"></p-tag>
+                }
+              </div>
+              <h3 class="category-name font-semibold text-lg m-0">{{ cat.nombre }}</h3>
             </div>
 
-            <p class="category-desc">
+            <p class="category-desc text-sm text-color-secondary my-3">
               {{ cat.descripcion || 'Sin descripción adicional registrada.' }}
             </p>
 
-            <div class="category-card-actions">
+            <div class="category-card-actions pt-2 border-top-1 border-surface">
               <p-button
                 type="button"
                 icon="pi pi-trash"
@@ -229,9 +230,12 @@
                 (onClick)="eliminarCategoria(cat)"
               ></p-button>
             </div>
-          </div>
+          </p-card>
         } @empty {
-          <p class="empty-state-text">No hay categorías configuradas en la base de datos.</p>
+          <div class="empty-state-card text-center p-6 w-full">
+            <i class="pi pi-tags text-3xl mb-2 text-color-secondary"></i>
+            <p class="empty-state-text">No hay categorías configuradas en la base de datos.</p>
+          </div>
         }
       </div>
         </section>
