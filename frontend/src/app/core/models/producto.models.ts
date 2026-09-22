@@ -1,3 +1,12 @@
+/**
+ * Producto tal como lo entrega el backend.
+ *
+ * Sólo campos reales del contrato (`ProductoResponseDTO`). Antes este modelo
+ * declaraba `marca`, `precioAnterior`, `descuentoPorcentaje`, `rating`,
+ * `reviewCount`, `cuotasSinInteres` y `patrocinado`, que el servidor nunca
+ * envió: se rellenaban con un PRNG en el navegador. Si el backend llega a
+ * exponerlos, se agregan aquí con su origen real.
+ */
 export interface Producto {
   id: number;
   sku: string;
@@ -8,13 +17,6 @@ export interface Producto {
   stock: number;
   categoriaId: number | null;
   imagenUrl?: string | null;
-  marca?: string | null;
-  precioAnterior?: number | null;
-  descuentoPorcentaje?: number | null;
-  rating?: number | null;
-  reviewCount?: number | null;
-  cuotasSinInteres?: number | null;
-  patrocinado?: boolean | null;
 }
 
 export interface ProductoRequest {

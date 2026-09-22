@@ -1,92 +1,53 @@
-<article
-  class="product-card repara-card"
-  [class.is-out-of-stock]="!hasStock()"
-  role="link"
-  tabindex="0"
-  (click)="onCardClick()"
-  (keydown)="onCardKeydown($event)"
-  [attr.aria-label]="'Ver detalle de ' + producto().nombre"
->
-  <!-- Contenedor Visual de Imagen (1:1 Cuadrado limpio estilo Sodimac) -->
-  <div class="card-media">
-    <div class="card-badges">
-      <p-tag
-        [severity]="hasStock() ? 'success' : 'danger'"
-        [value]="hasStock() ? 'Stock: ' + producto().stock : 'Sin stock'"
-        [icon]="hasStock() ? 'pi pi-check' : 'pi pi-times'"
-        styleClass="stock-tag"
-      ></p-tag>
-    </div>
+<article class="product-card" [class.is-out-of-stock]="!hasStock()">
+  <a
+    class="card-link"
+    [routerLink]="['/productos', producto().id]"
+    [attr.aria-label]="'Ver ficha técnica de ' + producto().nombre + ', SKU ' + producto().sku"
+  >
+    <span class="card-plate">
+      <img
+        class="product-thumb"
+        [src]="imagen()"
+        alt=""
+        aria-hidden="true"
+        width="320"
+        height="320"
+        loading="lazy"
+        decoding="async"
+        (error)="onImageError()"
+      />
+    </span>
 
-    <img
-      [src]="currentImage()"
-      [alt]="producto().nombre"
-      (error)="onImageError()"
-      class="product-thumb"
-      loading="lazy"
-    />
-  </div>
+    <span class="card-body">
+      <span class="card-meta">
+        <span class="product-sku">SKU {{ producto().sku }}</span>
+        <span class="stock-flag" [class.is-out]="!hasStock()">
+          <i [class]="hasStock() ? 'pi pi-check' : 'pi pi-times'" aria-hidden="true"></i>
+          {{ hasStock() ? producto().stock + ' disponibles' : 'Sin stock' }}
+        </span>
+      </span>
 
-  <!-- Información del Producto -->
-  <div class="card-body">
-    <div class="brand-row">
-      <span class="product-brand">{{ presentation().marca }}</span>
-      <span class="product-sku">{{ producto().sku }}</span>
-    </div>
+      <span class="product-name">{{ producto().nombre }}</span>
 
-    <h4 class="product-name" [title]="producto().nombre">{{ producto().nombre }}</h4>
+      <span class="price-line">
+        <span class="price-value price-text">{{ producto().precio | clp }}</span>
+        <span class="price-note">IVA incluido</span>
+      </span>
+    </span>
+  </a>
 
-    <!-- Calificación / Estrellas -->
-    <div class="rating-row" [attr.aria-label]="'Calificación ' + presentation().rating + ' de 5'">
-      <p-rating
-        [ngModel]="presentation().rating"
-        [readonly]="true"
-        styleClass="product-rating"
-      ></p-rating>
-      <span class="rating-score">{{ presentation().rating }}</span>
-      <span class="rating-count">({{ presentation().reviewCount }})</span>
-    </div>
-
-    <!-- Jerarquía de Precios Sodimac -->
-    <div class="pricing-block">
-      <div class="main-price-line">
-        <span class="price-text">{{ producto().precio | clp }}</span>
-        @if (presentation().descuentoPorcentaje > 0) {
-          <span class="discount-pill">-{{ presentation().descuentoPorcentaje }}%</span>
-        }
-      </div>
-
-      @if (presentation().precioAnterior > producto().precio) {
-        <div class="previous-price-line">
-          <span class="previous-price">{{ presentation().precioAnterior | clp }}</span>
-        </div>
-      }
-    </div>
-
-    <!-- Tag de Cuotas / Financiamiento -->
-    <div class="financing-tag">
-      <span class="card-type-chip">CMR</span>
-      <span class="financing-text">{{ presentation().cuotasSinInteres }} cuotas sin interés</span>
-    </div>
-  </div>
-
-  <!-- Footer con botón de compra rápida y sponsor -->
   <footer class="card-footer">
     <p-button
       type="button"
       variant="outlined"
       severity="primary"
       size="small"
-      icon="pi pi-cart-plus"
-      label="Agregar"
+      icon="pi pi-plus"
+      label="Agregar al carro"
       [disabled]="!hasStock()"
       (onClick)="onQuickBuy($event)"
-      styleClass="w-full quick-buy-btn"
-      [attr.aria-label]="'Agregar ' + producto().nombre + ' al carrito'"
+      styleClass="quick-buy-btn"
+      [attr.aria-label]="'Agregar ' + producto().nombre + ' al carro'"
     ></p-button>
-
-    @if (presentation().patrocinado) {
-      <span class="sponsored-label">Patrocinado</span>
-    }
   </footer>
 </article>

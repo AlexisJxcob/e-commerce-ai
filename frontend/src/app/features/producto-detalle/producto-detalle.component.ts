@@ -1,12 +1,9 @@
-import { Component, computed, effect, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { TagModule } from 'primeng/tag';
-import { RatingModule } from 'primeng/rating';
 import { SkeletonModule } from 'primeng/skeleton';
-import { ProgressBarModule } from 'primeng/progressbar';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { Producto } from '../../core/models/producto.models';
 import { CatalogoService } from '../../core/services/catalogo.service';
@@ -14,11 +11,11 @@ import { CarritoService } from '../../core/services/carrito.service';
 import { ClpPipe } from '../../shared/pipes/clp.pipe';
 import { ProductCardComponent } from '../../shared/components/product-card/product-card.component';
 import {
-  generarResenas,
-  generarResumenCalificaciones,
-  obtenerIconoVisual
-} from './utils/reviews-generator.util';
-import { getProductPresentation, ProductPresentation } from '../../core/utils/product-presentation.util';
+  CategoriaVisual,
+  obtenerCategoriaVisual,
+  placaTecnica,
+  PlateTheme
+} from '../../core/utils/product-visual.util';
 
 @Component({
     selector: 'app-producto-detalle',
@@ -26,10 +23,7 @@ import { getProductPresentation, ProductPresentation } from '../../core/utils/pr
       CommonModule,
       FormsModule,
       ButtonModule,
-      TagModule,
-      RatingModule,
       SkeletonModule,
-      ProgressBarModule,
       InputNumberModule,
       ClpPipe,
       ProductCardComponent
@@ -38,8 +32,7 @@ import { getProductPresentation, ProductPresentation } from '../../core/utils/pr
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './producto-detalle.component.scss'
 })
-export class ProductoDetalleComponent {
-  protected readonly Math = Math;
+export class ProductoDetalleComponent implements OnDestroy {
   private readonly catalogoService = inject(CatalogoService);
   private readonly carritoService = inject(CarritoService);
   private readonly router = inject(Router);
@@ -53,59 +46,62 @@ export class ProductoDetalleComponent {
   readonly cantidad = signal<number>(1);
   readonly isAddingToCart = signal<boolean>(false);
   readonly addedSuccess = signal<boolean>(false);
+  readonly addError = signal<string | null>(null);
 
   readonly productosRelacionados = signal<Producto[]>([]);
-  readonly isLoadingRelacionados = signal<boolean>(false);
 
   readonly hasStock = computed(() => (this.producto()?.stock ?? 0) > 0);
   readonly stockDisponible = computed(() => this.producto()?.stock ?? 0);
 
-  readonly resenas = computed(() => {
+  /** Texto que anuncia el estado real a lectores de pantalla. */
+  readonly estadoAnunciado = computed(() => {
+    if (this.isLoading()) return 'Cargando ficha del producto';
+    if (this.error()) return `Error: ${this.error()}`;
     const prod = this.producto();
-    return prod ? generarResenas(prod) : [];
+    return prod ? `Ficha de ${prod.nombre} cargada` : '';
   });
 
-  readonly resumenCalificaciones = computed(() => {
+  readonly visualInfo = computed<CategoriaVisual>(() => {
     const prod = this.producto();
-    return prod ? generarResumenCalificaciones(prod) : null;
+    return prod
+      ? obtenerCategoriaVisual(prod)
+      : { icono: 'pi pi-box', etiqueta: 'Ferretería y repuestos', tema: 'general' as PlateTheme };
   });
 
-  readonly visualInfo = computed(() => {
+  private readonly imageLoadFailed = signal<boolean>(false);
+
+  readonly imagen = computed<string>(() => {
     const prod = this.producto();
-    return prod ? obtenerIconoVisual(prod) : { icono: 'pi pi-box', etiqueta: 'Ferretería & Repuestos' };
+    if (!prod) return '';
+    if (this.imageLoadFailed()) {
+      return placaTecnica(obtenerCategoriaVisual(prod).tema);
+    }
+    return prod.imagenUrl?.trim() || placaTecnica(obtenerCategoriaVisual(prod).tema);
   });
 
-  readonly presentation = computed<ProductPresentation | null>(() => {
-    const prod = this.producto();
-    return prod ? getProductPresentation(prod) : null;
-  });
-
-  readonly imageLoadFailed = signal<boolean>(false);
-
-  readonly currentHeroImage = computed<string>(() => {
-    const pres = this.presentation();
-    if (!pres) return '';
-    return this.imageLoadFailed() ? pres.fallbackSvg : pres.imagenUrl;
-  });
-
-  onHeroImageError(): void {
-    this.imageLoadFailed.set(true);
-  }
+  private feedbackTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    effect(
-      () => {
-        const rawId = this.id();
-        const numId = Number(rawId);
-        if (!isNaN(numId) && numId > 0) {
-          this.cargarProducto(numId);
-        } else {
-          this.error.set('El identificador del producto no es válido.');
-          this.isLoading.set(false);
-        }
-      },
-      { allowSignalWrites: true }
-    );
+    effect(() => {
+      const numId = Number(this.id());
+      if (!Number.isNaN(numId) && numId > 0) {
+        this.cargarProducto(numId);
+      } else {
+        this.error.set('El identificador del producto no es válido.');
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.feedbackTimer) {
+      clearTimeout(this.feedbackTimer);
+    }
+  }
+
+  onHeroImageError(): void {
+    // Sólo afecta a la imagen actual: se resetea al cargar otro producto.
+    this.imageLoadFailed.set(true);
   }
 
   cargarProducto(id: number): void {
@@ -113,6 +109,10 @@ export class ProductoDetalleComponent {
     this.error.set(null);
     this.cantidad.set(1);
     this.addedSuccess.set(false);
+    this.addError.set(null);
+    // Sin esto, una foto fallida contaminaba el siguiente producto.
+    this.imageLoadFailed.set(false);
+    this.productosRelacionados.set([]);
 
     this.catalogoService.getProductoById(id).subscribe({
       next: (prod) => {
@@ -120,71 +120,58 @@ export class ProductoDetalleComponent {
         this.isLoading.set(false);
         if (prod.categoriaId != null) {
           this.cargarProductosRelacionados(prod.categoriaId, prod.id);
-        } else {
-          this.productosRelacionados.set([]);
         }
       },
       error: (err) => {
         this.isLoading.set(false);
-        if (err.status === 404) {
-          this.error.set('El producto solicitado no fue encontrado en el catálogo.');
-        } else {
-          this.error.set('Ocurrió un error al cargar la información del producto.');
-        }
+        this.error.set(
+          err?.status === 404
+            ? 'El producto solicitado no existe en el catálogo.'
+            : 'Ocurrió un error al cargar la información del producto.'
+        );
       }
     });
   }
 
   cargarProductosRelacionados(categoriaId: number, currentProductId: number): void {
-    this.isLoadingRelacionados.set(true);
     this.catalogoService.getProductosPorCategoria(categoriaId, 8).subscribe({
       next: (prods) => {
-        this.productosRelacionados.set(
-          prods.filter((p) => p.id !== currentProductId).slice(0, 4)
-        );
-        this.isLoadingRelacionados.set(false);
+        this.productosRelacionados.set(prods.filter((p) => p.id !== currentProductId).slice(0, 4));
       },
       error: () => {
+        // Los relacionados son un extra: su fallo no rompe la ficha.
         this.productosRelacionados.set([]);
-        this.isLoadingRelacionados.set(false);
       }
     });
   }
 
-  incrementQuantity(): void {
-    const max = this.stockDisponible();
-    if (this.cantidad() < max) {
-      this.cantidad.update((q) => q + 1);
-    }
-  }
-
-  decrementQuantity(): void {
-    if (this.cantidad() > 1) {
-      this.cantidad.update((q) => q - 1);
-    }
-  }
-
   addToCart(): void {
     const prod = this.producto();
-    if (!prod || !this.hasStock()) {
+    if (!prod || !this.hasStock() || this.isAddingToCart()) {
       return;
     }
 
     this.isAddingToCart.set(true);
+    this.addError.set(null);
     this.carritoService.agregarProducto(prod, this.cantidad()).subscribe({
       next: () => {
         this.isAddingToCart.set(false);
         this.addedSuccess.set(true);
-        setTimeout(() => this.addedSuccess.set(false), 3000);
+        this.feedbackTimer = setTimeout(() => this.addedSuccess.set(false), 3000);
       },
       error: () => {
         this.isAddingToCart.set(false);
+        this.addError.set('No se pudo agregar el producto al carro. Intenta nuevamente.');
       }
     });
   }
 
   onAddToCartRelacionado(prod: Producto): void {
-    this.carritoService.agregarProducto(prod, 1).subscribe();
+    this.carritoService.agregarProducto(prod, 1).subscribe({
+      error: () => {
+        this.addError.set('No se pudo agregar el producto relacionado al carro.');
+      }
+    });
   }
 
   volverAlCatalogo(): void {

@@ -2,62 +2,156 @@
 
 /* ==========================================================================
    Repara.ai — Design System Tokens & Global Styles
-   Editorial Premium Aesthetics (Warm Neutral + Electric Blue Accent)
-   Clean PrimeNG 22 Token Mappings (Zero !important)
+   Direction: Editorial Industrial & Brutalismo Técnico (High-Precision Workshop)
+   --------------------------------------------------------------------------
+   Every value below is a contract. Component styles consume these tokens;
+   they do not invent sizes, colours or radii. See DESIGN.md for the rationale.
    ========================================================================== */
 
 :root {
-  /* PrimeNG Design Tokens Mapped Globally */
-  --p-primary-color: #2454FF;
-  --p-primary-hover-color: #1B44DC;
-  --p-primary-active-color: #1637B8;
-  --p-primary-contrast-color: #FFFFFF;
-  --p-border-radius-sm: 6px;
-  --p-border-radius-md: 8px;
-  --p-border-radius-lg: 12px;
-  --p-content-border-radius: 10px;
-  --p-button-border-radius: 8px;
-  --p-inputtext-border-radius: 8px;
-  --p-dialog-border-radius: 12px;
-  --p-focus-ring-color: rgba(36, 84, 255, 0.25);
+  /* --- PrimeNG token bridge (single source for component appearance) --- */
+  --p-primary-color: #0F172A;
+  --p-primary-hover-color: #1E293B;
+  --p-primary-active-color: #020617;
+  --p-primary-contrast-color: #F8FAFC;
+  --p-border-radius-sm: 4px;
+  --p-border-radius-md: 6px;
+  --p-border-radius-lg: 8px;
+  --p-content-border-radius: 6px;
+  --p-button-border-radius: 4px;
+  --p-inputtext-border-radius: 4px;
+  --p-dialog-border-radius: 8px;
+  --p-focus-ring-color: rgba(224, 90, 27, 0.35);
   --p-focus-ring-width: 2px;
   --p-focus-ring-style: solid;
-  --p-focus-ring-offset: 0px;
+  --p-focus-ring-offset: 1px;
 
-  /* Paleta de Color Intencional */
-  --bg-primary: #FAFAF8;         /* Blanco cálido natural */
-  --text-primary: #1A1A1A;       /* Negro suave de alto contraste */
-  --text-secondary: #6B6B6B;     /* Gris medio neutral para metadata */
-  --surface-elevated: #EDEBE6;   /* Superficie sutil para inputs y badges */
-  --border-subtle: #E5E3DD;      /* Borde sutil delimitador (1px) */
-  --border-hover: #C5C3BC;       /* Borde intensificado en hover */
-  --accent-electric: #2454FF;    /* Azul eléctrico protagonista */
-  --accent-hover: #1B44DC;       /* Hover de acento con brillo sutil */
-  --accent-focus-ring: rgba(36, 84, 255, 0.18);
-  --status-success: #0F5132;     /* Verde de confirmación estricto */
-  --status-success-bg: rgba(15, 81, 50, 0.08);
-  --status-success-border: rgba(15, 81, 50, 0.22);
-  --status-error: #B02A37;
-  --status-error-bg: rgba(176, 42, 55, 0.08);
+  /* --- Technical industrial palette --- */
+  --bg-primary: #F4F5F7;          /* clean engineering concrete */
+  --bg-surface: #FFFFFF;          /* crisp white working panel */
+  --bg-inset: #EDF1F5;            /* recessed bay / machined well */
+  --text-primary: #090D16;        /* high-contrast carbon ink */
+  --text-secondary: #334155;      /* slate 700, readable and sharp */
+  --text-muted: #5A6B80;          /* slate for data labels (AA on concrete) */
+  --surface-elevated: #EAEDF2;    /* matte aluminium */
+  --border-subtle: #CBD5E1;       /* millimetre rule line */
+  --border-strong: #94A3B8;       /* calibrated border */
+  --border-hover: var(--border-strong); /* alias heredado */
 
-  /* Border Radii */
-  --radius-input: 8px;
-  --radius-button: 8px;
-  --radius-card: 10px;
-  --radius-modal: 12px;
+  /* --- Workshop accents: exactly two signals --- */
+  --accent-industrial: #E05A1B;   /* action / warning orange */
+  --accent-industrial-hover: #C24810;
+  --accent-tech-blue: #0284C7;    /* calibration / measurement blue */
+  --accent-tech-blue-bg: rgba(2, 132, 199, 0.08);
+  --accent-focus-ring: rgba(224, 90, 27, 0.28);
 
-  /* Typography */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --tracking-tight: -0.025em;
-  --line-height-body: 1.6;
+  --status-success: #047857;      /* stock verification green (AA on white) */
+  --status-success-bg: rgba(5, 150, 105, 0.08);
+  --status-success-border: rgba(5, 150, 105, 0.28);
+  --status-error: #B91C1C;        /* critical fault red (AA on white) */
+  --status-error-bg: rgba(185, 28, 28, 0.07);
+  --status-error-border: rgba(185, 28, 28, 0.28);
+  --status-warn: #B45309;         /* advisory amber, derived from the orange */
+  --status-warn-bg: rgba(180, 83, 9, 0.08);
+  --status-warn-border: rgba(180, 83, 9, 0.28);
 
-  /* Glassmorphism Header */
-  --header-bg: rgba(250, 250, 248, 0.85);
-  --header-blur: 16px;
+  /* --- Radii: machined, never pill --- */
+  --radius-input: 4px;
+  --radius-button: 4px;
+  --radius-card: 6px;
+  --radius-modal: 8px;
+  --radius-chip: 3px;
+
+  /* --- Depth: blueprint ring + offset blur, never a coloured halo --- */
+  --shadow-subtle: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.04);
+  --shadow-card: 0 2px 4px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(15, 23, 42, 0.08);
+  --shadow-hover: 0 8px 16px -4px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.15);
+
+  /* --- Type family --- */
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, Menlo, monospace;
+  --tracking-tight: -0.03em;
+  --line-height-body: 1.55;
+
+  /* --- Type scale (the only sizes components may use) --- */
+  --text-2xs: 0.6875rem;   /* 11px — micro data, chip labels */
+  --text-xs: 0.75rem;      /* 12px — captions, hints */
+  --text-sm: 0.8125rem;    /* 13px — dense UI, table cells */
+  --text-base: 0.875rem;   /* 14px — controls, buttons */
+  --text-md: 0.9375rem;    /* 15px — body copy */
+  --text-lg: 1.125rem;     /* 18px — card + section titles */
+  --text-xl: 1.375rem;     /* 22px — page titles */
+  --text-2xl: 1.75rem;     /* 28px — headline */
+  --text-3xl: 2.125rem;    /* 34px — detail display */
+  --text-display: 2.85rem; /* 46px — home hero only */
+
+  --leading-tight: 1.15;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+  --leading-relaxed: 1.65;
+
+  /* --- Spacing scale (4px base) --- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 56px;
+
+  /* --- Layout --- */
+  --page-max: 1320px;
+  --header-height: 64px;
+  --touch-target: 44px;
+
+  /* --- Motion --- */
+  --ease-fast: 0.15s ease;
+  --ease-standard: 0.2s ease;
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* --- Header --- */
+  --header-bg: rgba(244, 245, 247, 0.96);
+  --header-blur: 8px;
 }
 
 /* --------------------------------------------------------------------------
-   CSS Reset & Base Rules
+   Browser surfaces — the parts we did not draw still carry the design
+   -------------------------------------------------------------------------- */
+::selection {
+  background-color: rgba(224, 90, 27, 0.18);
+  color: var(--text-primary);
+}
+
+html {
+  caret-color: var(--accent-industrial);
+  scrollbar-color: var(--border-strong) var(--bg-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-industrial);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+  border-left: 1px solid var(--border-subtle);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border: 2px solid var(--bg-primary);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Reset & base
    -------------------------------------------------------------------------- */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -71,145 +165,176 @@ html, body {
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-size: var(--text-md);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: var(--line-height-body);
 }
 
-h1, h2, h3, h4, h5, h6 {
-  color: var(--text-primary);
-  font-weight: 600;
-  letter-spacing: var(--tracking-tight);
-  margin-top: 0;
+body {
+  text-wrap: pretty;
 }
 
-h1 {
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: var(--tracking-tight);
+  margin-top: 0;
+  text-wrap: balance;
 }
+
+h1 { font-size: var(--text-2xl); line-height: var(--leading-tight); }
+h2 { font-size: var(--text-xl); line-height: var(--leading-tight); }
+h3 { font-size: var(--text-lg); line-height: var(--leading-snug); }
+h4 { font-size: var(--text-base); line-height: var(--leading-snug); }
 
 p {
   color: var(--text-secondary);
   margin-top: 0;
+  max-width: 72ch;
 }
 
 a {
-  color: var(--accent-electric);
+  color: var(--accent-industrial);
   text-decoration: none;
-  transition: color 0.15s ease;
+  text-underline-offset: 3px;
+  transition: color var(--ease-fast);
 
   &:hover {
-    color: var(--accent-hover);
+    color: var(--accent-industrial-hover);
+    text-decoration: underline;
   }
 }
 
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Numbers that mean something are always tabular. */
+.data-mono,
+.product-sku,
+.price-text,
+.final-val,
+.subtotal-val,
+.totals-val {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
 /* --------------------------------------------------------------------------
-   Utility Classes & Layout Helpers
+   Layout utilities — declared once, used everywhere.
+   Before this block, templates referenced .w-full/.flex/.gap-2/.mb-1 that
+   existed nowhere, so those layouts silently collapsed.
+   -------------------------------------------------------------------------- */
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.flex { display: flex; }
+.inline-flex { display: inline-flex; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.cursor-pointer { cursor: pointer; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@each $n, $size in (1: var(--space-1), 2: var(--space-2), 3: var(--space-3), 4: var(--space-4)) {
+  .gap-#{$n} { gap: $size; }
+  .mt-#{$n} { margin-top: $size; }
+  .mb-#{$n} { margin-bottom: $size; }
+}
+
+/* --------------------------------------------------------------------------
+   Shared surfaces
    -------------------------------------------------------------------------- */
 .liquid-glass-header {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: var(--header-bg);
-  backdrop-filter: blur(var(--header-blur));
-  -webkit-backdrop-filter: blur(var(--header-blur));
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .repara-card {
-  background: var(--bg-primary);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
-  transition: border-color 0.2s ease;
+  box-shadow: var(--shadow-subtle);
+  transition: border-color var(--ease-standard), box-shadow var(--ease-standard), transform var(--ease-standard);
 
   &:hover {
-    border-color: var(--border-hover);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
   }
 }
 
-.badge-neutral {
+.badge-neutral,
+.badge-shipping-cost,
+.badge-official {
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem 0.55rem;
+  padding: 0.2rem 0.5rem;
   background-color: var(--surface-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  border-radius: var(--radius-chip);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text-secondary);
-  letter-spacing: 0.01em;
 }
 
 .badge-stock {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.2rem 0.6rem;
+  padding: 0.2rem 0.55rem;
   background-color: var(--status-success-bg);
   border: 1px solid var(--status-success-border);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  border-radius: var(--radius-chip);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--status-success);
 }
 
 .badge-free {
   display: inline-flex;
   padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.6875rem;
+  border-radius: var(--radius-chip);
+  font-size: var(--text-2xs);
   background: var(--status-success-bg);
   border: 1px solid var(--status-success-border);
   color: var(--status-success);
   font-weight: 700;
 }
 
-.badge-shipping-cost {
-  display: inline-flex;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.6875rem;
-  background: var(--surface-elevated);
-  border: 1px solid var(--border-subtle);
-  font-weight: 600;
-}
-
-.badge-official {
-  display: inline-flex;
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.6875rem;
-  background: var(--surface-elevated);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-}
-
-.card-badge {
-  display: inline-flex;
-  padding: 0.1rem 0.35rem;
-  background: #fff;
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  &.redcompra { color: #d10000; }
-  &.visa { color: #1a1f71; }
-  &.mastercard { color: #eb001b; }
-  &.amex { color: #006fcf; }
-}
-
-.price-text {
-  font-family: var(--font-sans);
-  font-weight: 500;
-  color: var(--text-primary);
-  letter-spacing: -0.015em;
-}
-
-/* Common Form Utilities */
+/* --------------------------------------------------------------------------
+   Form primitives
+   -------------------------------------------------------------------------- */
 .form-row-2 {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.75rem;
+  gap: var(--space-3);
   @media (min-width: 640px) { grid-template-columns: 1fr 1fr; }
 }
 
@@ -219,73 +344,95 @@ a {
   gap: 0.25rem;
 
   .form-label {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     font-weight: 600;
     .required-star { color: var(--status-error); }
   }
 
   .form-input, .form-select {
     width: 100%;
-    height: 38px;
+    min-height: 40px;
     padding: 0.45rem 0.65rem;
-    font-size: 0.875rem;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-input);
-    background: #fff;
+    background: var(--bg-surface);
+    color: var(--text-primary);
     &:focus {
       outline: none;
-      border-color: var(--accent-electric);
+      border-color: var(--accent-industrial);
       box-shadow: 0 0 0 2px var(--accent-focus-ring);
     }
     &.ng-invalid.ng-touched { border-color: var(--status-error); }
   }
 
-  .input-hint { font-size: 0.75rem; color: var(--text-secondary); }
-  .error-text { font-size: 0.75rem; color: var(--status-error); font-weight: 500; }
+  .input-hint { font-size: var(--text-xs); color: var(--text-secondary); }
+  .error-text { font-size: var(--text-xs); color: var(--status-error); font-weight: 600; }
 }
 
+/* --------------------------------------------------------------------------
+   Empty / error states
+   -------------------------------------------------------------------------- */
 .checkout-empty-container {
   display: flex;
   justify-content: center;
-  padding: 3rem 0;
+  padding: var(--space-7) 0;
 }
 
 .empty-card {
   max-width: 420px;
   width: 100%;
-  padding: 2rem 1.5rem;
+  padding: var(--space-6) var(--space-5);
   text-align: center;
-  background: #fff;
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  h2 { margin: 0; font-size: 1.25rem; }
-  p { margin: 0 0 0.5rem 0; font-size: 0.875rem; }
+  gap: var(--space-3);
+  h2 { margin: 0; font-size: var(--text-xl); }
+  p { margin: 0 0 var(--space-2) 0; font-size: var(--text-base); }
 }
 
 .empty-icon-circle {
   width: 52px;
   height: 52px;
-  border-radius: 50%;
+  border-radius: var(--radius-card);
   background: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.35rem;
+  font-size: var(--text-xl);
   color: var(--text-secondary);
 }
 
 .checkout-error-banner {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   padding: 0.6rem 0.75rem;
   border-radius: var(--radius-input);
   background-color: var(--status-error-bg);
-  border: 1px solid rgba(176, 42, 55, 0.22);
+  border: 1px solid var(--status-error-border);
   color: var(--status-error);
-  font-size: 0.8125rem;
+  font-size: var(--text-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Motion — honour the user's system preference.
+   WCAG 2.2.2 / 2.3.3: nothing may move, pulse or type indefinitely.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .repara-card:hover {
+    transform: none;
+  }
 }
