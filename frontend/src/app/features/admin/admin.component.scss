@@ -212,36 +212,21 @@
     align-items: center;
     gap: 0.5rem;
 
-    .stock-inline-input {
-      width: 60px;
-      height: 32px;
-      padding: 0.25rem 0.5rem;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-input);
-      text-align: center;
-      background: var(--bg-primary);
-
-      &:focus {
-        border-color: var(--accent-electric);
-        outline: none;
+    ::ng-deep .stock-inputnumber {
+      .p-inputnumber-input {
+        width: 3.25rem;
+        height: 32px;
+        text-align: center;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8125rem;
+      }
+      .p-inputnumber-button {
+        width: 1.75rem;
+        height: 32px;
+        padding: 0.25rem;
       }
     }
-
-    .save-stock-btn {
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border: 1px solid var(--border-subtle);
-      border-radius: 4px;
-      background: var(--surface-elevated);
-      color: var(--text-primary);
-      cursor: pointer;
-
-      &:hover {
-        border-color: var(--accent-electric);
-        color: var(--accent-electric);
-      }
-    }
+  }
 
     .badge-error-sm {
       font-size: 0.6875rem;
@@ -251,7 +236,6 @@
       background: var(--status-error-bg);
       color: var(--status-error);
     }
-  }
 
   .cell-actions {
     text-align: right;

@@ -117,26 +117,29 @@
               <td class="cell-price price-text">{{ prod.precio | clp }}</td>
               <td class="cell-stock">
                 <div class="stock-editor-inline">
-                  <input
-                    type="number"
-                    min="0"
-                    [value]="stockEditingMap()[prod.id] ?? prod.stock"
-                    (input)="onStockInputChange(prod.id, $event)"
-                    class="stock-inline-input"
+                  <p-inputnumber
+                    [min]="0"
+                    [showButtons]="true"
+                    buttonLayout="horizontal"
+                    [ngModel]="stockEditingMap()[prod.id] ?? prod.stock"
+                    (ngModelChange)="onStockNumberChange(prod.id, $event)"
+                    styleClass="stock-inputnumber"
                     [attr.aria-label]="'Stock para ' + prod.nombre"
-                  />
-                  <button
+                  ></p-inputnumber>
+                  <p-button
                     type="button"
-                    class="save-stock-btn"
-                    (click)="guardarStock(prod)"
-                    title="Actualizar stock (PATCH)"
-                  >
-                    Guardar
-                  </button>
+                    icon="pi pi-check"
+                    severity="success"
+                    size="small"
+                    [outlined]="true"
+                    (onClick)="guardarStock(prod)"
+                    pTooltip="Actualizar stock (PATCH)"
+                    tooltipPosition="top"
+                  ></p-button>
                   @if (prod.stock > 0) {
-                    <span class="badge-stock">{{ prod.stock }} un.</span>
+                    <p-tag [value]="prod.stock + ' un.'" severity="success"></p-tag>
                   } @else {
-                    <span class="badge-error-sm">Sin stock</span>
+                    <p-tag value="Sin stock" severity="danger"></p-tag>
                   }
                 </div>
               </td>

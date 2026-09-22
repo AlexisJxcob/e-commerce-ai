@@ -1,14 +1,18 @@
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 import { TabsModule } from 'primeng/tabs';
 import { BadgeModule } from 'primeng/badge';
 import { TableModule } from 'primeng/table';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { MessageService } from 'primeng/api';
 import { AdminService } from '../../core/services/admin.service';
 import { Producto, ProductoRequest } from '../../core/models/producto.models';
 import { Categoria, CategoriaRequest } from '../../core/models/categoria.models';
@@ -20,10 +24,14 @@ export type AdminTab = 'productos' | 'categorias' | 'ia';
 @Component({
     selector: 'app-admin',
     imports: [
+    FormsModule,
     ReactiveFormsModule,
     DialogModule,
     ButtonModule,
     InputTextModule,
+    InputNumberModule,
+    TagModule,
+    TooltipModule,
     TabsModule,
     BadgeModule,
     TableModule,
@@ -37,6 +45,7 @@ export type AdminTab = 'productos' | 'categorias' | 'ia';
 })
 export class AdminComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly messageService = inject(MessageService);
   readonly adminService = inject(AdminService);
 
   readonly activeTab = signal<AdminTab>('productos');
@@ -134,27 +143,34 @@ export class AdminComponent implements OnInit {
 
   // --- Inline Stock Management ---
 
-  onStockInputChange(productId: number, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const value = parseInt(input.value, 10);
-    if (!Number.isNaN(value) && value >= 0) {
+  onStockNumberChange(productId: number, value: number | null): void {
+    if (value !== null && value >= 0) {
       this.stockEditingMap.update((map) => ({ ...map, [productId]: value }));
     }
   }
 
   guardarStock(product: Producto): void {
     const nuevoStock = this.stockEditingMap()[product.id] ?? product.stock;
-    this.clearAlerts();
 
     this.adminService.actualizarStock(product.id, nuevoStock).subscribe({
       next: (updated) => {
         this.productos.update((list) =>
           list.map((p) => (p.id === updated.id ? updated : p))
         );
-        this.successMessage.set(`Stock de "${product.nombre}" actualizado a ${updated.stock}.`);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Stock actualizado',
+          detail: `Stock de "${product.nombre}" actualizado a ${updated.stock} un.`,
+          life: 3000
+        });
       },
       error: (err) => {
-        this.errorMessage.set(err?.error?.message ?? 'Error al actualizar el stock.');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al actualizar',
+          detail: err?.error?.message ?? 'No se pudo actualizar el stock.',
+          life: 4000
+        });
       }
     });
   }
