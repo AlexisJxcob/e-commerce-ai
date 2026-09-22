@@ -240,50 +240,67 @@
       <!-- TAB: MOTOR DE IA Y VECTORIAL -->
       <p-tabpanel value="ia">
         <section class="admin-tab-content ai-tab-container">
-      <div class="ai-overview-card repara-card">
-        <div class="ai-overview-header">
-          <div class="ai-icon-box">
-            <i class="pi pi-database" aria-hidden="true"></i>
+        <p-card styleClass="ai-overview-card">
+          <div class="ai-overview-header">
+            <div class="ai-icon-box">
+              <i class="pi pi-database" aria-hidden="true"></i>
+            </div>
+            <div class="ai-overview-text">
+              <div class="ai-title-row">
+                <h2 class="ai-card-title">Mantenimiento de pgvector & Embeddings</h2>
+                <div class="ai-tags-group">
+                  <p-tag value="sentence-transformers/all-MiniLM-L6-v2" severity="info"></p-tag>
+                  <p-tag value="384 dim" severity="secondary"></p-tag>
+                  <p-tag value="pgvector <=>" severity="secondary"></p-tag>
+                </div>
+              </div>
+              <p class="ai-card-desc">
+                El buscador inteligente utiliza representaciones vectoriales densas indexadas en PostgreSQL
+                mediante el operador de similitud de cosenos <code>&lt;=&gt;</code>. Este proceso analiza
+                la semántica de nombres, especificaciones técnicas y descripciones coloquiales.
+              </p>
+            </div>
           </div>
-          <div class="ai-overview-text">
-            <h2 class="ai-card-title">Mantenimiento de pgvector & Embeddings</h2>
-            <p class="ai-card-desc">
-              El buscador inteligente utiliza representaciones vectoriales densas generadas con el modelo
-              <strong>sentence-transformers/all-MiniLM-L6-v2</strong> (384 dimensiones) indexadas en
-              PostgreSQL mediante el operador de similitud de cosenos <code>&lt;=&gt;</code>.
+
+          <div class="ai-action-box">
+            <p-button
+              type="button"
+              label="Reindexar Embeddings Pendientes"
+              icon="pi pi-sync"
+              severity="primary"
+              [loading]="isReindexing()"
+              (onClick)="reindexarEmbeddings()"
+            ></p-button>
+
+            <p class="ai-action-note">
+              Genera y persiste el vector semántico para todos los productos con embedding nulo.
             </p>
           </div>
-        </div>
 
-        <div class="ai-action-box">
-          <button
-            pButton
-            type="button"
-            label="Reindexar Embeddings Pendientes"
-            icon="pi pi-sync"
-            class="p-button-primary reindex-btn"
-            [loading]="isReindexing()"
-            (click)="reindexarEmbeddings()"
-          ></button>
-
-          <p class="ai-action-note">
-            Genera y persiste el vector semántico para todos los productos con embedding nulo.
-          </p>
-        </div>
-
-        @if (reindexResult()) {
-          <div class="reindex-result-banner">
-            <div class="result-metric">
-              <span class="metric-num">{{ reindexResult()?.procesados }}</span>
-              <span class="metric-label">Productos procesados</span>
+          @if (isReindexing()) {
+            <div class="reindex-progress">
+              <p-progressbar mode="indeterminate" [style]="{ height: '6px' }"></p-progressbar>
+              <p class="reindex-progress-text">
+                Procesando embeddings vectoriales contra Hugging Face...
+              </p>
             </div>
-            <div class="result-metric">
-              <span class="metric-num">{{ reindexResult()?.pendientes }}</span>
-              <span class="metric-label">Pendientes de indexación</span>
+          }
+
+          @if (reindexResult()) {
+            <div class="reindex-result-grid">
+              <div class="metric-card">
+                <i class="pi pi-check-circle metric-icon success-icon" aria-hidden="true"></i>
+                <span class="metric-num">{{ reindexResult()?.procesados }}</span>
+                <span class="metric-label">Productos procesados</span>
+              </div>
+              <div class="metric-card">
+                <i class="pi pi-clock metric-icon pending-icon" aria-hidden="true"></i>
+                <span class="metric-num">{{ reindexResult()?.pendientes }}</span>
+                <span class="metric-label">Pendientes de indexación</span>
+              </div>
             </div>
-          </div>
-        }
-      </div>
+          }
+        </p-card>
         </section>
       </p-tabpanel>
     </p-tabpanels>

@@ -317,12 +317,24 @@
   }
 }
 
-.ai-overview-card {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+:host ::ng-deep .ai-overview-card.p-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: none;
 
+  .p-card-body {
+    padding: 2rem;
+  }
+
+  .p-card-content {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}
+
+.ai-overview-card {
   .ai-overview-header {
     display: flex;
     gap: 1.25rem;
@@ -342,10 +354,25 @@
       flex-shrink: 0;
     }
 
-    .ai-card-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin: 0 0 0.5rem 0;
+    .ai-title-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+
+      .ai-card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .ai-tags-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
     }
 
     .ai-card-desc {
@@ -371,12 +398,6 @@
     padding-top: 1rem;
     border-top: 1px solid var(--border-subtle);
 
-    .reindex-btn {
-      height: 42px;
-      padding: 0 1.25rem;
-      font-weight: 600;
-    }
-
     .ai-action-note {
       font-size: 0.8125rem;
       color: var(--text-secondary);
@@ -384,26 +405,53 @@
     }
   }
 
-  .reindex-result-banner {
-    display: flex;
-    gap: 1.5rem;
-    padding: 1rem 1.25rem;
-    background-color: var(--surface-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-input);
+  .reindex-progress {
+    padding: 0.75rem 0;
+    .reindex-progress-text {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+  }
 
-    .result-metric {
+  .reindex-result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+
+    .metric-card {
+      padding: 1.25rem;
+      background-color: var(--surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-card);
       display: flex;
       flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+
+      .metric-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+
+        &.success-icon {
+          color: var(--status-success);
+        }
+        &.pending-icon {
+          color: #f59e0b;
+        }
+      }
 
       .metric-num {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
         font-weight: 700;
-        color: var(--accent-electric);
+        color: var(--text-primary);
+        line-height: 1.1;
       }
 
       .metric-label {
-        font-size: 0.75rem;
+        font-size: 0.8125rem;
         color: var(--text-secondary);
       }
     }

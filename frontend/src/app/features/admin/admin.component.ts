@@ -14,6 +14,8 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
+import { CardModule } from 'primeng/card';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { AdminService } from '../../core/services/admin.service';
 import { Producto, ProductoRequest } from '../../core/models/producto.models';
@@ -41,6 +43,8 @@ export type AdminTab = 'productos' | 'categorias' | 'ia';
     InputIconModule,
     SelectModule,
     TextareaModule,
+    CardModule,
+    ProgressBarModule,
     ClpPipe
 ],
     templateUrl: './admin.component.html',
@@ -438,19 +442,26 @@ export class AdminComponent implements OnInit {
   reindexarEmbeddings(): void {
     this.isReindexing.set(true);
     this.reindexResult.set(null);
-    this.clearAlerts();
 
     this.adminService.reindexarEmbeddings().subscribe({
       next: (res) => {
         this.isReindexing.set(false);
         this.reindexResult.set(res);
-        this.successMessage.set(
-          `Reindexación completada: ${res.procesados} productos procesados, ${res.pendientes} pendientes.`
-        );
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Reindexación completada',
+          detail: `${res.procesados} productos indexados con éxito (${res.pendientes} pendientes).`,
+          life: 4000
+        });
       },
       error: () => {
         this.isReindexing.set(false);
-        this.errorMessage.set('Error durante la reindexación de embeddings vectoriales.');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error de reindexación',
+          detail: 'No se pudo completar la indexación vectorial en el servidor.',
+          life: 4000
+        });
       }
     });
   }
