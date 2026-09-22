@@ -51,107 +51,123 @@
       <p-tabpanel value="productos">
         <section class="admin-tab-content">
       <div class="toolbar-row">
-        <div class="search-input-wrapper">
-          <i class="pi pi-search search-icon" aria-hidden="true"></i>
+        <p-iconfield iconPosition="left" class="search-input-wrapper">
+          <p-inputicon styleClass="pi pi-search"></p-inputicon>
           <input
             pInputText
             type="text"
             placeholder="Buscar por SKU, nombre o descripción..."
             [value]="searchQuery()"
             (input)="searchQuery.set($any($event.target).value)"
-            class="admin-search-input"
+            class="admin-search-input w-full"
           />
-        </div>
+        </p-iconfield>
 
-        <button
-          pButton
+        <p-button
           type="button"
           label="Nuevo Producto"
           icon="pi pi-plus"
-          class="p-button-primary"
-          (click)="abrirCrearProducto()"
-        ></button>
+          severity="primary"
+          (onClick)="abrirCrearProducto()"
+        ></p-button>
       </div>
 
       <div class="table-container repara-card">
-        <table class="admin-table">
-          <thead>
+        <p-table
+          [value]="filteredProductos()"
+          [paginator]="true"
+          [rows]="10"
+          [rowsPerPageOptions]="[10, 20, 50]"
+          [loading]="isLoading()"
+          styleClass="admin-products-table"
+          dataKey="id"
+        >
+          <ng-template pTemplate="header">
             <tr>
-              <th scope="col">SKU</th>
-              <th scope="col">Producto</th>
-              <th scope="col">Categoría</th>
-              <th scope="col">Precio</th>
-              <th scope="col">Stock Disponible</th>
-              <th scope="col" class="th-actions">Acciones</th>
+              <th pSortableColumn="sku" scope="col" style="width: 140px">
+                SKU <p-sort-icon field="sku"></p-sort-icon>
+              </th>
+              <th pSortableColumn="nombre" scope="col">
+                Producto <p-sort-icon field="nombre"></p-sort-icon>
+              </th>
+              <th pSortableColumn="categoriaId" scope="col" style="width: 160px">
+                Categoría <p-sort-icon field="categoriaId"></p-sort-icon>
+              </th>
+              <th pSortableColumn="precio" scope="col" style="width: 140px">
+                Precio <p-sort-icon field="precio"></p-sort-icon>
+              </th>
+              <th pSortableColumn="stock" scope="col" style="width: 240px">
+                Stock Disponible <p-sort-icon field="stock"></p-sort-icon>
+              </th>
+              <th scope="col" class="th-actions" style="width: 120px">Acciones</th>
             </tr>
-          </thead>
-          <tbody>
-            @for (prod of filteredProductos(); track prod.id) {
-              <tr>
-                <td class="cell-sku">{{ prod.sku }}</td>
-                <td class="cell-name">
-                  <div class="name-group">
-                    <span class="product-name">{{ prod.nombre }}</span>
-                    <span class="product-desc">{{ prod.descripcionTecnica }}</span>
-                  </div>
-                </td>
-                <td>
-                  <span class="badge-neutral">{{ getNombreCategoria(prod.categoriaId) }}</span>
-                </td>
-                <td class="cell-price price-text">{{ prod.precio | clp }}</td>
-                <td class="cell-stock">
-                  <div class="stock-editor-inline">
-                    <input
-                      type="number"
-                      min="0"
-                      [value]="stockEditingMap()[prod.id] ?? prod.stock"
-                      (input)="onStockInputChange(prod.id, $event)"
-                      class="stock-inline-input"
-                      [attr.aria-label]="'Stock para ' + prod.nombre"
-                    />
-                    <button
-                      type="button"
-                      class="save-stock-btn"
-                      (click)="guardarStock(prod)"
-                      title="Actualizar stock (PATCH)"
-                    >
-                      Guardar
-                    </button>
-                    @if (prod.stock > 0) {
-                      <span class="badge-stock">{{ prod.stock }} un.</span>
-                    } @else {
-                      <span class="badge-error-sm">Sin stock</span>
-                    }
-                  </div>
-                </td>
-                <td class="cell-actions">
+          </ng-template>
+          <ng-template pTemplate="body" let-prod>
+            <tr>
+              <td class="cell-sku">{{ prod.sku }}</td>
+              <td class="cell-name">
+                <div class="name-group">
+                  <span class="product-name">{{ prod.nombre }}</span>
+                  <span class="product-desc">{{ prod.descripcionTecnica }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge-neutral">{{ getNombreCategoria(prod.categoriaId) }}</span>
+              </td>
+              <td class="cell-price price-text">{{ prod.precio | clp }}</td>
+              <td class="cell-stock">
+                <div class="stock-editor-inline">
+                  <input
+                    type="number"
+                    min="0"
+                    [value]="stockEditingMap()[prod.id] ?? prod.stock"
+                    (input)="onStockInputChange(prod.id, $event)"
+                    class="stock-inline-input"
+                    [attr.aria-label]="'Stock para ' + prod.nombre"
+                  />
                   <button
                     type="button"
-                    class="action-icon-btn edit-btn"
-                    (click)="abrirEditarProducto(prod)"
-                    [attr.aria-label]="'Editar ' + prod.nombre"
+                    class="save-stock-btn"
+                    (click)="guardarStock(prod)"
+                    title="Actualizar stock (PATCH)"
                   >
-                    <i class="pi pi-pencil" aria-hidden="true"></i>
+                    Guardar
                   </button>
-                  <button
-                    type="button"
-                    class="action-icon-btn delete-btn"
-                    (click)="eliminarProducto(prod)"
-                    [attr.aria-label]="'Eliminar ' + prod.nombre"
-                  >
-                    <i class="pi pi-trash" aria-hidden="true"></i>
-                  </button>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6" class="empty-table-cell">
-                  No se encontraron productos registrados o coincidentes con la búsqueda.
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+                  @if (prod.stock > 0) {
+                    <span class="badge-stock">{{ prod.stock }} un.</span>
+                  } @else {
+                    <span class="badge-error-sm">Sin stock</span>
+                  }
+                </div>
+              </td>
+              <td class="cell-actions">
+                <button
+                  type="button"
+                  class="action-icon-btn edit-btn"
+                  (click)="abrirEditarProducto(prod)"
+                  [attr.aria-label]="'Editar ' + prod.nombre"
+                >
+                  <i class="pi pi-pencil" aria-hidden="true"></i>
+                </button>
+                <button
+                  type="button"
+                  class="action-icon-btn delete-btn"
+                  (click)="eliminarProducto(prod)"
+                  [attr.aria-label]="'Eliminar ' + prod.nombre"
+                >
+                  <i class="pi pi-trash" aria-hidden="true"></i>
+                </button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="6" class="empty-table-cell text-center p-4">
+                No se encontraron productos registrados o coincidentes con la búsqueda.
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       </div>
         </section>
       </p-tabpanel>

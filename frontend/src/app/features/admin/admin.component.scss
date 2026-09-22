@@ -130,39 +130,53 @@
   overflow-x: auto;
 }
 
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
+:host ::ng-deep .admin-products-table {
+  .p-datatable-table {
+    border-collapse: collapse;
+    width: 100%;
+  }
 
-  thead tr {
-    border-bottom: 1px solid var(--border-subtle);
+  .p-datatable-thead > tr > th {
     background-color: var(--surface-elevated);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    transition: background 0.15s ease;
 
-    th {
-      padding: 0.75rem 1rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      font-size: 0.8125rem;
-
-      &.th-actions {
-        text-align: right;
-      }
+    &.p-sortable-column:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+      color: var(--text-primary);
     }
   }
 
-  tbody tr {
+  .p-datatable-tbody > tr {
     border-bottom: 1px solid var(--border-subtle);
+    transition: background 0.15s ease;
 
     &:hover {
       background-color: rgba(237, 235, 230, 0.4);
     }
 
-    td {
+    > td {
       padding: 0.75rem 1rem;
       vertical-align: middle;
+      font-size: 0.875rem;
     }
   }
+
+  .p-paginator {
+    background: transparent;
+    border-top: 1px solid var(--border-subtle);
+    padding: 0.75rem 1rem;
+  }
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
 
   .cell-sku {
     font-family: monospace;

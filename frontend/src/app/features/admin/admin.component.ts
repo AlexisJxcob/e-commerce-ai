@@ -6,6 +6,9 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TabsModule } from 'primeng/tabs';
 import { BadgeModule } from 'primeng/badge';
+import { TableModule } from 'primeng/table';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { AdminService } from '../../core/services/admin.service';
 import { Producto, ProductoRequest } from '../../core/models/producto.models';
 import { Categoria, CategoriaRequest } from '../../core/models/categoria.models';
@@ -23,6 +26,9 @@ export type AdminTab = 'productos' | 'categorias' | 'ia';
     InputTextModule,
     TabsModule,
     BadgeModule,
+    TableModule,
+    IconFieldModule,
+    InputIconModule,
     ClpPipe
 ],
     templateUrl: './admin.component.html',
