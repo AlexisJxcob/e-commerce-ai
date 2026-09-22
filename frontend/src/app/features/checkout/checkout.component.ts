@@ -1,9 +1,17 @@
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
+import { CardModule } from 'primeng/card';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
+import { StepperModule } from 'primeng/stepper';
 import { CarritoService } from '../../core/services/carrito.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { AuthModalService } from '../../core/auth/auth-modal.service';
@@ -17,14 +25,23 @@ export type MetodoEntrega = 'retiro' | 'despacho';
 @Component({
     selector: 'app-checkout',
     imports: [
+    FormsModule,
     ReactiveFormsModule,
     RouterModule,
     ButtonModule,
     InputTextModule,
+    InputNumberModule,
+    RadioButtonModule,
+    SelectModule,
+    CheckboxModule,
+    CardModule,
+    TagModule,
+    MessageModule,
+    StepperModule,
     ClpPipe
 ],
     templateUrl: './checkout.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './checkout.component.scss'
 })
 export class CheckoutComponent implements OnInit {
@@ -36,6 +53,10 @@ export class CheckoutComponent implements OnInit {
   readonly pedidoService = inject(PedidoService);
 
   readonly currentStep = signal<CheckoutStep>('resumen');
+  readonly currentStepNumber = computed<number>(() => {
+    const map: Record<CheckoutStep, number> = { resumen: 1, datos: 2, entrega: 3, pago: 4 };
+    return map[this.currentStep()];
+  });
   readonly metodoEntrega = signal<MetodoEntrega>('retiro');
   readonly retiraTercero = signal<boolean>(false);
   readonly terminosAceptados = signal<boolean>(false);
@@ -224,6 +245,12 @@ export class CheckoutComponent implements OnInit {
     if (rutControl && rutControl.value) {
       const formatted = formatRut(rutControl.value);
       rutControl.setValue(formatted, { emitEvent: false });
+    }
+  }
+
+  onItemCantidadChange(itemId: number, cantidad: number | null): void {
+    if (cantidad !== null && cantidad > 0) {
+      this.carritoService.actualizarCantidad(itemId, cantidad).subscribe();
     }
   }
 

@@ -223,12 +223,12 @@ flowchart LR
 4. El botón "Agregar kit completo" y los botones de compra rápida proporcionan feedback inmediato mediante animaciones de microinteracción y confirmación vía Toast.
 
 #### Checklist de Avance:
-- [ ] Rediseñar `HeroSearchComponent` con `<p-inputtext>`, `<p-button [loading]>` y `<p-chip>`.
-- [ ] Transformar `AiDiagnosisComponent` en una tarjeta de alta jerarquía visual utilizando `<p-card>` y `<p-tag>`.
-- [ ] Refactorizar `ProductCardComponent` incorporando `<p-rating>` y `<p-tag>` y un botón de compra rápida integrado.
-- [ ] Homogeneizar los skeletons de búsqueda y catálogo en `SearchSkeletonComponent`.
-- [ ] Pulir el estilo visual de los carruseles de categorías en `CategoryCarouselComponent`.
-- [ ] Modernizar `ProductoDetalleComponent` reemplazando los skeletons CSS por `<p-skeleton>`, incorporando `<p-rating>`, `<p-progressbar>` y `<p-inputnumber>`.
+- [x] Rediseñar `HeroSearchComponent` con `<p-inputtext>`, `<p-button [loading]>` y `<p-chip>`.
+- [x] Transformar `AiDiagnosisComponent` en una tarjeta de alta jerarquía visual utilizando `<p-card>` y `<p-tag>`.
+- [x] Refactorizar `ProductCardComponent` incorporando `<p-rating>` y `<p-tag>` y un botón de compra rápida integrado.
+- [x] Homogeneizar los skeletons de búsqueda y catálogo en `SearchSkeletonComponent`.
+- [x] Pulir el estilo visual de los carruseles de categorías en `CategoryCarouselComponent`.
+- [x] Modernizar `ProductoDetalleComponent` reemplazando los skeletons CSS por `<p-skeleton>`, incorporando `<p-rating>`, `<p-progressbar>` y `<p-inputnumber>`.
 
 ---
 
@@ -259,12 +259,12 @@ flowchart LR
 4. El comprobante final (voucher) es limpio, presentable y cuenta con una disposición lista para impresión o captura en dispositivos móviles.
 
 #### Checklist de Avance:
-- [ ] Implementar `<p-stepper>` en `CheckoutComponent` reemplazando la lista manual de pasos.
-- [ ] Modernizar el Paso 1 (Resumen) integrando controles numéricos formales para la modificación de cantidades.
-- [ ] Mejorar los formularios de datos personales (Paso 2) con `<p-inputtext>` y `<p-message>`.
-- [ ] Refactorizar la selección de entrega (Paso 3) con `<p-radiobutton>`, `<p-select>` para regiones/comunas y `<p-checkbox>`.
-- [ ] Estilizar la sección de pago y el sidebar de resumen garantizando posicionamiento sticky en desktop y colapso fluido en mobile.
-- [ ] Rediseñar el comprobante en `CheckoutResultadoComponent` con `<p-card>`, `<p-tag>` y remover `$safeNavigationMigration`.
+- [x] Implementar `<p-stepper>` en `CheckoutComponent` reemplazando la lista manual de pasos.
+- [x] Modernizar el Paso 1 (Resumen) integrando controles numéricos formales para la modificación de cantidades.
+- [x] Mejorar los formularios de datos personales (Paso 2) con `<p-inputtext>` y `<p-message>`.
+- [x] Refactorizar la selección de entrega (Paso 3) con `<p-radiobutton>`, `<p-select>` para regiones/comunas y `<p-checkbox>`.
+- [x] Estilizar la sección de pago y el sidebar de resumen garantizando posicionamiento sticky en desktop y colapso fluido en mobile.
+- [x] Rediseñar el comprobante en `CheckoutResultadoComponent` con `<p-card>`, `<p-tag>` y remover `$safeNavigationMigration`.
 
 ---
 
@@ -296,13 +296,13 @@ flowchart LR
 4. Toda la aplicación cumple con las directrices de contraste WCAG AA en modo claro.
 
 #### Checklist de Avance:
-- [ ] Migrar la barra de navegación del panel de administración a `<p-tabs>`.
-- [ ] Sustituir la tabla HTML nativa por `<p-table>` con paginador reactivo, ordenamiento y scroll responsivo.
-- [ ] Estandarizar la edición inline de stock con `<p-inputnumber>`.
-- [ ] Migrar los modales de producto y categoría a `<p-dialog>` con `<p-select>`, `<p-textarea>` e `<p-inputnumber>`.
-- [ ] Conectar `ConfirmationService` a los botones de eliminación de categorías y productos.
-- [ ] Refactorizar la pestaña de Motor de IA con `<p-card>` y métricas visuales atractivas.
-- [ ] Ejecutar auditoría final de contraste cromático, espaciados y navegación por teclado en toda la plataforma.
+- [x] Migrar la barra de navegación del panel de administración a `<p-tabs>`.
+- [x] Sustituir la tabla HTML nativa por `<p-table>` con paginador reactivo, ordenamiento y scroll responsivo.
+- [x] Estandarizar la edición inline de stock con `<p-inputnumber>`.
+- [x] Migrar los modales de producto y categoría a `<p-dialog>` con `<p-select>`, `<p-textarea>` e `<p-inputnumber>`.
+- [x] Conectar `ConfirmationService` a los botones de eliminación de categorías y productos.
+- [x] Refactorizar la pestaña de Motor de IA con `<p-card>` y métricas visuales atractivas.
+- [x] Ejecutar auditoría final de contraste cromático, espaciados y navegación por teclado en toda la plataforma.
 
 ---
 

@@ -1,13 +1,14 @@
 import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 
+import { TagModule } from 'primeng/tag';
 import { Producto } from '../../../../core/models/producto.models';
 import { ProductCardComponent } from '../../../../shared/components/product-card';
 
 @Component({
     selector: 'app-product-grid',
-    imports: [ProductCardComponent],
+    imports: [TagModule, ProductCardComponent],
     templateUrl: './product-grid.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './product-grid.component.scss'
 })
 export class ProductGridComponent {

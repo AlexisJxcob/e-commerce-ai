@@ -16,17 +16,55 @@
     </span>
   </nav>
 
-  <!-- Estado de Carga (Skeleton) -->
+  <!-- Estado de Carga (Skeleton con p-skeleton para CLS = 0) -->
   @if (isLoading()) {
     <section class="loading-container" aria-busy="true" aria-label="Cargando detalles del producto">
       <div class="detail-grid">
-        <div class="visual-card skeleton-box skeleton-visual"></div>
-        <div class="info-card skeleton-box skeleton-info">
-          <div class="skeleton-line skeleton-chip"></div>
-          <div class="skeleton-line skeleton-title"></div>
-          <div class="skeleton-line skeleton-rating"></div>
-          <div class="skeleton-line skeleton-price"></div>
-          <div class="skeleton-line skeleton-actions"></div>
+        <!-- Columna Izquierda: Showcase Visual Skeleton -->
+        <div class="visual-column">
+          <div class="visual-showcase repara-card skeleton-card">
+            <p-skeleton width="140px" height="24px" borderRadius="12px" styleClass="mb-3"></p-skeleton>
+            <div class="product-hero-image-wrap skeleton-hero-wrap">
+              <p-skeleton width="100%" height="100%" borderRadius="8px"></p-skeleton>
+            </div>
+            <div class="visual-features mt-3">
+              <p-skeleton width="130px" height="20px" borderRadius="4px"></p-skeleton>
+              <p-skeleton width="150px" height="20px" borderRadius="4px"></p-skeleton>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna Derecha: Información, Precios y Compra Skeleton -->
+        <div class="info-column">
+          <div class="product-metadata mb-3">
+            <p-skeleton width="80px" height="22px" borderRadius="4px"></p-skeleton>
+            <p-skeleton width="90px" height="22px" borderRadius="4px"></p-skeleton>
+            <p-skeleton width="120px" height="22px" borderRadius="4px"></p-skeleton>
+          </div>
+
+          <p-skeleton width="85%" height="36px" borderRadius="6px" styleClass="mb-3"></p-skeleton>
+
+          <div class="rating-bar-summary mb-4">
+            <p-skeleton width="120px" height="20px" borderRadius="4px"></p-skeleton>
+            <p-skeleton width="40px" height="20px" borderRadius="4px"></p-skeleton>
+            <p-skeleton width="80px" height="20px" borderRadius="4px"></p-skeleton>
+          </div>
+
+          <div class="price-section mb-4">
+            <p-skeleton width="160px" height="14px" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="140px" height="38px" borderRadius="6px" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="180px" height="20px" borderRadius="4px"></p-skeleton>
+          </div>
+
+          <div class="shipping-info-card mb-4">
+            <p-skeleton width="100%" height="45px" borderRadius="6px" styleClass="mb-2"></p-skeleton>
+            <p-skeleton width="100%" height="45px" borderRadius="6px"></p-skeleton>
+          </div>
+
+          <div class="purchase-box">
+            <p-skeleton width="130px" height="42px" borderRadius="8px"></p-skeleton>
+            <p-skeleton width="200px" height="42px" borderRadius="8px"></p-skeleton>
+          </div>
         </div>
       </div>
     </section>
@@ -40,15 +78,13 @@
       </div>
       <h2 class="error-title">No pudimos cargar el producto</h2>
       <p class="error-message">{{ error() }}</p>
-      <button
-        pButton
+      <p-button
         type="button"
-        class="p-button-outlined"
-        (click)="volverAlCatalogo()"
-      >
-        <i class="pi pi-home" aria-hidden="true"></i>
-        <span>Ir a la tienda</span>
-      </button>
+        variant="outlined"
+        icon="pi pi-home"
+        label="Ir a la tienda"
+        (onClick)="volverAlCatalogo()"
+      ></p-button>
     </section>
   }
 
@@ -93,17 +129,12 @@
             <span class="product-brand-chip">{{ marca }}</span>
           }
           <span class="product-sku">SKU: {{ prod.sku }}</span>
-          @if (hasStock()) {
-            <span class="badge-stock" aria-label="Stock disponible">
-              <i class="pi pi-check" aria-hidden="true"></i>
-              <span>En stock ({{ prod.stock }} unidades)</span>
-            </span>
-          } @else {
-            <span class="badge-out-of-stock" aria-label="Sin stock disponible">
-              <i class="pi pi-times" aria-hidden="true"></i>
-              <span>Sin stock</span>
-            </span>
-          }
+          <p-tag
+            [severity]="hasStock() ? 'success' : 'danger'"
+            [value]="hasStock() ? 'En stock (' + prod.stock + ' unidades)' : 'Sin stock'"
+            [icon]="hasStock() ? 'pi pi-check' : 'pi pi-times'"
+            styleClass="stock-tag"
+          ></p-tag>
         </div>
 
         <h1 class="product-title">{{ prod.nombre }}</h1>
@@ -111,14 +142,11 @@
         <!-- Calificación Promedio -->
         @if (resumenCalificaciones(); as resumen) {
           <div class="rating-bar-summary" aria-label="Calificación promedio">
-            <div class="stars-row" aria-hidden="true">
-              @for (star of [1, 2, 3, 4, 5]; track star) {
-                <i
-                  class="pi pi-star-fill star-icon"
-                  [class.is-filled]="star <= Math.round(resumen.promedio)"
-                ></i>
-              }
-            </div>
+            <p-rating
+              [ngModel]="resumen.promedio"
+              [readonly]="true"
+              styleClass="detail-rating"
+            ></p-rating>
             <span class="rating-score">{{ resumen.promedio }}</span>
             <span class="rating-count">({{ resumen.totalResenas }} opiniones)</span>
           </div>
@@ -170,45 +198,32 @@
         <div class="purchase-box">
           <div class="quantity-selector" [class.is-disabled]="!hasStock()">
             <span class="quantity-label">Cantidad</span>
-            <div class="quantity-controls" role="group" aria-label="Selector de cantidad">
-              <button
-                type="button"
-                class="qty-btn"
-                (click)="decrementQuantity()"
-                [disabled]="!hasStock() || cantidad() <= 1"
-                aria-label="Disminuir cantidad"
-              >
-                <i class="pi pi-minus" aria-hidden="true"></i>
-              </button>
-              <span class="qty-display" aria-live="polite">{{ cantidad() }}</span>
-              <button
-                type="button"
-                class="qty-btn"
-                (click)="incrementQuantity()"
-                [disabled]="!hasStock() || cantidad() >= stockDisponible()"
-                aria-label="Aumentar cantidad"
-              >
-                <i class="pi pi-plus" aria-hidden="true"></i>
-              </button>
-            </div>
+            <p-inputnumber
+              [ngModel]="cantidad()"
+              (ngModelChange)="cantidad.set($event ?? 1)"
+              [showButtons]="true"
+              buttonLayout="horizontal"
+              [min]="1"
+              [max]="stockDisponible()"
+              [disabled]="!hasStock()"
+              decrementButtonIcon="pi pi-minus"
+              incrementButtonIcon="pi pi-plus"
+              styleClass="detail-qty-input"
+            ></p-inputnumber>
           </div>
 
           <div class="add-to-cart-wrapper">
-            <button
-              pButton
+            <p-button
               type="button"
-              class="add-to-cart-btn"
+              severity="primary"
+              size="large"
               [disabled]="!hasStock() || isAddingToCart()"
-              (click)="addToCart()"
-            >
-              @if (isAddingToCart()) {
-                <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
-                <span>Agregando...</span>
-              } @else {
-                <i class="pi pi-cart-plus" aria-hidden="true"></i>
-                <span>Agregar al carrito</span>
-              }
-            </button>
+              [loading]="isAddingToCart()"
+              (onClick)="addToCart()"
+              icon="pi pi-cart-plus"
+              label="Agregar al carrito"
+              styleClass="add-to-cart-btn"
+            ></p-button>
 
             @if (addedSuccess()) {
               <div class="added-feedback" role="status">
@@ -288,12 +303,11 @@
           <div class="ratings-overview repara-card">
             <div class="overview-score">{{ resumen.promedio }}</div>
             <div class="overview-stars" aria-hidden="true">
-              @for (star of [1, 2, 3, 4, 5]; track star) {
-                <i
-                  class="pi pi-star-fill star-icon"
-                  [class.is-filled]="star <= Math.round(resumen.promedio)"
-                ></i>
-              }
+              <p-rating
+                [ngModel]="resumen.promedio"
+                [readonly]="true"
+                styleClass="overview-rating"
+              ></p-rating>
             </div>
             <div class="overview-count">{{ resumen.totalResenas }} evaluaciones verificadas</div>
 
@@ -301,8 +315,12 @@
               @for (dist of resumen.distribucion; track dist.estrellas) {
                 <div class="dist-row">
                   <span class="dist-stars">{{ dist.estrellas }} <i class="pi pi-star-fill"></i></span>
-                  <div class="dist-progress-track">
-                    <div class="dist-progress-fill" [style.width.%]="dist.porcentaje"></div>
+                  <div class="dist-progress-wrap">
+                    <p-progressbar
+                      [value]="dist.porcentaje"
+                      [showValue]="false"
+                      styleClass="dist-progressbar"
+                    ></p-progressbar>
                   </div>
                   <span class="dist-pct">{{ dist.porcentaje }}%</span>
                 </div>
@@ -318,22 +336,23 @@
                   <div class="author-info">
                     <span class="author-name">{{ res.autor }}</span>
                     @if (res.compraVerificada) {
-                      <span class="verified-badge">
-                        <i class="pi pi-check-circle" aria-hidden="true"></i>
-                        <span>Compra verificada</span>
-                      </span>
+                      <p-tag
+                        severity="success"
+                        value="Compra verificada"
+                        icon="pi pi-check-circle"
+                        styleClass="verified-tag"
+                      ></p-tag>
                     }
                   </div>
                   <span class="review-date">{{ res.fecha }}</span>
                 </div>
 
                 <div class="review-stars" aria-hidden="true">
-                  @for (star of [1, 2, 3, 4, 5]; track star) {
-                    <i
-                      class="pi pi-star-fill star-icon"
-                      [class.is-filled]="star <= res.calificacion"
-                    ></i>
-                  }
+                  <p-rating
+                    [ngModel]="res.calificacion"
+                    [readonly]="true"
+                    styleClass="review-item-rating"
+                  ></p-rating>
                 </div>
 
                 <p class="review-comment">{{ res.comentario }}</p>

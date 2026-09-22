@@ -1,15 +1,16 @@
 import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 
 import { CarouselModule, CarouselResponsiveOptions } from 'primeng/carousel';
+import { TagModule } from 'primeng/tag';
 import { Categoria } from '../../../../core/models/categoria.models';
 import { Producto } from '../../../../core/models/producto.models';
 import { ProductCardComponent } from '../../../../shared/components/product-card';
 
 @Component({
     selector: 'app-category-carousel',
-    imports: [CarouselModule, ProductCardComponent],
+    imports: [CarouselModule, TagModule, ProductCardComponent],
     templateUrl: './category-carousel.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './category-carousel.component.scss'
 })
 export class CategoryCarouselComponent {

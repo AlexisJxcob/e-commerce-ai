@@ -213,7 +213,20 @@
 .quantity-control {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
+
+  :host ::ng-deep .checkout-item-qty {
+    .p-inputnumber-input {
+      width: 2.75rem;
+      text-align: center;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+    }
+    .p-inputnumber-button {
+      width: 1.75rem;
+      padding: 0.25rem;
+    }
+  }
 }
 
 .stepper-box {
@@ -512,13 +525,24 @@
 .sticky-sidebar {
   position: sticky;
   top: 5rem;
+}
+
+:host ::ng-deep .summary-card.p-card {
   background: #fff;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
-  padding: 1.125rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
+  box-shadow: none;
+
+  .p-card-body {
+    padding: 1.125rem;
+  }
+
+  .p-card-content {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
 }
 
 .summary-card-header {

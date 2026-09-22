@@ -3,9 +3,10 @@
     <div class="header-content">
       <div class="title-row">
         <h3 class="category-title">{{ categoria().nombre }}</h3>
-        <span class="product-count-badge">
-          {{ productos().length }} {{ productos().length === 1 ? 'producto' : 'productos' }}
-        </span>
+        <p-tag
+          severity="secondary"
+          [value]="productos().length + (productos().length === 1 ? ' producto' : ' productos')"
+        ></p-tag>
       </div>
       @if (categoria().descripcion) {
         <p class="category-desc">{{ categoria().descripcion }}</p>

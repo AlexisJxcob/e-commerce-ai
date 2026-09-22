@@ -81,6 +81,11 @@
   flex-direction: column;
 }
 
+.skeleton-media-box {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
 .card-bottom {
   display: flex;
   align-items: center;

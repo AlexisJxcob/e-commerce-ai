@@ -25,45 +25,47 @@
   }
 }
 
-.admin-nav-tabs {
-  display: flex;
-  gap: 0.5rem;
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 0.75rem;
+:host ::ng-deep .admin-tabs {
+  .p-tablist {
+    border-bottom: 1px solid var(--border-subtle);
+    background: transparent;
+  }
 
-  .tab-btn {
+  .p-tablist-tab-list {
+    background: transparent;
+    gap: 0.5rem;
+  }
+
+  .p-tab {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--radius-button);
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9375rem;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
+    color: var(--text-secondary);
+    border: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
 
     &:hover {
       color: var(--text-primary);
-      background-color: var(--surface-elevated);
     }
 
-    &.active {
-      background-color: var(--bg-primary);
-      border-color: var(--border-subtle);
+    &.p-tab-active {
       color: var(--accent-electric);
+      border-color: var(--accent-electric);
       font-weight: 600;
     }
+  }
 
-    .tab-badge {
-      font-size: 0.6875rem;
-      padding: 0.1rem 0.4rem;
-      background-color: var(--surface-elevated);
-      border-radius: 10px;
-      color: var(--text-secondary);
-    }
+  .p-tabpanels {
+    background: transparent;
+    padding: 1.5rem 0 0 0;
+  }
+
+  .p-tabpanel {
+    padding: 0;
   }
 }
 
@@ -128,39 +130,53 @@
   overflow-x: auto;
 }
 
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
+:host ::ng-deep .admin-products-table {
+  .p-datatable-table {
+    border-collapse: collapse;
+    width: 100%;
+  }
 
-  thead tr {
-    border-bottom: 1px solid var(--border-subtle);
+  .p-datatable-thead > tr > th {
     background-color: var(--surface-elevated);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    transition: background 0.15s ease;
 
-    th {
-      padding: 0.75rem 1rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      font-size: 0.8125rem;
-
-      &.th-actions {
-        text-align: right;
-      }
+    &.p-sortable-column:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+      color: var(--text-primary);
     }
   }
 
-  tbody tr {
+  .p-datatable-tbody > tr {
     border-bottom: 1px solid var(--border-subtle);
+    transition: background 0.15s ease;
 
     &:hover {
       background-color: rgba(237, 235, 230, 0.4);
     }
 
-    td {
+    > td {
       padding: 0.75rem 1rem;
       vertical-align: middle;
+      font-size: 0.875rem;
     }
   }
+
+  .p-paginator {
+    background: transparent;
+    border-top: 1px solid var(--border-subtle);
+    padding: 0.75rem 1rem;
+  }
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
 
   .cell-sku {
     font-family: monospace;
@@ -196,36 +212,21 @@
     align-items: center;
     gap: 0.5rem;
 
-    .stock-inline-input {
-      width: 60px;
-      height: 32px;
-      padding: 0.25rem 0.5rem;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-input);
-      text-align: center;
-      background: var(--bg-primary);
-
-      &:focus {
-        border-color: var(--accent-electric);
-        outline: none;
+    ::ng-deep .stock-inputnumber {
+      .p-inputnumber-input {
+        width: 3.25rem;
+        height: 32px;
+        text-align: center;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8125rem;
+      }
+      .p-inputnumber-button {
+        width: 1.75rem;
+        height: 32px;
+        padding: 0.25rem;
       }
     }
-
-    .save-stock-btn {
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border: 1px solid var(--border-subtle);
-      border-radius: 4px;
-      background: var(--surface-elevated);
-      color: var(--text-primary);
-      cursor: pointer;
-
-      &:hover {
-        border-color: var(--accent-electric);
-        color: var(--accent-electric);
-      }
-    }
+  }
 
     .badge-error-sm {
       font-size: 0.6875rem;
@@ -235,30 +236,15 @@
       background: var(--status-error-bg);
       color: var(--status-error);
     }
-  }
 
   .cell-actions {
     text-align: right;
 
-    .action-icon-btn {
-      width: 32px;
-      height: 32px;
-      border: none;
-      background: transparent;
-      border-radius: 4px;
-      cursor: pointer;
-      color: var(--text-secondary);
-      transition: all 0.15s ease;
-
-      &.edit-btn:hover {
-        color: var(--accent-electric);
-        background-color: rgba(36, 84, 255, 0.08);
-      }
-
-      &.delete-btn:hover {
-        color: var(--status-error);
-        background-color: var(--status-error-bg);
-      }
+    .table-actions-group {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.25rem;
     }
   }
 
@@ -273,70 +259,61 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
+}
 
-  .category-card {
+:host ::ng-deep .category-card.p-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: none;
+  background: var(--bg-primary);
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--border-hover);
+  }
+
+  .p-card-body {
     padding: 1.25rem;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+  }
 
-    .category-card-header {
-      display: flex;
-      align-items: baseline;
-      gap: 0.5rem;
-      flex-wrap: wrap;
+  .p-card-content {
+    padding: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
 
-      .category-id {
-        font-family: monospace;
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-      }
+  .category-desc {
+    flex-grow: 1;
+  }
 
-      .category-name {
-        font-size: 1.05rem;
-        font-weight: 600;
-        margin: 0;
-      }
-    }
+  .category-card-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
 
-    .category-desc {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      margin: 0;
-      flex-grow: 1;
-    }
+:host ::ng-deep .ai-overview-card.p-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: none;
 
-    .category-card-actions {
-      display: flex;
-      justify-content: flex-end;
+  .p-card-body {
+    padding: 2rem;
+  }
 
-      .category-delete-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        background: transparent;
-        border: none;
-        color: var(--text-secondary);
-        font-size: 0.75rem;
-        cursor: pointer;
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-
-        &:hover {
-          color: var(--status-error);
-          background: var(--status-error-bg);
-        }
-      }
-    }
+  .p-card-content {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 }
 
 .ai-overview-card {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-
   .ai-overview-header {
     display: flex;
     gap: 1.25rem;
@@ -356,10 +333,25 @@
       flex-shrink: 0;
     }
 
-    .ai-card-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin: 0 0 0.5rem 0;
+    .ai-title-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+
+      .ai-card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .ai-tags-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
     }
 
     .ai-card-desc {
@@ -385,12 +377,6 @@
     padding-top: 1rem;
     border-top: 1px solid var(--border-subtle);
 
-    .reindex-btn {
-      height: 42px;
-      padding: 0 1.25rem;
-      font-weight: 600;
-    }
-
     .ai-action-note {
       font-size: 0.8125rem;
       color: var(--text-secondary);
@@ -398,26 +384,53 @@
     }
   }
 
-  .reindex-result-banner {
-    display: flex;
-    gap: 1.5rem;
-    padding: 1rem 1.25rem;
-    background-color: var(--surface-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-input);
+  .reindex-progress {
+    padding: 0.75rem 0;
+    .reindex-progress-text {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+  }
 
-    .result-metric {
+  .reindex-result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+
+    .metric-card {
+      padding: 1.25rem;
+      background-color: var(--surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-card);
       display: flex;
       flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+
+      .metric-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+
+        &.success-icon {
+          color: var(--status-success);
+        }
+        &.pending-icon {
+          color: #f59e0b;
+        }
+      }
 
       .metric-num {
-        font-size: 1.5rem;
+        font-size: 1.75rem;
         font-weight: 700;
-        color: var(--accent-electric);
+        color: var(--text-primary);
+        line-height: 1.1;
       }
 
       .metric-label {
-        font-size: 0.75rem;
+        font-size: 0.8125rem;
         color: var(--text-secondary);
       }
     }

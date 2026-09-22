@@ -1,98 +1,107 @@
-<aside class="diagnosis-panel repara-card" aria-label="Diagnóstico técnico del asistente">
-  <header class="diagnosis-header">
-    <div class="diagnosis-badge">
-      <i class="pi pi-sparkles badge-icon" aria-hidden="true"></i>
-      <span>Diagnóstico Técnico IA</span>
-    </div>
-    <h2 class="diagnosis-title">Solución recomendada</h2>
-    @if (query()) {
-      <p class="diagnosis-summary">
-        Análisis generado para tu problema:
-        <span class="query-highlight">"{{ query() }}"</span>.
-        A continuación se detallan las herramientas y repuestos necesarios para efectuar la reparación de forma óptima y segura.
-      </p>
-    } @else {
-      <p class="diagnosis-summary">
-        A continuación se detallan los insumos y herramientas recomendados por el asistente para resolver el requerimiento técnico.
-      </p>
-    }
-  </header>
-
-  <div class="diagnosis-content">
-    <!-- Herramientas identificadas -->
-    <section class="breakdown-section" aria-labelledby="tools-title">
-      <div class="section-title-wrap">
-        <i class="pi pi-wrench section-icon" aria-hidden="true"></i>
-        <h3 id="tools-title" class="section-title">Herramientas sugeridas</h3>
+<p-card styleClass="diagnosis-card" aria-label="Diagnóstico técnico del asistente">
+  <div class="diagnosis-panel">
+    <header class="diagnosis-header">
+      <div class="diagnosis-badge">
+        <p-tag severity="info" value="Diagnóstico Técnico IA" icon="pi pi-sparkles"></p-tag>
       </div>
-
-      @if (herramientas().length > 0) {
-        <div class="chips-container" role="list">
-          @for (tool of herramientas(); track tool) {
-            <span class="diagnosis-chip" role="listitem">
-              <span class="chip-bullet" aria-hidden="true">•</span>
-              {{ tool }}
-            </span>
-          }
-        </div>
+      <h2 class="diagnosis-title">Solución recomendada</h2>
+      @if (query()) {
+        <p class="diagnosis-summary">
+          Análisis generado para tu problema:
+          <span class="query-highlight">"{{ query() }}"</span>.
+          A continuación se detallan las herramientas y repuestos necesarios para efectuar la reparación de forma óptima y segura.
+        </p>
       } @else {
-        <p class="empty-hint">No se detectaron herramientas específicas adicionales.</p>
+        <p class="diagnosis-summary">
+          A continuación se detallan los insumos y herramientas recomendados por el asistente para resolver el requerimiento técnico.
+        </p>
       }
-    </section>
+    </header>
 
-    <!-- Repuestos identificados -->
-    <section class="breakdown-section" aria-labelledby="parts-title">
-      <div class="section-title-wrap">
-        <i class="pi pi-cog section-icon" aria-hidden="true"></i>
-        <h3 id="parts-title" class="section-title">Repuestos y materiales</h3>
-      </div>
-
-      @if (repuestos().length > 0) {
-        <div class="chips-container" role="list">
-          @for (part of repuestos(); track part) {
-            <span class="diagnosis-chip" role="listitem">
-              <span class="chip-bullet" aria-hidden="true">•</span>
-              {{ part }}
-            </span>
-          }
-        </div>
-      } @else {
-        <p class="empty-hint">No se identificaron repuestos críticos requeridos.</p>
-      }
-    </section>
-
-    <!-- Palabras clave / Contexto adicional -->
-    @if (palabrasClave().length > 0) {
-      <section class="breakdown-section" aria-labelledby="keywords-title">
+    <div class="diagnosis-content">
+      <!-- Herramientas identificadas -->
+      <section class="breakdown-section" aria-labelledby="tools-title">
         <div class="section-title-wrap">
-          <i class="pi pi-tag section-icon" aria-hidden="true"></i>
-          <h3 id="keywords-title" class="section-title">Términos técnicos indexados</h3>
+          <i class="pi pi-wrench section-icon" aria-hidden="true"></i>
+          <h3 id="tools-title" class="section-title">Herramientas sugeridas</h3>
         </div>
-        <div class="chips-container" role="list">
-          @for (kw of palabrasClave(); track kw) {
-            <span class="diagnosis-chip chip-secondary" role="listitem">{{ kw }}</span>
-          }
-        </div>
-      </section>
-    }
-  </div>
 
-  <footer class="diagnosis-footer">
-    <button
-      pButton
-      type="button"
-      class="p-button-primary kit-button"
-      [disabled]="productCount() === 0"
-      (click)="onAddKitClick()"
-    >
-      <i class="pi pi-shopping-bag button-icon" aria-hidden="true"></i>
-      <span class="button-text">Agregar kit completo al carrito</span>
-      @if (productCount() > 0) {
-        <span class="kit-count-badge">({{ productCount() }})</span>
+        @if (herramientas().length > 0) {
+          <div class="chips-container" role="list">
+            @for (tool of herramientas(); track tool) {
+              <p-tag
+                severity="info"
+                [value]="tool"
+                icon="pi pi-wrench"
+                styleClass="tool-tag"
+                role="listitem"
+              ></p-tag>
+            }
+          </div>
+        } @else {
+          <p class="empty-hint">No se detectaron herramientas específicas adicionales.</p>
+        }
+      </section>
+
+      <!-- Repuestos identificados -->
+      <section class="breakdown-section" aria-labelledby="parts-title">
+        <div class="section-title-wrap">
+          <i class="pi pi-cog section-icon" aria-hidden="true"></i>
+          <h3 id="parts-title" class="section-title">Repuestos y materiales</h3>
+        </div>
+
+        @if (repuestos().length > 0) {
+          <div class="chips-container" role="list">
+            @for (part of repuestos(); track part) {
+              <p-tag
+                severity="secondary"
+                [value]="part"
+                icon="pi pi-cog"
+                styleClass="part-tag"
+                role="listitem"
+              ></p-tag>
+            }
+          </div>
+        } @else {
+          <p class="empty-hint">No se identificaron repuestos críticos requeridos.</p>
+        }
+      </section>
+
+      <!-- Palabras clave / Contexto adicional -->
+      @if (palabrasClave().length > 0) {
+        <section class="breakdown-section" aria-labelledby="keywords-title">
+          <div class="section-title-wrap">
+            <i class="pi pi-tag section-icon" aria-hidden="true"></i>
+            <h3 id="keywords-title" class="section-title">Términos técnicos indexados</h3>
+          </div>
+          <div class="chips-container" role="list">
+            @for (kw of palabrasClave(); track kw) {
+              <p-tag
+                severity="warn"
+                [value]="kw"
+                icon="pi pi-tag"
+                styleClass="kw-tag"
+                role="listitem"
+              ></p-tag>
+            }
+          </div>
+        </section>
       }
-    </button>
-    <p class="kit-note">
-      Incluye los productos y materiales compatibles identificados en el catálogo.
-    </p>
-  </footer>
-</aside>
+    </div>
+
+    <footer class="diagnosis-footer">
+      <p-button
+        type="button"
+        severity="primary"
+        icon="pi pi-shopping-bag"
+        [label]="productCount() > 0 ? 'Agregar kit completo al carrito (' + productCount() + ')' : 'Agregar kit completo al carrito'"
+        [disabled]="productCount() === 0"
+        (onClick)="onAddKitClick()"
+        styleClass="w-full kit-button"
+      ></p-button>
+      <p class="kit-note">
+        Incluye los productos y materiales compatibles identificados en el catálogo.
+      </p>
+    </footer>
+  </div>
+</p-card>

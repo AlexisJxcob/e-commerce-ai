@@ -1,9 +1,22 @@
 import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { TabsModule } from 'primeng/tabs';
+import { BadgeModule } from 'primeng/badge';
+import { TableModule } from 'primeng/table';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { SelectModule } from 'primeng/select';
+import { TextareaModule } from 'primeng/textarea';
+import { CardModule } from 'primeng/card';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { AdminService } from '../../core/services/admin.service';
 import { Producto, ProductoRequest } from '../../core/models/producto.models';
 import { Categoria, CategoriaRequest } from '../../core/models/categoria.models';
@@ -15,18 +28,33 @@ export type AdminTab = 'productos' | 'categorias' | 'ia';
 @Component({
     selector: 'app-admin',
     imports: [
+    FormsModule,
     ReactiveFormsModule,
     DialogModule,
     ButtonModule,
     InputTextModule,
+    InputNumberModule,
+    TagModule,
+    TooltipModule,
+    TabsModule,
+    BadgeModule,
+    TableModule,
+    IconFieldModule,
+    InputIconModule,
+    SelectModule,
+    TextareaModule,
+    CardModule,
+    ProgressBarModule,
     ClpPipe
 ],
     templateUrl: './admin.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './admin.component.scss'
 })
 export class AdminComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly messageService = inject(MessageService);
   readonly adminService = inject(AdminService);
 
   readonly activeTab = signal<AdminTab>('productos');
@@ -83,13 +111,24 @@ export class AdminComponent implements OnInit {
     );
   });
 
+  // Categories available to be chosen as parent (prevent cyclic self-parenting)
+  readonly categoriasDisponiblesComoPadre = computed(() => {
+    const currentId = this.editingCategoryId();
+    if (!currentId) {
+      return this.categorias();
+    }
+    return this.categorias().filter((c) => c.id !== currentId);
+  });
+
   ngOnInit(): void {
     this.cargarDatos();
   }
 
-  setTab(tab: AdminTab): void {
-    this.activeTab.set(tab);
-    this.clearAlerts();
+  setTab(tab: string | number | undefined): void {
+    if (tab && (tab === 'productos' || tab === 'categorias' || tab === 'ia')) {
+      this.activeTab.set(tab);
+      this.clearAlerts();
+    }
   }
 
   cargarDatos(): void {
@@ -122,27 +161,34 @@ export class AdminComponent implements OnInit {
 
   // --- Inline Stock Management ---
 
-  onStockInputChange(productId: number, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const value = parseInt(input.value, 10);
-    if (!Number.isNaN(value) && value >= 0) {
+  onStockNumberChange(productId: number, value: number | null): void {
+    if (value !== null && value >= 0) {
       this.stockEditingMap.update((map) => ({ ...map, [productId]: value }));
     }
   }
 
   guardarStock(product: Producto): void {
     const nuevoStock = this.stockEditingMap()[product.id] ?? product.stock;
-    this.clearAlerts();
 
     this.adminService.actualizarStock(product.id, nuevoStock).subscribe({
       next: (updated) => {
         this.productos.update((list) =>
           list.map((p) => (p.id === updated.id ? updated : p))
         );
-        this.successMessage.set(`Stock de "${product.nombre}" actualizado a ${updated.stock}.`);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Stock actualizado',
+          detail: `Stock de "${product.nombre}" actualizado a ${updated.stock} un.`,
+          life: 3000
+        });
       },
       error: (err) => {
-        this.errorMessage.set(err?.error?.message ?? 'Error al actualizar el stock.');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error al actualizar',
+          detail: err?.error?.message ?? 'No se pudo actualizar el stock.',
+          life: 4000
+        });
       }
     });
   }
@@ -205,10 +251,20 @@ export class AdminComponent implements OnInit {
             list.map((p) => (p.id === updated.id ? updated : p))
           );
           this.cerrarProductModal();
-          this.successMessage.set(`Producto "${updated.nombre}" modificado.`);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Producto actualizado',
+            detail: `Producto "${updated.nombre}" actualizado correctamente.`,
+            life: 3000
+          });
         },
         error: (err) => {
-          this.errorMessage.set(err?.error?.message ?? 'Error al actualizar producto.');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al actualizar',
+            detail: err?.error?.message ?? 'Error al actualizar producto.',
+            life: 4000
+          });
         }
       });
     } else {
@@ -216,27 +272,54 @@ export class AdminComponent implements OnInit {
         next: (created) => {
           this.productos.update((list) => [created, ...list]);
           this.cerrarProductModal();
-          this.successMessage.set(`Producto "${created.nombre}" creado exitosamente.`);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Producto creado',
+            detail: `Producto "${created.nombre}" creado exitosamente.`,
+            life: 3000
+          });
         },
         error: (err) => {
-          this.errorMessage.set(err?.error?.message ?? 'Error al crear producto.');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al crear',
+            detail: err?.error?.message ?? 'Error al crear producto.',
+            life: 4000
+          });
         }
       });
     }
   }
 
   eliminarProducto(product: Producto): void {
-    if (!confirm(`¿Eliminar definitivamente "${product.nombre}"?`)) {
-      return;
-    }
-
-    this.adminService.eliminarProducto(product.id).subscribe({
-      next: () => {
-        this.productos.update((list) => list.filter((p) => p.id !== product.id));
-        this.successMessage.set(`Producto "${product.nombre}" eliminado.`);
-      },
-      error: (err) => {
-        this.errorMessage.set(err?.error?.message ?? 'No se pudo eliminar el producto.');
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de que deseas eliminar definitivamente el producto "${product.nombre}"?`,
+      header: 'Eliminar Producto',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger p-button-sm',
+      rejectButtonStyleClass: 'p-button-outlined p-button-sm',
+      accept: () => {
+        this.adminService.eliminarProducto(product.id).subscribe({
+          next: () => {
+            this.productos.update((list) => list.filter((p) => p.id !== product.id));
+            this.messageService.add({
+              severity: 'info',
+              summary: 'Producto eliminado',
+              detail: `Producto "${product.nombre}" eliminado correctamente.`,
+              life: 3000
+            });
+          },
+          error: (err) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error al eliminar',
+              detail: err?.error?.message ?? 'No se pudo eliminar el producto.',
+              life: 4000
+            });
+          }
+        });
       }
     });
   }
@@ -279,10 +362,20 @@ export class AdminComponent implements OnInit {
             list.map((c) => (c.id === updated.id ? updated : c))
           );
           this.cerrarCategoryModal();
-          this.successMessage.set(`Categoría "${updated.nombre}" actualizada.`);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Categoría actualizada',
+            detail: `Categoría "${updated.nombre}" actualizada.`,
+            life: 3000
+          });
         },
         error: (err) => {
-          this.errorMessage.set(err?.error?.message ?? 'Error al actualizar categoría.');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al actualizar',
+            detail: err?.error?.message ?? 'Error al actualizar categoría.',
+            life: 4000
+          });
         }
       });
     } else {
@@ -290,29 +383,56 @@ export class AdminComponent implements OnInit {
         next: (created) => {
           this.categorias.update((list) => [...list, created]);
           this.cerrarCategoryModal();
-          this.successMessage.set(`Categoría "${created.nombre}" creada.`);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Categoría creada',
+            detail: `Categoría "${created.nombre}" creada con éxito.`,
+            life: 3000
+          });
         },
         error: (err) => {
-          this.errorMessage.set(err?.error?.message ?? 'Error al crear categoría.');
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error al crear',
+            detail: err?.error?.message ?? 'Error al crear categoría.',
+            life: 4000
+          });
         }
       });
     }
   }
 
   eliminarCategoria(category: Categoria): void {
-    if (!confirm(`¿Eliminar la categoría "${category.nombre}"?`)) {
-      return;
-    }
-
-    this.adminService.eliminarCategoria(category.id).subscribe({
-      next: () => {
-        this.categorias.update((list) => list.filter((c) => c.id !== category.id));
-        this.successMessage.set(`Categoría "${category.nombre}" eliminada.`);
-      },
-      error: (err) => {
-        this.errorMessage.set(
-          err?.error?.message ?? 'No se pudo eliminar la categoría (puede estar en uso).'
-        );
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de que deseas eliminar la categoría "${category.nombre}"?`,
+      header: 'Eliminar Categoría',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger p-button-sm',
+      rejectButtonStyleClass: 'p-button-outlined p-button-sm',
+      accept: () => {
+        this.adminService.eliminarCategoria(category.id).subscribe({
+          next: () => {
+            this.categorias.update((list) => list.filter((c) => c.id !== category.id));
+            this.messageService.add({
+              severity: 'info',
+              summary: 'Categoría eliminada',
+              detail: `Categoría "${category.nombre}" eliminada correctamente.`,
+              life: 3000
+            });
+          },
+          error: (err) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error al eliminar',
+              detail:
+                err?.error?.message ??
+                'No se pudo eliminar la categoría (puede estar en uso por productos existentes).',
+              life: 4500
+            });
+          }
+        });
       }
     });
   }
@@ -322,19 +442,26 @@ export class AdminComponent implements OnInit {
   reindexarEmbeddings(): void {
     this.isReindexing.set(true);
     this.reindexResult.set(null);
-    this.clearAlerts();
 
     this.adminService.reindexarEmbeddings().subscribe({
       next: (res) => {
         this.isReindexing.set(false);
         this.reindexResult.set(res);
-        this.successMessage.set(
-          `Reindexación completada: ${res.procesados} productos procesados, ${res.pendientes} pendientes.`
-        );
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Reindexación completada',
+          detail: `${res.procesados} productos indexados con éxito (${res.pendientes} pendientes).`,
+          life: 4000
+        });
       },
       error: () => {
         this.isReindexing.set(false);
-        this.errorMessage.set('Error durante la reindexación de embeddings vectoriales.');
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error de reindexación',
+          detail: 'No se pudo completar la indexación vectorial en el servidor.',
+          life: 4000
+        });
       }
     });
   }

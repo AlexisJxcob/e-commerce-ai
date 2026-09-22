@@ -48,7 +48,9 @@
       <div class="products-grid">
         @for (item of [1, 2, 3, 4]; track item) {
           <div class="product-skeleton-card">
-            <p-skeleton width="100%" height="160px" borderRadius="8px" styleClass="mb-3"></p-skeleton>
+            <div class="skeleton-media-box mb-3">
+              <p-skeleton width="100%" height="100%" borderRadius="8px"></p-skeleton>
+            </div>
             <p-skeleton width="60%" height="14px" styleClass="mb-2"></p-skeleton>
             <p-skeleton width="90%" height="20px" styleClass="mb-3"></p-skeleton>
             <div class="card-bottom">

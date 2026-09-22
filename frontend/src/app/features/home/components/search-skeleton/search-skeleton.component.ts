@@ -6,7 +6,7 @@ import { SkeletonModule } from 'primeng/skeleton';
     selector: 'app-search-skeleton',
     imports: [SkeletonModule],
     templateUrl: './search-skeleton.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './search-skeleton.component.scss'
 })
 export class SearchSkeletonComponent {}

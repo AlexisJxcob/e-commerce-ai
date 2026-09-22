@@ -1,5 +1,5 @@
 <div class="checkout-page-container">
-  <!-- Stepper Header (Inspirado en el flujo Entel) -->
+  <!-- Stepper Header con p-stepper -->
   <header class="checkout-stepper-header">
     <div class="stepper-nav-wrapper">
       <button type="button" class="back-link-btn" (click)="seguirComprando()">
@@ -8,25 +8,14 @@
       </button>
 
       <nav class="stepper-track" aria-label="Progreso de la compra">
-        <ol class="stepper-list">
-          @for (step of steps; track step.id) {
-            <li
-              class="stepper-item"
-              [class.active]="currentStep() === step.id"
-              [class.completed]="isStepCompleted(step.id)"
-              (click)="setStep(step.id)"
-            >
-              <div class="step-indicator">
-                @if (isStepCompleted(step.id)) {
-                  <i class="pi pi-check step-check" aria-hidden="true"></i>
-                } @else {
-                  <span class="step-num">{{ step.number }}</span>
-                }
-              </div>
-              <span class="step-title">{{ step.label }}</span>
-            </li>
-          }
-        </ol>
+        <p-stepper [value]="currentStepNumber()" [linear]="false" styleClass="checkout-stepper">
+          <p-step-list>
+            <p-step [value]="1" (click)="setStep('resumen')">Resumen</p-step>
+            <p-step [value]="2" (click)="setStep('datos')">Tus Datos</p-step>
+            <p-step [value]="3" (click)="setStep('entrega')">Entrega</p-step>
+            <p-step [value]="4" (click)="setStep('pago')">Pago</p-step>
+          </p-step-list>
+        </p-stepper>
       </nav>
     </div>
   </header>
@@ -40,14 +29,13 @@
         </div>
         <h2>Tu carrito está vacío</h2>
         <p>No tienes productos en el carrito para procesar una compra.</p>
-        <button
-          pButton
+        <p-button
           type="button"
           label="Explorar catálogo de ferretería"
           icon="pi pi-search"
-          class="p-button-primary"
-          (click)="seguirComprando()"
-        ></button>
+          severity="primary"
+          (onClick)="seguirComprando()"
+        ></p-button>
       </div>
     </main>
   } @else {
@@ -89,34 +77,25 @@
                     </div>
 
                     <div class="quantity-control">
-                      <div class="stepper-box">
-                        <button
-                          type="button"
-                          class="step-btn"
-                          (click)="decrementar(item.id, item.cantidad)"
-                          [attr.aria-label]="'Disminuir ' + item.nombre"
-                        >
-                          <i class="pi pi-minus" aria-hidden="true"></i>
-                        </button>
-                        <span class="step-val">{{ item.cantidad }}</span>
-                        <button
-                          type="button"
-                          class="step-btn"
-                          (click)="incrementar(item.id, item.cantidad)"
-                          [attr.aria-label]="'Aumentar ' + item.nombre"
-                        >
-                          <i class="pi pi-plus" aria-hidden="true"></i>
-                        </button>
-                      </div>
+                      <p-inputnumber
+                        [ngModel]="item.cantidad"
+                        (ngModelChange)="onItemCantidadChange(item.id, $event)"
+                        [showButtons]="true"
+                        buttonLayout="horizontal"
+                        [min]="1"
+                        decrementButtonIcon="pi pi-minus"
+                        incrementButtonIcon="pi pi-plus"
+                        styleClass="checkout-item-qty"
+                      ></p-inputnumber>
 
-                      <button
+                      <p-button
                         type="button"
-                        class="remove-btn"
-                        (click)="eliminar(item.id)"
-                        title="Eliminar producto"
-                      >
-                        <i class="pi pi-trash" aria-hidden="true"></i>
-                      </button>
+                        variant="text"
+                        severity="danger"
+                        icon="pi pi-trash"
+                        (onClick)="eliminar(item.id)"
+                        [attr.aria-label]="'Eliminar ' + item.nombre"
+                      ></p-button>
                     </div>
 
                     <div class="item-subtotal-cell text-right">
@@ -128,24 +107,23 @@
             </div>
 
             <div class="step-actions">
-              <button
+              <p-button
                 type="button"
-                class="btn-secondary-custom"
-                (click)="seguirComprando()"
-              >
-                <i class="pi pi-plus" aria-hidden="true"></i>
-                <span>Agregar más productos</span>
-              </button>
+                variant="outlined"
+                severity="secondary"
+                icon="pi pi-plus"
+                label="Agregar más productos"
+                (onClick)="seguirComprando()"
+              ></p-button>
 
-              <button
-                pButton
+              <p-button
                 type="button"
+                severity="primary"
                 label="Continuar a mis datos"
                 icon="pi pi-arrow-right"
                 iconPos="right"
-                class="p-button-primary step-next-btn"
-                (click)="avanzarADatos()"
-              ></button>
+                (onClick)="avanzarADatos()"
+              ></p-button>
             </div>
           </div>
         }
@@ -177,7 +155,7 @@
                     [class.ng-invalid]="datosForm.get('nombres')?.invalid && datosForm.get('nombres')?.touched"
                   />
                   @if (datosForm.get('nombres')?.invalid && datosForm.get('nombres')?.touched) {
-                    <span class="error-text">Ingresa tus nombres (mínimo 2 caracteres).</span>
+                    <p-message severity="error" variant="simple" size="small">Ingresa tus nombres (mínimo 2 caracteres).</p-message>
                   }
                 </div>
 
@@ -193,7 +171,7 @@
                     [class.ng-invalid]="datosForm.get('apellidos')?.invalid && datosForm.get('apellidos')?.touched"
                   />
                   @if (datosForm.get('apellidos')?.invalid && datosForm.get('apellidos')?.touched) {
-                    <span class="error-text">Ingresa tus apellidos completos.</span>
+                    <p-message severity="error" variant="simple" size="small">Ingresa tus apellidos completos.</p-message>
                   }
                 </div>
               </div>
@@ -212,7 +190,7 @@
                     [class.ng-invalid]="datosForm.get('rut')?.invalid && datosForm.get('rut')?.touched"
                   />
                   @if (datosForm.get('rut')?.invalid && datosForm.get('rut')?.touched) {
-                    <span class="error-text">Ingresa un RUT chileno válido con dígito verificador.</span>
+                    <p-message severity="error" variant="simple" size="small">Ingresa un RUT chileno válido con dígito verificador.</p-message>
                   }
                 </div>
 
@@ -228,7 +206,7 @@
                     [class.ng-invalid]="datosForm.get('telefono')?.invalid && datosForm.get('telefono')?.touched"
                   />
                   @if (datosForm.get('telefono')?.invalid && datosForm.get('telefono')?.touched) {
-                    <span class="error-text">Ingresa un número telefónico de contacto válido.</span>
+                    <p-message severity="error" variant="simple" size="small">Ingresa un número telefónico de contacto válido.</p-message>
                   }
                 </div>
               </div>
@@ -246,28 +224,27 @@
                 />
                 <span class="input-hint">Te enviaremos el comprobante y detalle de retiro/envío a este correo.</span>
                 @if (datosForm.get('email')?.invalid && datosForm.get('email')?.touched) {
-                  <span class="error-text">Ingresa un correo electrónico válido.</span>
+                  <p-message severity="error" variant="simple" size="small">Ingresa un correo electrónico válido.</p-message>
                 }
               </div>
 
               <div class="step-actions">
-                <button
+                <p-button
                   type="button"
-                  class="btn-secondary-custom"
-                  (click)="setStep('resumen')"
-                >
-                  <i class="pi pi-arrow-left" aria-hidden="true"></i>
-                  <span>Volver al resumen</span>
-                </button>
+                  variant="outlined"
+                  severity="secondary"
+                  icon="pi pi-arrow-left"
+                  label="Volver al resumen"
+                  (onClick)="setStep('resumen')"
+                ></p-button>
 
-                <button
-                  pButton
+                <p-button
                   type="submit"
+                  severity="primary"
                   label="Continuar a método de entrega"
                   icon="pi pi-arrow-right"
                   iconPos="right"
-                  class="p-button-primary step-next-btn"
-                ></button>
+                ></p-button>
               </div>
             </form>
           </div>
@@ -298,13 +275,17 @@
                 (keydown.enter)="metodoEntrega.set('retiro')"
               >
                 <div class="choice-card-header">
-                  <div class="radio-indicator">
-                    <span class="radio-dot" [class.active]="metodoEntrega() === 'retiro'"></span>
-                  </div>
+                  <p-radiobutton
+                    name="metodoEntrega"
+                    value="retiro"
+                    [ngModel]="metodoEntrega()"
+                    (ngModelChange)="metodoEntrega.set($event)"
+                    inputId="entregaRetiro"
+                  ></p-radiobutton>
                   <div class="choice-title-group">
                     <div class="title-with-badge">
-                      <span class="choice-title">Retiro en local</span>
-                      <span class="badge-free">Gratis</span>
+                      <label for="entregaRetiro" class="choice-title cursor-pointer">Retiro en local</label>
+                      <p-tag severity="success" value="Gratis" size="small"></p-tag>
                     </div>
                     <span class="choice-subtitle">Listo para retirar en 2 horas hábiles</span>
                   </div>
@@ -342,15 +323,21 @@
                 (keydown.enter)="metodoEntrega.set('despacho')"
               >
                 <div class="choice-card-header">
-                  <div class="radio-indicator">
-                    <span class="radio-dot" [class.active]="metodoEntrega() === 'despacho'"></span>
-                  </div>
+                  <p-radiobutton
+                    name="metodoEntrega"
+                    value="despacho"
+                    [ngModel]="metodoEntrega()"
+                    (ngModelChange)="metodoEntrega.set($event)"
+                    inputId="entregaDespacho"
+                  ></p-radiobutton>
                   <div class="choice-title-group">
                     <div class="title-with-badge">
-                      <span class="choice-title">Despacho a domicilio</span>
-                      <span class="badge-shipping-cost">
-                        {{ costoDespacho() === 0 ? 'Envío Gratis' : (costoDespacho() | clp) }}
-                      </span>
+                      <label for="entregaDespacho" class="choice-title cursor-pointer">Despacho a domicilio</label>
+                      <p-tag
+                        [value]="costoDespacho() === 0 ? 'Envío Gratis' : (costoDespacho() | clp)"
+                        [severity]="costoDespacho() === 0 ? 'success' : 'info'"
+                        size="small"
+                      ></p-tag>
                     </div>
                     <span class="choice-subtitle">Entrega estimada en 24 a 48 horas hábiles</span>
                   </div>
@@ -361,11 +348,17 @@
                     <div class="form-row-2">
                       <div class="form-group">
                         <label for="region" class="form-label">Región <span class="required-star">*</span></label>
-                        <select id="region" formControlName="region" class="form-select">
-                          @for (reg of regionesChile; track reg) {
-                            <option [value]="reg">{{ reg }}</option>
-                          }
-                        </select>
+                        <p-select
+                          id="region"
+                          formControlName="region"
+                          [options]="regionesChile"
+                          [filter]="true"
+                          placeholder="Selecciona tu región"
+                          styleClass="w-full"
+                        ></p-select>
+                        @if (despachoForm.get('region')?.invalid && despachoForm.get('region')?.touched) {
+                          <p-message severity="error" variant="simple" size="small">Selecciona una región válida.</p-message>
+                        }
                       </div>
 
                       <div class="form-group">
@@ -380,7 +373,7 @@
                           [class.ng-invalid]="despachoForm.get('comuna')?.invalid && despachoForm.get('comuna')?.touched"
                         />
                         @if (despachoForm.get('comuna')?.invalid && despachoForm.get('comuna')?.touched) {
-                          <span class="error-text">Indica la comuna de despacho.</span>
+                          <p-message severity="error" variant="simple" size="small">Indica la comuna de despacho.</p-message>
                         }
                       </div>
                     </div>
@@ -397,7 +390,7 @@
                         [class.ng-invalid]="despachoForm.get('direccion')?.invalid && despachoForm.get('direccion')?.touched"
                       />
                       @if (despachoForm.get('direccion')?.invalid && despachoForm.get('direccion')?.touched) {
-                        <span class="error-text">Indica tu dirección completa.</span>
+                        <p-message severity="error" variant="simple" size="small">Indica tu dirección completa.</p-message>
                       }
                     </div>
 
@@ -434,14 +427,17 @@
             <!-- Retiro por un tercero -->
             @if (metodoEntrega() === 'retiro') {
               <div class="third-party-box">
-                <label class="checkbox-container">
-                  <input
-                    type="checkbox"
-                    [checked]="retiraTercero()"
-                    (change)="toggleRetiraTercero($event)"
-                  />
-                  <span class="checkbox-label-text">Autorizar a otra persona para retirar el pedido</span>
-                </label>
+                <div class="checkbox-container">
+                  <p-checkbox
+                    [binary]="true"
+                    [ngModel]="retiraTercero()"
+                    (ngModelChange)="retiraTercero.set($event)"
+                    inputId="checkRetiraTercero"
+                  ></p-checkbox>
+                  <label for="checkRetiraTercero" class="checkbox-label-text cursor-pointer">
+                    Autorizar a otra persona para retirar el pedido
+                  </label>
+                </div>
 
                 @if (retiraTercero()) {
                   <form [formGroup]="terceroForm" class="tercero-form-inner">
@@ -476,24 +472,23 @@
             }
 
             <div class="step-actions">
-              <button
+              <p-button
                 type="button"
-                class="btn-secondary-custom"
-                (click)="setStep('datos')"
-              >
-                <i class="pi pi-arrow-left" aria-hidden="true"></i>
-                <span>Volver a mis datos</span>
-              </button>
+                variant="outlined"
+                severity="secondary"
+                icon="pi pi-arrow-left"
+                label="Volver a mis datos"
+                (onClick)="setStep('datos')"
+              ></p-button>
 
-              <button
-                pButton
+              <p-button
                 type="button"
+                severity="primary"
                 label="Continuar al pago"
                 icon="pi pi-arrow-right"
                 iconPos="right"
-                class="p-button-primary step-next-btn"
-                (click)="avanzarAPago()"
-              ></button>
+                (onClick)="avanzarAPago()"
+              ></p-button>
             </div>
           </div>
         }
@@ -520,7 +515,7 @@
                   </div>
                   <div class="gateway-brand">
                     <span class="gateway-name">Transbank Webpay Plus</span>
-                    <span class="badge-official">Pasarela Oficial</span>
+                    <p-tag severity="info" value="Pasarela Oficial" size="small"></p-tag>
                   </div>
                 </div>
 
@@ -552,9 +547,13 @@
                     <i class="pi pi-user" aria-hidden="true"></i>
                     Datos de contacto
                   </span>
-                  <button type="button" class="btn-edit-step" (click)="setStep('datos')">
-                    Editar
-                  </button>
+                  <p-button
+                    type="button"
+                    variant="text"
+                    size="small"
+                    label="Editar"
+                    (onClick)="setStep('datos')"
+                  ></p-button>
                 </div>
                 <div class="review-box-content">
                   <strong>{{ datosForm.get('nombres')?.value }} {{ datosForm.get('apellidos')?.value }}</strong>
@@ -570,13 +569,19 @@
                     <i class="pi pi-map-marker" aria-hidden="true"></i>
                     Entrega
                   </span>
-                  <button type="button" class="btn-edit-step" (click)="setStep('entrega')">
-                    Editar
-                  </button>
+                  <p-button
+                    type="button"
+                    variant="text"
+                    size="small"
+                    label="Editar"
+                    (onClick)="setStep('entrega')"
+                  ></p-button>
                 </div>
                 <div class="review-box-content">
                   @if (metodoEntrega() === 'retiro') {
-                    <span class="delivery-highlight">Retiro en local (Gratis)</span>
+                    <div class="flex items-center gap-2 mb-1">
+                      <p-tag severity="success" value="Retiro en local (Gratis)" size="small"></p-tag>
+                    </div>
                     <span>{{ sucursalLocal.nombre }}</span>
                     <span>{{ sucursalLocal.direccion }}, {{ sucursalLocal.comuna }}</span>
                     @if (retiraTercero() && terceroForm.get('nombreTercero')?.value) {
@@ -585,7 +590,9 @@
                       </span>
                     }
                   } @else {
-                    <span class="delivery-highlight">Despacho a domicilio</span>
+                    <div class="flex items-center gap-2 mb-1">
+                      <p-tag severity="info" value="Despacho a domicilio" size="small"></p-tag>
+                    </div>
                     <span>{{ despachoForm.get('direccion')?.value }}</span>
                     @if (despachoForm.get('depto')?.value) {
                       <span>{{ despachoForm.get('depto')?.value }}</span>
@@ -598,47 +605,44 @@
 
             <!-- Terms and Conditions -->
             <div class="terms-acceptance-box">
-              <label class="checkbox-container">
-                <input
-                  type="checkbox"
-                  [checked]="terminosAceptados()"
-                  (change)="toggleTerminos($event)"
-                />
-                <span class="checkbox-label-text">
+              <div class="checkbox-container">
+                <p-checkbox
+                  [binary]="true"
+                  [ngModel]="terminosAceptados()"
+                  (ngModelChange)="terminosAceptados.set($event)"
+                  inputId="checkTerminos"
+                ></p-checkbox>
+                <label for="checkTerminos" class="checkbox-label-text cursor-pointer">
                   Declaro que he leído y acepto los <strong>Términos y Condiciones de compra</strong> y las
                   <strong>Políticas de Privacidad</strong> de Repara.ai.
-                </span>
-              </label>
+                </label>
+              </div>
             </div>
 
             @if (errorMessage()) {
-              <div class="checkout-error-banner" role="alert">
-                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-                <span>{{ errorMessage() }}</span>
-              </div>
+              <p-message severity="error" styleClass="w-full">{{ errorMessage() }}</p-message>
             }
 
             <div class="step-actions">
-              <button
+              <p-button
                 type="button"
-                class="btn-secondary-custom"
-                (click)="setStep('entrega')"
+                variant="outlined"
+                severity="secondary"
+                icon="pi pi-arrow-left"
+                label="Volver a entrega"
+                (onClick)="setStep('entrega')"
                 [disabled]="isProcessing()"
-              >
-                <i class="pi pi-arrow-left" aria-hidden="true"></i>
-                <span>Volver a entrega</span>
-              </button>
+              ></p-button>
 
-              <button
-                pButton
+              <p-button
                 type="button"
+                severity="primary"
                 label="Pagar con Webpay Plus"
                 icon="pi pi-lock"
-                class="p-button-primary pay-now-btn"
                 [loading]="isProcessing()"
                 [disabled]="!terminosAceptados() || isProcessing()"
-                (click)="procesarPago()"
-              ></button>
+                (onClick)="procesarPago()"
+              ></p-button>
             </div>
           </div>
         }
@@ -646,10 +650,10 @@
 
       <!-- Right Column: Sticky Order Summary (Sidebar estilo Entel) -->
       <aside class="checkout-summary-sidebar">
-        <div class="summary-card repara-card sticky-sidebar">
+        <p-card styleClass="summary-card sticky-sidebar">
           <div class="summary-card-header">
             <h2 class="summary-title">Resumen de compra</h2>
-            <span class="badge-neutral">{{ itemCount() }} {{ itemCount() === 1 ? 'producto' : 'productos' }}</span>
+            <p-tag [value]="itemCount() + (itemCount() === 1 ? ' producto' : ' productos')" severity="secondary"></p-tag>
           </div>
 
           <ul class="summary-items-list" role="list">
@@ -699,7 +703,7 @@
               <span>Garantía técnica de ferretería en todos los productos</span>
             </div>
           </div>
-        </div>
+        </p-card>
       </aside>
     </main>
   }

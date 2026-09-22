@@ -1,13 +1,15 @@
 import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { TagModule } from 'primeng/tag';
 import { SugerenciaFerreteria } from '../../../../core/models/asistente.models';
 
 @Component({
     selector: 'app-ai-diagnosis',
-    imports: [ButtonModule],
+    imports: [ButtonModule, CardModule, TagModule],
     templateUrl: './ai-diagnosis.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './ai-diagnosis.component.scss'
 })
 export class AiDiagnosisComponent {
