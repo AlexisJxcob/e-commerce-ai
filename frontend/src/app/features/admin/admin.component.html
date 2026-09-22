@@ -144,22 +144,30 @@
                 </div>
               </td>
               <td class="cell-actions">
-                <button
-                  type="button"
-                  class="action-icon-btn edit-btn"
-                  (click)="abrirEditarProducto(prod)"
-                  [attr.aria-label]="'Editar ' + prod.nombre"
-                >
-                  <i class="pi pi-pencil" aria-hidden="true"></i>
-                </button>
-                <button
-                  type="button"
-                  class="action-icon-btn delete-btn"
-                  (click)="eliminarProducto(prod)"
-                  [attr.aria-label]="'Eliminar ' + prod.nombre"
-                >
-                  <i class="pi pi-trash" aria-hidden="true"></i>
-                </button>
+                <div class="table-actions-group">
+                  <p-button
+                    type="button"
+                    icon="pi pi-pencil"
+                    [text]="true"
+                    severity="secondary"
+                    size="small"
+                    (onClick)="abrirEditarProducto(prod)"
+                    pTooltip="Editar producto"
+                    tooltipPosition="top"
+                    [attr.aria-label]="'Editar ' + prod.nombre"
+                  ></p-button>
+                  <p-button
+                    type="button"
+                    icon="pi pi-trash"
+                    [text]="true"
+                    severity="danger"
+                    size="small"
+                    (onClick)="eliminarProducto(prod)"
+                    pTooltip="Eliminar producto"
+                    tooltipPosition="top"
+                    [attr.aria-label]="'Eliminar ' + prod.nombre"
+                  ></p-button>
+                </div>
               </td>
             </tr>
           </ng-template>
@@ -211,14 +219,15 @@
             </p>
 
             <div class="category-card-actions">
-              <button
+              <p-button
                 type="button"
-                class="category-delete-btn"
-                (click)="eliminarCategoria(cat)"
-              >
-                <i class="pi pi-trash" aria-hidden="true"></i>
-                <span>Eliminar</span>
-              </button>
+                icon="pi pi-trash"
+                label="Eliminar"
+                severity="danger"
+                [outlined]="true"
+                size="small"
+                (onClick)="eliminarCategoria(cat)"
+              ></p-button>
             </div>
           </div>
         } @empty {

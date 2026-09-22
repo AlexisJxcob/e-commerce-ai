@@ -12,7 +12,7 @@ import { BadgeModule } from 'primeng/badge';
 import { TableModule } from 'primeng/table';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { AdminService } from '../../core/services/admin.service';
 import { Producto, ProductoRequest } from '../../core/models/producto.models';
 import { Categoria, CategoriaRequest } from '../../core/models/categoria.models';
@@ -45,6 +45,7 @@ export type AdminTab = 'productos' | 'categorias' | 'ia';
 })
 export class AdminComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
+  private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
   readonly adminService = inject(AdminService);
 
@@ -254,17 +255,34 @@ export class AdminComponent implements OnInit {
   }
 
   eliminarProducto(product: Producto): void {
-    if (!confirm(`¿Eliminar definitivamente "${product.nombre}"?`)) {
-      return;
-    }
-
-    this.adminService.eliminarProducto(product.id).subscribe({
-      next: () => {
-        this.productos.update((list) => list.filter((p) => p.id !== product.id));
-        this.successMessage.set(`Producto "${product.nombre}" eliminado.`);
-      },
-      error: (err) => {
-        this.errorMessage.set(err?.error?.message ?? 'No se pudo eliminar el producto.');
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de que deseas eliminar definitivamente el producto "${product.nombre}"?`,
+      header: 'Eliminar Producto',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger p-button-sm',
+      rejectButtonStyleClass: 'p-button-outlined p-button-sm',
+      accept: () => {
+        this.adminService.eliminarProducto(product.id).subscribe({
+          next: () => {
+            this.productos.update((list) => list.filter((p) => p.id !== product.id));
+            this.messageService.add({
+              severity: 'info',
+              summary: 'Producto eliminado',
+              detail: `Producto "${product.nombre}" eliminado correctamente.`,
+              life: 3000
+            });
+          },
+          error: (err) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error al eliminar',
+              detail: err?.error?.message ?? 'No se pudo eliminar el producto.',
+              life: 4000
+            });
+          }
+        });
       }
     });
   }
@@ -328,19 +346,36 @@ export class AdminComponent implements OnInit {
   }
 
   eliminarCategoria(category: Categoria): void {
-    if (!confirm(`¿Eliminar la categoría "${category.nombre}"?`)) {
-      return;
-    }
-
-    this.adminService.eliminarCategoria(category.id).subscribe({
-      next: () => {
-        this.categorias.update((list) => list.filter((c) => c.id !== category.id));
-        this.successMessage.set(`Categoría "${category.nombre}" eliminada.`);
-      },
-      error: (err) => {
-        this.errorMessage.set(
-          err?.error?.message ?? 'No se pudo eliminar la categoría (puede estar en uso).'
-        );
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de que deseas eliminar la categoría "${category.nombre}"?`,
+      header: 'Eliminar Categoría',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger p-button-sm',
+      rejectButtonStyleClass: 'p-button-outlined p-button-sm',
+      accept: () => {
+        this.adminService.eliminarCategoria(category.id).subscribe({
+          next: () => {
+            this.categorias.update((list) => list.filter((c) => c.id !== category.id));
+            this.messageService.add({
+              severity: 'info',
+              summary: 'Categoría eliminada',
+              detail: `Categoría "${category.nombre}" eliminada correctamente.`,
+              life: 3000
+            });
+          },
+          error: (err) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error al eliminar',
+              detail:
+                err?.error?.message ??
+                'No se pudo eliminar la categoría (puede estar en uso por productos existentes).',
+              life: 4500
+            });
+          }
+        });
       }
     });
   }
