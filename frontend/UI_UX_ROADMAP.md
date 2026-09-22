@@ -185,13 +185,13 @@ flowchart LR
 4. Las contraseñas en el modal de autenticación cuentan con botón de visualización accesible (ojo alternable).
 
 #### Checklist de Avance:
-- [ ] Configurar preset semántico de PrimeNG 22 basado en Aura en `app.config.ts` vinculando colores primarios y superficies cálidas.
-- [ ] Registrar `MessageService` y `ConfirmationService` en los providers de la aplicación.
-- [ ] Insertar `<p-toast position="top-right">` y `<p-confirmdialog>` en `app.component.html`.
-- [ ] Depurar `styles.scss`, eliminando sobreescrituras pesadas y mapeando clases utilitarias a variables `--p-*`.
-- [ ] Rediseñar `HeaderComponent` utilizando `<p-button>`, `<p-badge>` y navegación optimizada para dispositivos móviles.
-- [ ] Modernizar `CartDrawerComponent` utilizando `<p-inputnumber>`, botones estandarizados de PrimeNG y confirmación modal al vaciar.
-- [ ] Refactorizar `AuthModalComponent` adoptando `<p-tabs>`, `<p-password>` y `<p-message>`.
+- [x] Configurar preset semántico de PrimeNG 22 basado en Aura en `app.config.ts` vinculando colores primarios y superficies cálidas.
+- [x] Registrar `MessageService` y `ConfirmationService` en los providers de la aplicación.
+- [x] Insertar `<p-toast position="top-right">` y `<p-confirmdialog>` en `app.component.html`.
+- [x] Depurar `styles.scss`, eliminando sobreescrituras pesadas y mapeando clases utilitarias a variables `--p-*`.
+- [x] Rediseñar `HeaderComponent` utilizando `<p-button>`, `<p-badge>` y navegación optimizada para dispositivos móviles.
+- [x] Modernizar `CartDrawerComponent` utilizando `<p-inputnumber>`, botones estandarizados de PrimeNG y confirmación modal al vaciar.
+- [x] Refactorizar `AuthModalComponent` adoptando `<p-tabs>`, `<p-password>` y `<p-message>`.
 
 ---
 
