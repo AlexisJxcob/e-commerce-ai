@@ -20,20 +20,21 @@
           </div>
         </div>
         <div class="error-actions">
-          <button
-            pButton
+          <p-button
             type="button"
             label="Reintentar"
-            class="p-button-primary p-button-sm"
-            (click)="retry()"
-          ></button>
-          <button
-            pButton
+            severity="primary"
+            size="small"
+            (onClick)="retry()"
+          ></p-button>
+          <p-button
             type="button"
             label="Nueva consulta"
-            class="p-button-outlined p-button-sm"
-            (click)="reset()"
-          ></button>
+            variant="outlined"
+            severity="secondary"
+            size="small"
+            (onClick)="reset()"
+          ></p-button>
         </div>
       </div>
     </section>
@@ -49,16 +50,15 @@
             <strong class="query-text">"{{ asistente.currentQuery() }}"</strong>
           </span>
         </div>
-        <button
-          pButton
+        <p-button
           type="button"
           label="Nueva consulta"
-          class="p-button-outlined p-button-sm reset-btn"
-          (click)="reset()"
-        >
-          <i class="pi pi-refresh" aria-hidden="true"></i>
-          <span>Nueva consulta</span>
-        </button>
+          icon="pi pi-refresh"
+          variant="outlined"
+          size="small"
+          styleClass="reset-btn"
+          (onClick)="reset()"
+        ></p-button>
       </div>
 
       <div class="results-asymmetric-layout">
@@ -119,13 +119,13 @@
       } @else if (catalogoError()) {
         <div class="catalog-error-box">
           <p>{{ catalogoError() }}</p>
-          <button
-            pButton
+          <p-button
             type="button"
             label="Reintentar catálogo"
-            class="p-button-outlined p-button-sm"
-            (click)="cargarCatalogo()"
-          ></button>
+            variant="outlined"
+            size="small"
+            (onClick)="cargarCatalogo()"
+          ></p-button>
         </div>
       } @else {
         <div class="catalog-carousels">

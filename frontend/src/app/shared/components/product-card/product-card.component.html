@@ -10,16 +10,12 @@
   <!-- Contenedor Visual de Imagen (1:1 Cuadrado limpio estilo Sodimac) -->
   <div class="card-media">
     <div class="card-badges">
-      @if (hasStock()) {
-        <span class="badge-stock" aria-label="Stock disponible">
-          <i class="pi pi-check" aria-hidden="true"></i>
-          <span>Stock: {{ producto().stock }}</span>
-        </span>
-      } @else {
-        <span class="badge-out-of-stock" aria-label="Sin stock disponible">
-          <span>Sin stock</span>
-        </span>
-      }
+      <p-tag
+        [severity]="hasStock() ? 'success' : 'danger'"
+        [value]="hasStock() ? 'Stock: ' + producto().stock : 'Sin stock'"
+        [icon]="hasStock() ? 'pi pi-check' : 'pi pi-times'"
+        styleClass="stock-tag"
+      ></p-tag>
     </div>
 
     <img
@@ -42,14 +38,11 @@
 
     <!-- Calificación / Estrellas -->
     <div class="rating-row" [attr.aria-label]="'Calificación ' + presentation().rating + ' de 5'">
-      <div class="stars-list" aria-hidden="true">
-        @for (star of [1, 2, 3, 4, 5]; track star) {
-          <i
-            class="pi pi-star-fill star-icon"
-            [class.is-filled]="star <= Math.round(presentation().rating)"
-          ></i>
-        }
-      </div>
+      <p-rating
+        [ngModel]="presentation().rating"
+        [readonly]="true"
+        styleClass="product-rating"
+      ></p-rating>
       <span class="rating-score">{{ presentation().rating }}</span>
       <span class="rating-count">({{ presentation().reviewCount }})</span>
     </div>
@@ -79,17 +72,18 @@
 
   <!-- Footer con botón de compra rápida y sponsor -->
   <footer class="card-footer">
-    <button
-      pButton
+    <p-button
       type="button"
-      class="p-button-outlined quick-buy-btn"
+      variant="outlined"
+      severity="primary"
+      size="small"
+      icon="pi pi-cart-plus"
+      label="Agregar"
       [disabled]="!hasStock()"
-      (click)="onQuickBuy($event)"
-      aria-label="Agregar producto al carrito"
-    >
-      <i class="pi pi-cart-plus btn-icon" aria-hidden="true"></i>
-      <span class="btn-text">Agregar</span>
-    </button>
+      (onClick)="onQuickBuy($event)"
+      styleClass="w-full quick-buy-btn"
+      [attr.aria-label]="'Agregar ' + producto().nombre + ' al carrito'"
+    ></p-button>
 
     @if (presentation().patrocinado) {
       <span class="sponsored-label">Patrocinado</span>

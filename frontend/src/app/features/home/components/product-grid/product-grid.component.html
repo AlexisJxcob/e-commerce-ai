@@ -2,13 +2,10 @@
   <header class="products-header">
     <div class="header-left">
       <h3 class="products-title">Productos compatibles</h3>
-      <span class="products-count-chip" aria-label="Total de productos">{{ count() }} disponibles</span>
+      <p-tag severity="secondary" [value]="count() + ' disponibles'"></p-tag>
     </div>
     <div class="header-right">
-      <span class="catalog-badge">
-        <i class="pi pi-shield-check" aria-hidden="true"></i>
-        <span>Stock en tienda</span>
-      </span>
+      <p-tag severity="success" value="Stock en tienda" icon="pi pi-shield-check"></p-tag>
     </div>
   </header>
 

@@ -114,19 +114,19 @@
   height: auto;
   padding: 1.15rem 10.5rem 1.15rem 3.25rem;
   font-size: 1.0625rem;
-  background-color: #FFFFFF !important;
-  border: 1px solid var(--border-subtle) !important;
-  border-radius: var(--radius-input) !important;
+  background-color: #FFFFFF;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-input);
   color: var(--text-primary);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
-    border-color: var(--border-hover) !important;
+    border-color: var(--border-hover);
   }
 
   &:focus {
-    border-color: var(--accent-electric) !important;
-    box-shadow: 0 0 0 3px var(--accent-focus-ring) !important;
+    border-color: var(--accent-electric);
+    box-shadow: 0 0 0 3px var(--accent-focus-ring);
   }
 
   &::placeholder {
@@ -140,36 +140,33 @@
   }
 }
 
-.hero-submit-button {
+:host ::ng-deep .hero-submit-button {
   position: absolute;
   right: 0.5rem;
-  padding: 0.75rem 1.35rem !important;
-  font-size: 0.9375rem !important;
-  font-weight: 600 !important;
-  border-radius: var(--radius-button) !important;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: var(--accent-electric) !important;
-  border: 1px solid var(--accent-electric) !important;
-  color: #FFFFFF !important;
-  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: var(--radius-button);
   z-index: 3;
 
-  &:disabled {
-    opacity: 0.45 !important;
-    cursor: not-allowed !important;
-  }
-
-  .button-icon {
-    font-size: 0.875rem;
+  .p-button {
+    padding: 0.75rem 1.35rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    border-radius: var(--radius-button);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   @media (max-width: 640px) {
     position: static;
     margin-top: 0.75rem;
     width: 100%;
-    justify-content: center;
+
+    .p-button {
+      width: 100%;
+      justify-content: center;
+    }
   }
 }
 
@@ -194,25 +191,32 @@
   gap: 0.45rem;
 }
 
-.suggestion-chip {
+:host ::ng-deep .suggestion-chip {
   background: transparent;
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 0.25rem 0.65rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
   font-family: var(--font-sans);
 
-  &:hover:not(:disabled) {
-    border-color: var(--border-hover);
-    color: var(--text-primary);
-    background-color: var(--surface-elevated);
+  .p-chip-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    line-height: 1.4;
   }
 
-  &:disabled {
+  &:hover:not(.is-disabled) {
+    border-color: var(--border-hover);
+    background-color: var(--surface-elevated);
+
+    .p-chip-label {
+      color: var(--text-primary);
+    }
+  }
+
+  &.is-disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }

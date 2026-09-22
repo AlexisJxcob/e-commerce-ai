@@ -372,45 +372,26 @@
   color: var(--text-secondary);
 }
 
-.quantity-controls {
-  display: inline-flex;
-  align-items: center;
-  background: #FFFFFF;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-button);
-  padding: 0.15rem;
+:host ::ng-deep .detail-qty-input {
   height: 42px;
-}
 
-.qty-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  background: transparent;
-  border: none;
-  color: var(--text-primary);
-  border-radius: 4px;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: var(--surface-elevated);
-    color: var(--accent-electric);
+  .p-inputnumber {
+    height: 42px;
+    display: inline-flex;
   }
 
-  &:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
+  .p-inputnumber-input {
+    width: 48px;
+    text-align: center;
+    font-weight: 600;
+    height: 42px;
+    border-radius: 0;
   }
-}
 
-.qty-display {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 36px;
-  font-weight: 600;
+  .p-inputnumber-button {
+    width: 36px;
+    height: 42px;
+  }
 }
 
 .add-to-cart-wrapper {
@@ -420,29 +401,20 @@
   gap: 0.35rem;
 }
 
-.add-to-cart-btn {
+:host ::ng-deep .add-to-cart-btn {
   width: 100%;
-  height: 42px;
-  padding: 0 1.25rem !important;
-  background: var(--accent-electric) !important;
-  border: 1px solid var(--accent-electric) !important;
-  color: #FFFFFF !important;
-  border-radius: var(--radius-button) !important;
-  font-size: 0.875rem !important;
-  font-weight: 600 !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.45rem;
-  cursor: pointer;
 
-  &:hover:not(:disabled) {
-    background: var(--accent-hover) !important;
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
+  .p-button {
+    width: 100%;
+    height: 42px;
+    padding: 0 1.25rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    border-radius: var(--radius-button);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
   }
 }
 
@@ -634,17 +606,36 @@
   }
 }
 
-.dist-progress-track {
-  flex: 1;
-  height: 5px;
-  background: var(--surface-elevated);
-  border-radius: 3px;
-  overflow: hidden;
+:host ::ng-deep .overview-rating,
+:host ::ng-deep .detail-rating,
+:host ::ng-deep .review-item-rating {
+  display: inline-flex;
+  gap: 0.15rem;
+
+  .p-rating-item {
+    cursor: default;
+
+    .p-rating-icon {
+      font-size: 0.875rem;
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+  }
 }
 
-.dist-progress-fill {
-  height: 100%;
-  background: #F59E0B;
+.dist-progress-wrap {
+  flex: 1;
+}
+
+:host ::ng-deep .dist-progressbar {
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--surface-elevated);
+
+  .p-progressbar-value {
+    background-color: #F59E0B;
+    border-radius: 3px;
+  }
 }
 
 .dist-pct {
@@ -683,13 +674,14 @@
   font-size: 0.875rem;
 }
 
-.verified-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
+:host ::ng-deep .verified-tag {
   font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--status-success);
+}
+
+:host ::ng-deep .stock-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .review-date {
@@ -701,12 +693,6 @@
   display: flex;
   gap: 0.15rem;
   margin-bottom: 0.4rem;
-
-  .star-icon {
-    font-size: 0.75rem;
-    color: #D1D5DB;
-    &.is-filled { color: #F59E0B; }
-  }
 }
 
 .review-comment {
@@ -734,28 +720,25 @@
   }
 }
 
-.loading-container { margin-top: 2rem; }
-
-.skeleton-box, .skeleton-line {
-  background: #EDEBE6;
-  border-radius: var(--radius-card);
+.loading-container {
+  margin-top: 1rem;
+  margin-bottom: 3rem;
 }
 
-.skeleton-visual { height: 320px; }
-.skeleton-info {
+.skeleton-card {
+  width: 100%;
+  padding: 2rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-  padding: 1.25rem;
-  background: #FFFFFF;
-  border: 1px solid var(--border-subtle);
+  align-items: center;
 }
 
-.skeleton-chip { width: 100px; height: 20px; }
-.skeleton-title { width: 75%; height: 32px; }
-.skeleton-rating { width: 140px; height: 16px; }
-.skeleton-price { width: 160px; height: 38px; }
-.skeleton-actions { width: 100%; height: 42px; margin-top: 0.5rem; }
+.skeleton-hero-wrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: 280px;
+  margin: 0 auto;
+}
 
 .error-container {
   max-width: 440px;

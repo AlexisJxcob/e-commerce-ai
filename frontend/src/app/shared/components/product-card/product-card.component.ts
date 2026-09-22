@@ -1,16 +1,18 @@
 import { Component, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
-
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { RatingModule } from 'primeng/rating';
 import { Producto } from '../../../core/models/producto.models';
 import { ClpPipe } from '../../pipes/clp.pipe';
 import { getProductPresentation, ProductPresentation } from '../../../core/utils/product-presentation.util';
 
 @Component({
     selector: 'app-product-card',
-    imports: [ButtonModule, ClpPipe],
+    imports: [FormsModule, ButtonModule, TagModule, RatingModule, ClpPipe],
     templateUrl: './product-card.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './product-card.component.scss'
 })
 export class ProductCardComponent {

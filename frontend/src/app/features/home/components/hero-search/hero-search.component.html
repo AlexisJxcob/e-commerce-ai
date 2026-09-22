@@ -29,16 +29,14 @@
           autocomplete="off"
           aria-label="Describe el problema de reparación"
         />
-        <button
-          pButton
+        <p-button
           type="submit"
-          class="p-button-primary hero-submit-button"
+          label="Diagnosticar"
+          icon="pi pi-sparkles"
           [disabled]="!queryText().trim() || loading()"
           [loading]="loading()"
-        >
-          <i class="pi pi-sparkles button-icon" aria-hidden="true"></i>
-          <span class="button-label">Diagnosticar</span>
-        </button>
+          styleClass="hero-submit-button"
+        ></p-button>
       </div>
     </form>
 
@@ -47,14 +45,15 @@
         <span class="suggestions-label">Casos frecuentes:</span>
         <div class="suggestions-chips">
           @for (item of quickSuggestions; track item) {
-            <button
-              type="button"
-              class="suggestion-chip"
-              (click)="selectSuggestion(item)"
-              [disabled]="loading()"
-            >
-              {{ item }}
-            </button>
+            <p-chip
+              [label]="item"
+              styleClass="suggestion-chip"
+              [class.is-disabled]="loading()"
+              (click)="!loading() && selectSuggestion(item)"
+              tabindex="0"
+              (keydown.enter)="!loading() && selectSuggestion(item)"
+              [attr.aria-disabled]="loading()"
+            ></p-chip>
           }
         </div>
       </div>

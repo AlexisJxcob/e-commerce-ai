@@ -3,20 +3,27 @@
   width: 100%;
 }
 
-.diagnosis-panel {
-  text-align: left;
-  padding: 1.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+:host ::ng-deep .diagnosis-card {
   background-color: var(--bg-primary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
     border-color: var(--border-hover);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
   }
+
+  .p-card-body {
+    padding: 1.75rem;
+  }
+}
+
+.diagnosis-panel {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .diagnosis-header {
@@ -29,21 +36,6 @@
 
 .diagnosis-badge {
   display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.6rem;
-  background-color: var(--surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--accent-electric);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-
-  .badge-icon {
-    font-size: 0.75rem;
-  }
 }
 
 .diagnosis-title {
@@ -58,13 +50,13 @@
 
 .diagnosis-summary {
   font-size: 0.9375rem;
-  line-height: var(--line-height-body); /* 1.6 */
+  line-height: var(--line-height-body);
   color: var(--text-secondary);
   margin: 0;
 
   .query-highlight {
     color: var(--text-primary);
-    font-weight: 500;
+    font-weight: 600;
   }
 }
 
@@ -109,37 +101,6 @@
   text-align: left;
 }
 
-.diagnosis-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.65rem;
-  background-color: var(--surface-elevated); /* #EDEBE6 */
-  border: 1px solid var(--border-subtle);   /* #E5E3DD */
-  border-radius: 6px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
-
-  &:hover {
-    border-color: var(--border-hover);
-    background-color: #E6E4DF;
-  }
-
-  .chip-bullet {
-    color: var(--accent-electric);
-    font-size: 0.75rem;
-  }
-
-  &.chip-secondary {
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    background-color: var(--bg-primary);
-  }
-}
-
 .empty-hint {
   font-size: 0.8125rem;
   color: var(--text-secondary);
@@ -156,43 +117,20 @@
   text-align: left;
 }
 
-.kit-button {
+:host ::ng-deep .kit-button {
   width: 100%;
-  padding: 0.85rem 1.25rem !important;
-  font-size: 0.9375rem !important;
-  font-weight: 600 !important;
-  border-radius: var(--radius-button) !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  background-color: var(--accent-electric) !important; /* #2454FF */
-  border: 1px solid var(--accent-electric) !important;
-  color: #FFFFFF !important;
-  cursor: pointer;
-  letter-spacing: -0.01em;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
 
-  &:hover:not(:disabled) {
-    background-color: var(--accent-hover) !important;
-    border-color: var(--accent-hover) !important;
-  }
-
-  &:disabled {
-    opacity: 0.45 !important;
-    cursor: not-allowed !important;
-  }
-
-  .button-icon {
-    font-size: 1rem;
-  }
-
-  .kit-count-badge {
-    background-color: rgba(255, 255, 255, 0.2);
-    padding: 0.1rem 0.4rem;
-    border-radius: 12px;
-    font-size: 0.8125rem;
+  .p-button {
+    width: 100%;
+    padding: 0.85rem 1.25rem;
+    font-size: 0.9375rem;
     font-weight: 600;
+    border-radius: var(--radius-button);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    letter-spacing: -0.01em;
   }
 }
 

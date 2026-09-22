@@ -223,12 +223,12 @@ flowchart LR
 4. El botón "Agregar kit completo" y los botones de compra rápida proporcionan feedback inmediato mediante animaciones de microinteracción y confirmación vía Toast.
 
 #### Checklist de Avance:
-- [ ] Rediseñar `HeroSearchComponent` con `<p-inputtext>`, `<p-button [loading]>` y `<p-chip>`.
-- [ ] Transformar `AiDiagnosisComponent` en una tarjeta de alta jerarquía visual utilizando `<p-card>` y `<p-tag>`.
-- [ ] Refactorizar `ProductCardComponent` incorporando `<p-rating>` y `<p-tag>` y un botón de compra rápida integrado.
-- [ ] Homogeneizar los skeletons de búsqueda y catálogo en `SearchSkeletonComponent`.
-- [ ] Pulir el estilo visual de los carruseles de categorías en `CategoryCarouselComponent`.
-- [ ] Modernizar `ProductoDetalleComponent` reemplazando los skeletons CSS por `<p-skeleton>`, incorporando `<p-rating>`, `<p-progressbar>` y `<p-inputnumber>`.
+- [x] Rediseñar `HeroSearchComponent` con `<p-inputtext>`, `<p-button [loading]>` y `<p-chip>`.
+- [x] Transformar `AiDiagnosisComponent` en una tarjeta de alta jerarquía visual utilizando `<p-card>` y `<p-tag>`.
+- [x] Refactorizar `ProductCardComponent` incorporando `<p-rating>` y `<p-tag>` y un botón de compra rápida integrado.
+- [x] Homogeneizar los skeletons de búsqueda y catálogo en `SearchSkeletonComponent`.
+- [x] Pulir el estilo visual de los carruseles de categorías en `CategoryCarouselComponent`.
+- [x] Modernizar `ProductoDetalleComponent` reemplazando los skeletons CSS por `<p-skeleton>`, incorporando `<p-rating>`, `<p-progressbar>` y `<p-inputnumber>`.
 
 ---
 

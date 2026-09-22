@@ -3,6 +3,7 @@ import { Component, input, output, signal, ChangeDetectionStrategy } from '@angu
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { ChipModule } from 'primeng/chip';
 import { TypewriterDirective } from '../../../../shared/directives/typewriter.directive';
 
 @Component({
@@ -11,10 +12,11 @@ import { TypewriterDirective } from '../../../../shared/directives/typewriter.di
     FormsModule,
     ButtonModule,
     InputTextModule,
+    ChipModule,
     TypewriterDirective
 ],
     templateUrl: './hero-search.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './hero-search.component.scss'
 })
 export class HeroSearchComponent {

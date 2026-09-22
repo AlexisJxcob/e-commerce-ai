@@ -1,7 +1,13 @@
 import { Component, computed, effect, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
-
-import { Router, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { RatingModule } from 'primeng/rating';
+import { SkeletonModule } from 'primeng/skeleton';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { Producto } from '../../core/models/producto.models';
 import { CatalogoService } from '../../core/services/catalogo.service';
 import { CarritoService } from '../../core/services/carrito.service';
@@ -16,9 +22,20 @@ import { getProductPresentation, ProductPresentation } from '../../core/utils/pr
 
 @Component({
     selector: 'app-producto-detalle',
-    imports: [RouterLink, ButtonModule, ClpPipe, ProductCardComponent],
+    imports: [
+      CommonModule,
+      FormsModule,
+      ButtonModule,
+      TagModule,
+      RatingModule,
+      SkeletonModule,
+      ProgressBarModule,
+      InputNumberModule,
+      ClpPipe,
+      ProductCardComponent
+    ],
     templateUrl: './producto-detalle.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './producto-detalle.component.scss'
 })
 export class ProductoDetalleComponent {
