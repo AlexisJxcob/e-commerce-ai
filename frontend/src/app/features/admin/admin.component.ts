@@ -4,6 +4,8 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { TabsModule } from 'primeng/tabs';
+import { BadgeModule } from 'primeng/badge';
 import { AdminService } from '../../core/services/admin.service';
 import { Producto, ProductoRequest } from '../../core/models/producto.models';
 import { Categoria, CategoriaRequest } from '../../core/models/categoria.models';
@@ -19,10 +21,12 @@ export type AdminTab = 'productos' | 'categorias' | 'ia';
     DialogModule,
     ButtonModule,
     InputTextModule,
+    TabsModule,
+    BadgeModule,
     ClpPipe
 ],
     templateUrl: './admin.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './admin.component.scss'
 })
 export class AdminComponent implements OnInit {
@@ -87,9 +91,11 @@ export class AdminComponent implements OnInit {
     this.cargarDatos();
   }
 
-  setTab(tab: AdminTab): void {
-    this.activeTab.set(tab);
-    this.clearAlerts();
+  setTab(tab: string | number | undefined): void {
+    if (tab && (tab === 'productos' || tab === 'categorias' || tab === 'ia')) {
+      this.activeTab.set(tab);
+      this.clearAlerts();
+    }
   }
 
   cargarDatos(): void {

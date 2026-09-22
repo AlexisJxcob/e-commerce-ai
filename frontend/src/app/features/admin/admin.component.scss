@@ -25,45 +25,47 @@
   }
 }
 
-.admin-nav-tabs {
-  display: flex;
-  gap: 0.5rem;
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 0.75rem;
+:host ::ng-deep .admin-tabs {
+  .p-tablist {
+    border-bottom: 1px solid var(--border-subtle);
+    background: transparent;
+  }
 
-  .tab-btn {
+  .p-tablist-tab-list {
+    background: transparent;
+    gap: 0.5rem;
+  }
+
+  .p-tab {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--radius-button);
-    color: var(--text-secondary);
-    font-size: 0.875rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9375rem;
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
+    color: var(--text-secondary);
+    border: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
 
     &:hover {
       color: var(--text-primary);
-      background-color: var(--surface-elevated);
     }
 
-    &.active {
-      background-color: var(--bg-primary);
-      border-color: var(--border-subtle);
+    &.p-tab-active {
       color: var(--accent-electric);
+      border-color: var(--accent-electric);
       font-weight: 600;
     }
+  }
 
-    .tab-badge {
-      font-size: 0.6875rem;
-      padding: 0.1rem 0.4rem;
-      background-color: var(--surface-elevated);
-      border-radius: 10px;
-      color: var(--text-secondary);
-    }
+  .p-tabpanels {
+    background: transparent;
+    padding: 1.5rem 0 0 0;
+  }
+
+  .p-tabpanel {
+    padding: 0;
   }
 }
 

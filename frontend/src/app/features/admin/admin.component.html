@@ -7,45 +7,6 @@
       </p>
     </div>
 
-    <nav class="admin-nav-tabs" role="tablist">
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="activeTab() === 'productos'"
-        (click)="setTab('productos')"
-        role="tab"
-        [attr.aria-selected]="activeTab() === 'productos'"
-      >
-        <i class="pi pi-box" aria-hidden="true"></i>
-        <span>Inventario y Stock</span>
-        <span class="tab-badge">{{ productos().length }}</span>
-      </button>
-
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="activeTab() === 'categorias'"
-        (click)="setTab('categorias')"
-        role="tab"
-        [attr.aria-selected]="activeTab() === 'categorias'"
-      >
-        <i class="pi pi-tags" aria-hidden="true"></i>
-        <span>Categorías</span>
-        <span class="tab-badge">{{ categorias().length }}</span>
-      </button>
-
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="activeTab() === 'ia'"
-        (click)="setTab('ia')"
-        role="tab"
-        [attr.aria-selected]="activeTab() === 'ia'"
-      >
-        <i class="pi pi-sparkles" aria-hidden="true"></i>
-        <span>Motor de IA y Vectorial</span>
-      </button>
-    </nav>
   </header>
 
   @if (successMessage()) {
@@ -62,9 +23,33 @@
     </div>
   }
 
-  <!-- TAB: PRODUCTOS & STOCK -->
-  @if (activeTab() === 'productos') {
-    <section class="admin-tab-content">
+  <p-tabs [value]="activeTab()" (valueChange)="setTab($event)" styleClass="admin-tabs">
+    <p-tablist>
+      <p-tab value="productos">
+        <i class="pi pi-box" aria-hidden="true"></i>
+        <span>Inventario y Stock</span>
+        @if (productos().length > 0) {
+          <p-badge [value]="productos().length" severity="secondary"></p-badge>
+        }
+      </p-tab>
+
+      <p-tab value="categorias">
+        <i class="pi pi-tags" aria-hidden="true"></i>
+        <span>Categorías</span>
+        @if (categorias().length > 0) {
+          <p-badge [value]="categorias().length" severity="secondary"></p-badge>
+        }
+      </p-tab>
+
+      <p-tab value="ia">
+        <i class="pi pi-sparkles" aria-hidden="true"></i>
+        <span>Motor de IA y Vectorial</span>
+      </p-tab>
+    </p-tablist>
+
+    <p-tabpanels>
+      <p-tabpanel value="productos">
+        <section class="admin-tab-content">
       <div class="toolbar-row">
         <div class="search-input-wrapper">
           <i class="pi pi-search search-icon" aria-hidden="true"></i>
@@ -168,12 +153,12 @@
           </tbody>
         </table>
       </div>
-    </section>
-  }
+        </section>
+      </p-tabpanel>
 
-  <!-- TAB: CATEGORÍAS -->
-  @if (activeTab() === 'categorias') {
-    <section class="admin-tab-content">
+      <!-- TAB: CATEGORÍAS -->
+      <p-tabpanel value="categorias">
+        <section class="admin-tab-content">
       <div class="toolbar-row">
         <p class="tab-explanation">
           Estructura de catálogo jerárquica con soporte para categorías padre y subcategorías.
@@ -221,12 +206,12 @@
           <p class="empty-state-text">No hay categorías configuradas en la base de datos.</p>
         }
       </div>
-    </section>
-  }
+        </section>
+      </p-tabpanel>
 
-  <!-- TAB: MOTOR DE IA Y VECTORIAL -->
-  @if (activeTab() === 'ia') {
-    <section class="admin-tab-content ai-tab-container">
+      <!-- TAB: MOTOR DE IA Y VECTORIAL -->
+      <p-tabpanel value="ia">
+        <section class="admin-tab-content ai-tab-container">
       <div class="ai-overview-card repara-card">
         <div class="ai-overview-header">
           <div class="ai-icon-box">
@@ -271,8 +256,10 @@
           </div>
         }
       </div>
-    </section>
-  }
+        </section>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
 
   <!-- MODAL: PRODUCTO -->
   <p-dialog
