@@ -1,5 +1,5 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { Producto } from '../../../core/models/producto.models';
@@ -7,11 +7,11 @@ import { ClpPipe } from '../../pipes/clp.pipe';
 import { getProductPresentation, ProductPresentation } from '../../../core/utils/product-presentation.util';
 
 @Component({
-  selector: 'app-product-card',
-  standalone: true,
-  imports: [CommonModule, ButtonModule, ClpPipe],
-  templateUrl: './product-card.component.html',
-  styleUrl: './product-card.component.scss'
+    selector: 'app-product-card',
+    imports: [ButtonModule, ClpPipe],
+    templateUrl: './product-card.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './product-card.component.scss'
 })
 export class ProductCardComponent {
   private readonly router = inject(Router);

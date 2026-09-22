@@ -1,5 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -10,17 +10,16 @@ import { ErrorResponse } from '../../../core/models/error.models';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
-  selector: 'app-auth-modal',
-  standalone: true,
-  imports: [
-    CommonModule,
+    selector: 'app-auth-modal',
+    imports: [
     ReactiveFormsModule,
     DialogModule,
     ButtonModule,
     InputTextModule
-  ],
-  templateUrl: './auth-modal.component.html',
-  styleUrl: './auth-modal.component.scss'
+],
+    templateUrl: './auth-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './auth-modal.component.scss'
 })
 export class AuthModalComponent {
   private readonly fb = inject(FormBuilder);

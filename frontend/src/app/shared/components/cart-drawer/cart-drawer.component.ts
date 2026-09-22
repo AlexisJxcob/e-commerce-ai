@@ -1,5 +1,5 @@
-import { Component, computed, inject, output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, output, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router } from '@angular/router';
 import { DrawerModule } from 'primeng/drawer';
 import { ButtonModule } from 'primeng/button';
@@ -10,11 +10,11 @@ import { PedidoService } from '../../../core/services/pedido.service';
 import { ClpPipe } from '../../pipes/clp.pipe';
 
 @Component({
-  selector: 'app-cart-drawer',
-  standalone: true,
-  imports: [CommonModule, DrawerModule, ButtonModule, ClpPipe],
-  templateUrl: './cart-drawer.component.html',
-  styleUrl: './cart-drawer.component.scss'
+    selector: 'app-cart-drawer',
+    imports: [DrawerModule, ButtonModule, ClpPipe],
+    templateUrl: './cart-drawer.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './cart-drawer.component.scss'
 })
 export class CartDrawerComponent {
   private readonly router = inject(Router);

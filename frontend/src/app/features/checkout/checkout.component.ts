@@ -1,5 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -15,18 +15,17 @@ export type CheckoutStep = 'resumen' | 'datos' | 'entrega' | 'pago';
 export type MetodoEntrega = 'retiro' | 'despacho';
 
 @Component({
-  selector: 'app-checkout',
-  standalone: true,
-  imports: [
-    CommonModule,
+    selector: 'app-checkout',
+    imports: [
     ReactiveFormsModule,
     RouterModule,
     ButtonModule,
     InputTextModule,
     ClpPipe
-  ],
-  templateUrl: './checkout.component.html',
-  styleUrl: './checkout.component.scss'
+],
+    templateUrl: './checkout.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './checkout.component.scss'
 })
 export class CheckoutComponent implements OnInit {
   private readonly fb = inject(FormBuilder);

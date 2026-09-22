@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { CarritoService } from './carrito.service';
 import { AuthService } from '../auth/auth.service';
@@ -29,7 +29,7 @@ describe('CarritoService', () => {
     TestBed.configureTestingModule({
       providers: [
         CarritoService,
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: authServiceSpy }
       ]

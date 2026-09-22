@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -10,11 +10,11 @@ import { ClpPipe } from '../../shared/pipes/clp.pipe';
 export type PaymentStatus = 'exito' | 'rechazado' | 'cancelado' | 'error' | 'invalido';
 
 @Component({
-  selector: 'app-checkout-resultado',
-  standalone: true,
-  imports: [CommonModule, RouterModule, ButtonModule, ClpPipe],
-  templateUrl: './checkout-resultado.component.html',
-  styleUrl: './checkout-resultado.component.scss'
+    selector: 'app-checkout-resultado',
+    imports: [CommonModule, RouterModule, ButtonModule, ClpPipe],
+    templateUrl: './checkout-resultado.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './checkout-resultado.component.scss'
 })
 export class CheckoutResultadoComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

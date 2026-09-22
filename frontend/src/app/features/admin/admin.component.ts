@@ -1,5 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -13,18 +13,17 @@ import { ClpPipe } from '../../shared/pipes/clp.pipe';
 export type AdminTab = 'productos' | 'categorias' | 'ia';
 
 @Component({
-  selector: 'app-admin',
-  standalone: true,
-  imports: [
-    CommonModule,
+    selector: 'app-admin',
+    imports: [
     ReactiveFormsModule,
     DialogModule,
     ButtonModule,
     InputTextModule,
     ClpPipe
-  ],
-  templateUrl: './admin.component.html',
-  styleUrl: './admin.component.scss'
+],
+    templateUrl: './admin.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './admin.component.scss'
 })
 export class AdminComponent implements OnInit {
   private readonly fb = inject(FormBuilder);

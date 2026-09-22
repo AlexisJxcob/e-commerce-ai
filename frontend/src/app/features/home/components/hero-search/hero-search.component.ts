@@ -1,22 +1,21 @@
-import { Component, input, output, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TypewriterDirective } from '../../../../shared/directives/typewriter.directive';
 
 @Component({
-  selector: 'app-hero-search',
-  standalone: true,
-  imports: [
-    CommonModule,
+    selector: 'app-hero-search',
+    imports: [
     FormsModule,
     ButtonModule,
     InputTextModule,
     TypewriterDirective
-  ],
-  templateUrl: './hero-search.component.html',
-  styleUrl: './hero-search.component.scss'
+],
+    templateUrl: './hero-search.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './hero-search.component.scss'
 })
 export class HeroSearchComponent {
   readonly loading = input<boolean>(false);
