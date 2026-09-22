@@ -6,54 +6,60 @@
     </a>
 
     <nav class="header-actions">
-      <button
+      <p-button
         type="button"
-        class="cart-trigger-btn"
-        (click)="openCart()"
-        aria-label="Abrir carrito de compras"
-      >
-        <i class="pi pi-shopping-bag cart-icon" aria-hidden="true"></i>
-        @if (carritoService.itemCount() > 0) {
-          <span class="cart-count-badge">{{ carritoService.itemCount() }}</span>
-        }
-      </button>
+        icon="pi pi-shopping-bag"
+        [badge]="cartBadgeValue()"
+        variant="outlined"
+        size="small"
+        [rounded]="true"
+        (onClick)="openCart()"
+        ariaLabel="Abrir carrito de compras"
+        styleClass="cart-header-button"
+      ></p-button>
 
       @if (authService.isAuthenticated()) {
         @if (authService.isAdmin()) {
           <a routerLink="/admin" class="admin-nav-link" aria-label="Panel de administración">
             <i class="pi pi-cog" aria-hidden="true"></i>
-            <span>Admin</span>
+            <span class="admin-label">Admin</span>
           </a>
         }
 
-        <div class="user-badge">
+        <div class="user-badge" [title]="authService.currentUser()?.username">
           <i class="pi pi-user user-icon" aria-hidden="true"></i>
           <span class="user-name">{{ authService.currentUser()?.username }}</span>
         </div>
 
-        <button
-          pButton
+        <p-button
           type="button"
-          label="Cerrar sesión"
-          class="p-button-outlined p-button-sm logout-button"
-          (click)="logout()"
-        ></button>
+          label="Salir"
+          icon="pi pi-sign-out"
+          size="small"
+          variant="outlined"
+          severity="secondary"
+          styleClass="logout-button"
+          (onClick)="logout()"
+          ariaLabel="Cerrar sesión"
+        ></p-button>
       } @else {
-        <button
-          pButton
+        <p-button
           type="button"
           label="Ingresar"
-          class="p-button-outlined p-button-sm login-button"
-          (click)="openLogin()"
-        ></button>
+          icon="pi pi-user"
+          size="small"
+          variant="outlined"
+          styleClass="login-button"
+          (onClick)="openLogin()"
+        ></p-button>
 
-        <button
-          pButton
+        <p-button
           type="button"
           label="Registrarse"
-          class="p-button-primary p-button-sm register-button"
-          (click)="openRegister()"
-        ></button>
+          size="small"
+          styleClass="register-button"
+          (onClick)="openRegister()"
+        ></p-button>
       }
     </nav>
   </div>

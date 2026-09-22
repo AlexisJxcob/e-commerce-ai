@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TypewriterDirective } from './typewriter.directive';
 
 @Component({
-  standalone: true,
-  imports: [TypewriterDirective],
-  template: `
+    imports: [TypewriterDirective],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    template: `
     <input
       type="text"
       appTypewriter
@@ -35,6 +35,10 @@ describe('TypewriterDirective', () => {
     inputEl = fixture.nativeElement.querySelector('input');
   });
 
+  afterEach(() => {
+    fixture.destroy();
+  });
+
   it('should initialize and type characters into the placeholder', fakeAsync(() => {
     tick(40);
     fixture.detectChanges();
@@ -62,5 +66,6 @@ describe('TypewriterDirective', () => {
     fixture.detectChanges();
 
     expect(inputEl.placeholder.length).toBeGreaterThan(0);
+    fixture.destroy();
   }));
 });

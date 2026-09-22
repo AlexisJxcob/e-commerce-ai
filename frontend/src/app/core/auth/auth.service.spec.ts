@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { AuthService } from './auth.service';
 import { LoginRequest, LoginResponse, RegisterRequest, Usuario } from '../models/auth.models';
@@ -16,7 +16,7 @@ describe('AuthService', () => {
     TestBed.configureTestingModule({
       providers: [
         AuthService,
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting()
       ]
     });

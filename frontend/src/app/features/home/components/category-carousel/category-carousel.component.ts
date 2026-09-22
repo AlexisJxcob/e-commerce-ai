@@ -1,16 +1,16 @@
-import { Component, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { CarouselModule, CarouselResponsiveOptions } from 'primeng/carousel';
 import { Categoria } from '../../../../core/models/categoria.models';
 import { Producto } from '../../../../core/models/producto.models';
 import { ProductCardComponent } from '../../../../shared/components/product-card';
 
 @Component({
-  selector: 'app-category-carousel',
-  standalone: true,
-  imports: [CommonModule, CarouselModule, ProductCardComponent],
-  templateUrl: './category-carousel.component.html',
-  styleUrl: './category-carousel.component.scss'
+    selector: 'app-category-carousel',
+    imports: [CarouselModule, ProductCardComponent],
+    templateUrl: './category-carousel.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './category-carousel.component.scss'
 })
 export class CategoryCarouselComponent {
   readonly categoria = input.required<Categoria>();

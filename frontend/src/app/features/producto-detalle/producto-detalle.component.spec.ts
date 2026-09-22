@@ -86,6 +86,7 @@ describe('ProductoDetalleComponent', () => {
   });
 
   it('should render product title, price and stock status', () => {
+    fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
     expect(el.textContent).toContain('Llave de Paso 1/2 Bronce');
     expect(el.textContent).toContain('SKU: PLOM-001');

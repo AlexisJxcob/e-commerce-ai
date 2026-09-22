@@ -3,9 +3,27 @@
 /* ==========================================================================
    Repara.ai — Design System Tokens & Global Styles
    Editorial Premium Aesthetics (Warm Neutral + Electric Blue Accent)
+   Clean PrimeNG 22 Token Mappings (Zero !important)
    ========================================================================== */
 
 :root {
+  /* PrimeNG Design Tokens Mapped Globally */
+  --p-primary-color: #2454FF;
+  --p-primary-hover-color: #1B44DC;
+  --p-primary-active-color: #1637B8;
+  --p-primary-contrast-color: #FFFFFF;
+  --p-border-radius-sm: 6px;
+  --p-border-radius-md: 8px;
+  --p-border-radius-lg: 12px;
+  --p-content-border-radius: 10px;
+  --p-button-border-radius: 8px;
+  --p-inputtext-border-radius: 8px;
+  --p-dialog-border-radius: 12px;
+  --p-focus-ring-color: rgba(36, 84, 255, 0.25);
+  --p-focus-ring-width: 2px;
+  --p-focus-ring-style: solid;
+  --p-focus-ring-offset: 0px;
+
   /* Paleta de Color Intencional */
   --bg-primary: #FAFAF8;         /* Blanco cálido natural */
   --text-primary: #1A1A1A;       /* Negro suave de alto contraste */
@@ -180,147 +198,11 @@ a {
   &.amex { color: #006fcf; }
 }
 
-
-
 .price-text {
   font-family: var(--font-sans);
   font-weight: 500;
   color: var(--text-primary);
   letter-spacing: -0.015em;
-}
-
-/* --------------------------------------------------------------------------
-   Clean PrimeNG Overrides (Eliminación de sombras pesadas y ajuste a tokens)
-   -------------------------------------------------------------------------- */
-
-/* Buttons */
-.p-button {
-  font-family: var(--font-sans);
-  font-weight: 500;
-  border-radius: var(--radius-button);
-  box-shadow: none !important;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-  letter-spacing: -0.01em;
-}
-
-.p-button-primary,
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary) {
-  background-color: var(--accent-electric) !important;
-  border: 1px solid var(--accent-electric) !important;
-  color: #FFFFFF !important;
-
-  &:hover {
-    background-color: var(--accent-hover) !important;
-    border-color: var(--accent-hover) !important;
-  }
-
-  &:focus-visible {
-    outline: none !important;
-    box-shadow: 0 0 0 3px var(--accent-focus-ring) !important;
-  }
-}
-
-.p-button.p-button-outlined {
-  background-color: transparent !important;
-  border: 1px solid var(--border-subtle) !important;
-  color: var(--text-primary) !important;
-
-  &:hover {
-    background-color: var(--surface-elevated) !important;
-    border-color: var(--border-hover) !important;
-  }
-}
-
-/* Inputs & Form Controls */
-.p-inputtext,
-input[type="text"],
-input[type="search"],
-input[type="password"],
-input[type="email"] {
-  font-family: var(--font-sans);
-  background-color: var(--bg-primary);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-input);
-  color: var(--text-primary);
-  box-shadow: none !important;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-
-  &:hover {
-    border-color: var(--border-hover);
-  }
-
-  &:focus,
-  &:focus-visible {
-    border-color: var(--accent-electric) !important;
-    box-shadow: 0 0 0 3px var(--accent-focus-ring) !important;
-    outline: none !important;
-  }
-
-  &::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.8;
-  }
-}
-
-/* Dialog / Modals */
-.p-dialog {
-  border-radius: var(--radius-modal) !important;
-  border: 1px solid var(--border-subtle) !important;
-  background-color: var(--bg-primary) !important;
-  box-shadow: 0 16px 36px rgba(26, 26, 26, 0.08) !important;
-  overflow: hidden;
-
-  .p-dialog-header,
-  .p-dialog-content,
-  .p-dialog-footer {
-    background-color: var(--bg-primary) !important;
-    color: var(--text-primary) !important;
-  }
-
-  .p-dialog-header {
-    border-bottom: 1px solid var(--border-subtle);
-    padding: 1.25rem 1.5rem;
-  }
-
-  .p-dialog-content {
-    padding: 1.5rem;
-  }
-
-  .p-dialog-footer {
-    border-top: 1px solid var(--border-subtle);
-    padding: 1rem 1.5rem;
-  }
-}
-
-/* Drawer / Sidebar */
-.p-drawer,
-.p-sidebar {
-  background-color: var(--bg-primary) !important;
-  border-left: 1px solid var(--border-subtle) !important;
-  box-shadow: -8px 0 32px rgba(26, 26, 26, 0.06) !important;
-
-  .p-drawer-header,
-  .p-drawer-content,
-  .p-drawer-footer {
-    background-color: var(--bg-primary) !important;
-    color: var(--text-primary) !important;
-  }
-
-  .p-drawer-header {
-    border-bottom: 1px solid var(--border-subtle);
-    padding: 1.25rem 1.5rem;
-  }
-}
-
-/* Chips & Badges */
-.p-chip {
-  background-color: var(--surface-elevated) !important;
-  border: 1px solid var(--border-subtle) !important;
-  border-radius: 6px !important;
-  color: var(--text-primary) !important;
-  font-family: var(--font-sans);
-  font-size: 0.8125rem;
-  font-weight: 500;
 }
 
 /* Common Form Utilities */
@@ -407,5 +289,3 @@ input[type="email"] {
   color: var(--status-error);
   font-size: 0.8125rem;
 }
-
-

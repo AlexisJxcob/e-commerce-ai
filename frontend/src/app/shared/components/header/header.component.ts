@@ -1,22 +1,27 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, ChangeDetectionStrategy, computed } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { BadgeModule } from 'primeng/badge';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthModalService } from '../../../core/auth/auth-modal.service';
 import { CarritoService } from '../../../core/services/carrito.service';
 
 @Component({
   selector: 'app-header',
-  standalone: true,
-  imports: [CommonModule, RouterModule, ButtonModule],
+  imports: [RouterModule, ButtonModule, BadgeModule],
   templateUrl: './header.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
   readonly authService = inject(AuthService);
   readonly authModalService = inject(AuthModalService);
   readonly carritoService = inject(CarritoService);
+
+  readonly cartBadgeValue = computed(() => {
+    const count = this.carritoService.itemCount();
+    return count > 0 ? count.toString() : undefined;
+  });
 
   openCart(): void {
     this.carritoService.abrirCarrito();

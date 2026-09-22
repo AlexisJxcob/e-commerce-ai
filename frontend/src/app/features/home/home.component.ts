@@ -1,5 +1,5 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { HeroSearchComponent } from './components/hero-search';
@@ -14,10 +14,8 @@ import { CategoriaConProductos } from '../../core/models/categoria.models';
 import { Producto } from '../../core/models/producto.models';
 
 @Component({
-  selector: 'app-home',
-  standalone: true,
-  imports: [
-    CommonModule,
+    selector: 'app-home',
+    imports: [
     ButtonModule,
     SkeletonModule,
     HeroSearchComponent,
@@ -25,9 +23,10 @@ import { Producto } from '../../core/models/producto.models';
     AiDiagnosisComponent,
     ProductGridComponent,
     CategoryCarouselComponent
-  ],
-  templateUrl: './home.component.html',
-  styleUrl: './home.component.scss'
+],
+    templateUrl: './home.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './home.component.scss'
 })
 export class HomeComponent implements OnInit {
   readonly asistente = inject(AsistenteService);

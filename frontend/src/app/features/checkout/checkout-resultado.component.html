@@ -61,7 +61,7 @@
 
             <div class="receipt-total-row">
               <span class="total-label">Total Pagado</span>
-              <span class="total-amount price-text">{{ pedido()?.total | clp }}</span>
+              <span class="total-amount price-text">{{ $safeNavigationMigration(pedido()?.total) | clp }}</span>
             </div>
           </div>
         }

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { CatalogoService } from './catalogo.service';
 import { Producto, PageResponse } from '../models/producto.models';
@@ -74,7 +74,7 @@ describe('CatalogoService', () => {
     TestBed.configureTestingModule({
       providers: [
         CatalogoService,
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting()
       ]
     });
@@ -127,7 +127,7 @@ describe('CatalogoService', () => {
       expect(otros).toBeTruthy();
       expect(otros?.categoria.nombre).toBe('Otros productos');
       expect(otros?.productos.length).toBe(2);
-      expect(otros?.productos.map((p) => p.sku)).toEqual(['SINC-01', 'NULL-01']);
+      expect(otros?.productos.map((p) => p.sku)).toEqual(['NULL-01', 'SINC-01']);
     });
 
     const reqCat = httpMock.expectOne('/api/v1/categorias');

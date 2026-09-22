@@ -1,14 +1,14 @@
-import { Component, computed, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import { ButtonModule } from 'primeng/button';
 import { SugerenciaFerreteria } from '../../../../core/models/asistente.models';
 
 @Component({
-  selector: 'app-ai-diagnosis',
-  standalone: true,
-  imports: [CommonModule, ButtonModule],
-  templateUrl: './ai-diagnosis.component.html',
-  styleUrl: './ai-diagnosis.component.scss'
+    selector: 'app-ai-diagnosis',
+    imports: [ButtonModule],
+    templateUrl: './ai-diagnosis.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './ai-diagnosis.component.scss'
 })
 export class AiDiagnosisComponent {
   readonly query = input<string>('');

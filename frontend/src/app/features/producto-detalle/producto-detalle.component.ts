@@ -1,5 +1,5 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, effect, inject, input, signal, ChangeDetectionStrategy } from '@angular/core';
+
 import { Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { Producto } from '../../core/models/producto.models';
@@ -15,11 +15,11 @@ import {
 import { getProductPresentation, ProductPresentation } from '../../core/utils/product-presentation.util';
 
 @Component({
-  selector: 'app-producto-detalle',
-  standalone: true,
-  imports: [CommonModule, RouterLink, ButtonModule, ClpPipe, ProductCardComponent],
-  templateUrl: './producto-detalle.component.html',
-  styleUrl: './producto-detalle.component.scss'
+    selector: 'app-producto-detalle',
+    imports: [RouterLink, ButtonModule, ClpPipe, ProductCardComponent],
+    templateUrl: './producto-detalle.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styleUrl: './producto-detalle.component.scss'
 })
 export class ProductoDetalleComponent {
   protected readonly Math = Math;
