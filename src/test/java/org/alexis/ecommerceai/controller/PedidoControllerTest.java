@@ -139,19 +139,19 @@ class PedidoControllerTest {
 
     @Test
     void crearDesdeCarrito_devuelve201ConElPedidoCreado() throws Exception {
-        when(pedidoService.crearDesdeCarrito("juan")).thenReturn(dto());
+        when(pedidoService.crearDesdeCarrito(eq("juan"), any())).thenReturn(dto());
 
         mockMvc.perform(post("/api/v1/pedidos/desde-carrito"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(100))
                 .andExpect(jsonPath("$.estado").value("PENDIENTE"));
 
-        verify(pedidoService).crearDesdeCarrito("juan");
+        verify(pedidoService).crearDesdeCarrito(eq("juan"), any());
     }
 
     @Test
     void crearDesdeCarrito_conCarritoVacio_devuelve400() throws Exception {
-        when(pedidoService.crearDesdeCarrito("juan"))
+        when(pedidoService.crearDesdeCarrito(eq("juan"), any()))
                 .thenThrow(new CarritoVacioException("El carrito está vacío"));
 
         mockMvc.perform(post("/api/v1/pedidos/desde-carrito"))

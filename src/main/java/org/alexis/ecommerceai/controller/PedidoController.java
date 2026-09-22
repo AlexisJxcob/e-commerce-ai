@@ -2,6 +2,9 @@ package org.alexis.ecommerceai.controller;
 
 import jakarta.validation.Valid;
 import org.alexis.ecommerceai.dto.CheckoutResponseDTO;
+import org.alexis.ecommerceai.dto.CotizacionRequestDTO;
+import org.alexis.ecommerceai.dto.CotizacionResponseDTO;
+import org.alexis.ecommerceai.dto.DatosCheckoutDTO;
 import org.alexis.ecommerceai.dto.EstadoPedidoRequestDTO;
 import org.alexis.ecommerceai.dto.PedidoRequestDTO;
 import org.alexis.ecommerceai.dto.PedidoResponseDTO;
@@ -43,12 +46,27 @@ public class PedidoController {
     /**
      * Convierte el carrito persistente del usuario autenticado en un pedido.
      * El carrito se vacía sólo si el pedido se creó correctamente.
+     *
+     * <p>El cuerpo es opcional para no romper clientes antiguos, pero el
+     * checkout envía comprador y entrega: sin ellos el pedido no es
+     * despachable.</p>
      */
     @PostMapping("/desde-carrito")
-    public ResponseEntity<PedidoResponseDTO> crearDesdeCarrito() {
+    public ResponseEntity<PedidoResponseDTO> crearDesdeCarrito(
+            @Valid @RequestBody(required = false) DatosCheckoutDTO datos) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        var creado = pedidoService.crearDesdeCarrito(auth.getName());
+        var creado = pedidoService.crearDesdeCarrito(auth.getName(), datos);
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+    }
+
+    /**
+     * Cotiza la entrega del carrito actual. Es la fuente de verdad de lo que el
+     * checkout muestra como subtotal, despacho y total.
+     */
+    @PostMapping("/cotizar")
+    public ResponseEntity<CotizacionResponseDTO> cotizar(@RequestBody CotizacionRequestDTO request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return ResponseEntity.ok(pedidoService.cotizar(auth.getName(), request.metodoEntrega()));
     }
 
     /**

@@ -1,5 +1,6 @@
 package org.alexis.ecommerceai.service;
 
+import org.alexis.ecommerceai.dto.DatosCheckoutDTO;
 import org.alexis.ecommerceai.dto.LineaPedidoDTO;
 import org.alexis.ecommerceai.dto.PedidoRequestDTO;
 import org.alexis.ecommerceai.dto.PedidoResponseDTO;
@@ -13,6 +14,7 @@ import org.alexis.ecommerceai.model.Carrito;
 import org.alexis.ecommerceai.model.CarritoItem;
 import org.alexis.ecommerceai.model.EstadoPago;
 import org.alexis.ecommerceai.model.EstadoPedido;
+import org.alexis.ecommerceai.model.MetodoEntrega;
 import org.alexis.ecommerceai.model.Pedido;
 import org.alexis.ecommerceai.model.Producto;
 import org.alexis.ecommerceai.model.Rol;
@@ -60,7 +62,7 @@ class PedidoServiceTest {
     @BeforeEach
     void setUp() {
         pedidoService = new PedidoService(
-                pedidoRepository, productoRepository, usuarioRepository, carritoRepository);
+                pedidoRepository, productoRepository, usuarioRepository, carritoRepository, new EnvioService());
     }
 
     private static Usuario cliente() {
@@ -291,6 +293,91 @@ class PedidoServiceTest {
         // El carrito queda intacto: el vaciado nunca se alcanzó
         assertThat(carrito.getItems()).hasSize(1);
         verify(carritoRepository, never()).save(any(Carrito.class));
+    }
+
+    // ---------- crearDesdeCarrito: datos de checkout y despacho (V6) ----------
+
+    private static DatosCheckoutDTO datos(MetodoEntrega metodo, String comuna, String direccion) {
+        return new DatosCheckoutDTO(
+                "Juan", "Pérez", "12.345.678-5", "juan@correo.cl", "+56 9 1234 5678",
+                metodo, "Región Metropolitana", comuna, direccion, null, null,
+                false, null, null);
+    }
+
+    @Test
+    void crearDesdeCarrito_conDatosDeComprador_losPersisteEnElPedido() {
+        Usuario juan = cliente();
+        Producto p1 = producto(1L, "10.00", 5);
+        Carrito carrito = carritoCon(juan, linea(p1, 2));
+        when(usuarioRepository.findByUsername("juan")).thenReturn(Optional.of(juan));
+        when(carritoRepository.findConItemsByUsuarioId(1L)).thenReturn(Optional.of(carrito));
+        when(productoRepository.findAllById(any())).thenReturn(List.of(p1));
+        var captor = ArgumentCaptor.forClass(Pedido.class);
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        pedidoService.crearDesdeCarrito("juan",
+                datos(MetodoEntrega.DESPACHO, "Providencia", "Av. Providencia 1234"));
+
+        verify(pedidoRepository).save(captor.capture());
+        Pedido guardado = captor.getValue();
+        assertThat(guardado.getCompradorNombre()).isEqualTo("Juan");
+        assertThat(guardado.getCompradorRut()).isEqualTo("12.345.678-5");
+        assertThat(guardado.getDespachoComuna()).isEqualTo("Providencia");
+        assertThat(guardado.getDespachoDireccion()).isEqualTo("Av. Providencia 1234");
+        assertThat(guardado.getMetodoEntrega()).isEqualTo(MetodoEntrega.DESPACHO);
+    }
+
+    @Test
+    void crearDesdeCarrito_conDespachoBajoElUmbral_cobraDespachoEnElTotal() {
+        Usuario juan = cliente();
+        Producto p1 = producto(1L, "10.00", 5);
+        Carrito carrito = carritoCon(juan, linea(p1, 2));
+        when(usuarioRepository.findByUsername("juan")).thenReturn(Optional.of(juan));
+        when(carritoRepository.findConItemsByUsuarioId(1L)).thenReturn(Optional.of(carrito));
+        when(productoRepository.findAllById(any())).thenReturn(List.of(p1));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PedidoResponseDTO response = pedidoService.crearDesdeCarrito("juan",
+                datos(MetodoEntrega.DESPACHO, "Providencia", "Av. Providencia 1234"));
+
+        // 20.00 de productos + 3.990 de despacho estándar
+        assertThat(response.subtotal()).isEqualByComparingTo("20.00");
+        assertThat(response.costoDespacho()).isEqualByComparingTo("3990");
+        assertThat(response.total()).isEqualByComparingTo("4010.00");
+        assertThat(response.metodoEntrega()).isEqualTo("DESPACHO");
+    }
+
+    @Test
+    void crearDesdeCarrito_conRetiro_noCobraDespacho() {
+        Usuario juan = cliente();
+        Producto p1 = producto(1L, "10.00", 5);
+        Carrito carrito = carritoCon(juan, linea(p1, 2));
+        when(usuarioRepository.findByUsername("juan")).thenReturn(Optional.of(juan));
+        when(carritoRepository.findConItemsByUsuarioId(1L)).thenReturn(Optional.of(carrito));
+        when(productoRepository.findAllById(any())).thenReturn(List.of(p1));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        PedidoResponseDTO response = pedidoService.crearDesdeCarrito("juan",
+                datos(MetodoEntrega.RETIRO, null, null));
+
+        assertThat(response.costoDespacho()).isEqualByComparingTo("0");
+        assertThat(response.total()).isEqualByComparingTo("20.00");
+    }
+
+    @Test
+    void cotizar_despachoSobreElUmbral_marcaDespachoGratis() {
+        Usuario juan = cliente();
+        Producto p1 = producto(1L, "30000.00", 5);
+        Carrito carrito = carritoCon(juan, linea(p1, 2));
+        when(usuarioRepository.findByUsername("juan")).thenReturn(Optional.of(juan));
+        when(carritoRepository.findConItemsByUsuarioId(1L)).thenReturn(Optional.of(carrito));
+
+        var cotizacion = pedidoService.cotizar("juan", MetodoEntrega.DESPACHO);
+
+        assertThat(cotizacion.subtotal()).isEqualByComparingTo("60000.00");
+        assertThat(cotizacion.costoDespacho()).isEqualByComparingTo("0");
+        assertThat(cotizacion.total()).isEqualByComparingTo("60000.00");
+        assertThat(cotizacion.envioGratisDesde()).isEqualByComparingTo("50000");
     }
 
     // ---------- cambiarEstado ----------

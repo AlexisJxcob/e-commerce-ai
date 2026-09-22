@@ -1,5 +1,7 @@
 package org.alexis.ecommerceai.service;
 
+import org.alexis.ecommerceai.dto.CotizacionResponseDTO;
+import org.alexis.ecommerceai.dto.DatosCheckoutDTO;
 import org.alexis.ecommerceai.dto.ItemPedidoResponseDTO;
 import org.alexis.ecommerceai.dto.LineaPedidoDTO;
 import org.alexis.ecommerceai.dto.PedidoRequestDTO;
@@ -15,6 +17,7 @@ import org.alexis.ecommerceai.model.Carrito;
 import org.alexis.ecommerceai.model.EstadoPago;
 import org.alexis.ecommerceai.model.EstadoPedido;
 import org.alexis.ecommerceai.model.ItemPedido;
+import org.alexis.ecommerceai.model.MetodoEntrega;
 import org.alexis.ecommerceai.model.Pedido;
 import org.alexis.ecommerceai.model.Producto;
 import org.alexis.ecommerceai.model.Usuario;
@@ -58,29 +61,46 @@ public class PedidoService {
     private final ProductoRepository productoRepository;
     private final UsuarioRepository usuarioRepository;
     private final CarritoRepository carritoRepository;
+    private final EnvioService envioService;
 
     public PedidoService(PedidoRepository pedidoRepository,
                          ProductoRepository productoRepository,
                          UsuarioRepository usuarioRepository,
-                         CarritoRepository carritoRepository) {
+                         CarritoRepository carritoRepository,
+                         EnvioService envioService) {
         this.pedidoRepository = pedidoRepository;
         this.productoRepository = productoRepository;
         this.usuarioRepository = usuarioRepository;
         this.carritoRepository = carritoRepository;
+        this.envioService = envioService;
     }
 
     @Transactional
     public PedidoResponseDTO create(String username, PedidoRequestDTO request) {
         Usuario usuario = resolverUsuario(username);
-        return crear(usuario, request.items());
+        return crear(usuario, request.items(), null);
     }
 
     /**
-     * Crea el pedido a partir del carrito persistente del usuario y lo vacía
-     * solo si el pedido se creó correctamente.
+     * Crea el pedido desde el carrito sin datos de comprador/entrega.
+     * Se mantiene por compatibilidad; el checkout usa la variante con datos.
      */
     @Transactional
     public PedidoResponseDTO crearDesdeCarrito(String username) {
+        return crearDesdeCarrito(username, null);
+    }
+
+    /**
+     * Crea el pedido a partir del carrito persistente del usuario, persistiendo
+     * los datos de comprador y entrega recolectados en el checkout, y vacía el
+     * carrito solo si el pedido se creó correctamente.
+     *
+     * <p>El costo de entrega se calcula con {@link EnvioService}, la misma
+     * fuente que alimenta la cotización mostrada en pantalla: lo que se ve y lo
+     * que se cobra no pueden divergir.</p>
+     */
+    @Transactional
+    public PedidoResponseDTO crearDesdeCarrito(String username, DatosCheckoutDTO datos) {
         Usuario usuario = resolverUsuario(username);
         Carrito carrito = carritoRepository.findConItemsByUsuarioId(usuario.getId())
                 .filter(c -> !c.getItems().isEmpty())
@@ -91,7 +111,7 @@ public class PedidoService {
                 .map(item -> new LineaPedidoDTO(item.getProducto().getId(), item.getCantidad()))
                 .toList();
 
-        PedidoResponseDTO pedido = crear(usuario, lineas);
+        PedidoResponseDTO pedido = crear(usuario, lineas, datos);
 
         // Misma transacción que el pedido: si el pedido no se persistió,
         // esta línea no se ejecuta y el carrito queda intacto.
@@ -100,7 +120,33 @@ public class PedidoService {
         return pedido;
     }
 
-    private PedidoResponseDTO crear(Usuario usuario, List<LineaPedidoDTO> lineas) {
+    /**
+     * Cotiza la entrega del carrito actual sin crear pedido. El checkout
+     * muestra estos montos, de modo que el total en pantalla proviene del
+     * servidor y coincide con el que se cobrará.
+     */
+    @Transactional(readOnly = true)
+    public CotizacionResponseDTO cotizar(String username, MetodoEntrega metodo) {
+        Usuario usuario = resolverUsuario(username);
+        Carrito carrito = carritoRepository.findConItemsByUsuarioId(usuario.getId())
+                .filter(c -> !c.getItems().isEmpty())
+                .orElseThrow(() -> new CarritoVacioException(
+                        "El carrito está vacío: no hay productos para cotizar"));
+
+        BigDecimal subtotal = carrito.getItems().stream()
+                .map(item -> item.getProducto().getPrecio()
+                        .multiply(BigDecimal.valueOf(item.getCantidad())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal costoDespacho = envioService.calcularCostoDespacho(metodo, subtotal);
+        return new CotizacionResponseDTO(
+                subtotal,
+                costoDespacho,
+                subtotal.add(costoDespacho),
+                EnvioService.ENVIO_GRATIS_DESDE);
+    }
+
+    private PedidoResponseDTO crear(Usuario usuario, List<LineaPedidoDTO> lineas, DatosCheckoutDTO datos) {
         Map<Long, Producto> productos = cargarProductos(lineas);
 
         // Primera pasada: validar todo antes de mutar nada (sin pedido parcial).
@@ -125,7 +171,7 @@ public class PedidoService {
             pedido.setUsuario(usuario);
             pedido.setFechaCreacion(LocalDateTime.now());
             pedido.setEstado(EstadoPedido.PENDIENTE);
-            BigDecimal total = BigDecimal.ZERO;
+            BigDecimal subtotal = BigDecimal.ZERO;
             List<ItemPedido> items = new ArrayList<>();
             for (LineaPedidoDTO linea : lineas.stream()
                     .sorted(Comparator.comparing(LineaPedidoDTO::productoId))
@@ -142,10 +188,20 @@ public class PedidoService {
                 item.setCantidad(linea.cantidad());
                 item.setPrecioUnitario(producto.getPrecio());
                 items.add(item);
-                total = total.add(producto.getPrecio().multiply(BigDecimal.valueOf(linea.cantidad())));
+                subtotal = subtotal.add(producto.getPrecio().multiply(BigDecimal.valueOf(linea.cantidad())));
             }
+
+            MetodoEntrega metodo = datos != null && datos.metodoEntrega() != null
+                    ? datos.metodoEntrega()
+                    : MetodoEntrega.RETIRO;
+            BigDecimal costoDespacho = envioService.calcularCostoDespacho(metodo, subtotal);
+
             pedido.setItems(items);
-            pedido.setTotal(total);
+            pedido.setSubtotal(subtotal);
+            pedido.setCostoDespacho(costoDespacho);
+            pedido.setMetodoEntrega(metodo);
+            pedido.setTotal(subtotal.add(costoDespacho));
+            aplicarDatosCheckout(pedido, datos);
             pedido = pedidoRepository.save(pedido);
             return toResponseDTO(pedido);
         } catch (OptimisticLockingFailureException e) {
@@ -255,6 +311,30 @@ public class PedidoService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado: " + username));
     }
 
+    /**
+     * Vuelca los datos del checkout en el pedido. Si no vinieron (flujo legado
+     * de {@code POST /v1/pedidos}), el pedido queda sin comprador y sólo con el
+     * método de entrega por defecto.
+     */
+    private void aplicarDatosCheckout(Pedido pedido, DatosCheckoutDTO datos) {
+        if (datos == null) {
+            return;
+        }
+        pedido.setCompradorNombre(datos.nombres());
+        pedido.setCompradorApellidos(datos.apellidos());
+        pedido.setCompradorRut(datos.rut());
+        pedido.setCompradorEmail(datos.email());
+        pedido.setCompradorTelefono(datos.telefono());
+        pedido.setDespachoRegion(datos.region());
+        pedido.setDespachoComuna(datos.comuna());
+        pedido.setDespachoDireccion(datos.direccion());
+        pedido.setDespachoDepto(datos.depto());
+        pedido.setDespachoReferencias(datos.referencias());
+        pedido.setRetiraTercero(Boolean.TRUE.equals(datos.retiraTercero()));
+        pedido.setTerceroNombre(datos.nombreTercero());
+        pedido.setTerceroRut(datos.rutTercero());
+    }
+
     private PedidoResponseDTO toResponseDTO(Pedido pedido) {
         List<ItemPedidoResponseDTO> items = pedido.getItems() == null ? List.of() : pedido.getItems().stream()
                 .map(item -> new ItemPedidoResponseDTO(
@@ -271,7 +351,10 @@ public class PedidoService {
                 pedido.getFechaCreacion(),
                 items,
                 pedido.getWebpayToken(),
-                pedido.getEstadoPago() != null ? pedido.getEstadoPago().name() : null
+                pedido.getEstadoPago() != null ? pedido.getEstadoPago().name() : null,
+                pedido.getSubtotal() != null ? pedido.getSubtotal() : pedido.getTotal(),
+                pedido.getCostoDespacho() != null ? pedido.getCostoDespacho() : BigDecimal.ZERO,
+                pedido.getMetodoEntrega() != null ? pedido.getMetodoEntrega().name() : null
         );
     }
 }
