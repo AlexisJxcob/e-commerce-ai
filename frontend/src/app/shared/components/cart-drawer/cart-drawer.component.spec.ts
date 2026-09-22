@@ -11,6 +11,8 @@ import { Carrito } from '../../../core/models/carrito.models';
 import { Pedido, CheckoutResponse } from '../../../core/models/pedido.models';
 import { of } from 'rxjs';
 
+import { ConfirmationService, MessageService } from 'primeng/api';
+
 describe('CartDrawerComponent', () => {
   let component: CartDrawerComponent;
   let fixture: ComponentFixture<CartDrawerComponent>;
@@ -85,7 +87,9 @@ describe('CartDrawerComponent', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: AuthModalService, useValue: mockAuthModalService },
         { provide: PedidoService, useValue: mockPedidoService },
-        { provide: Router, useValue: mockRouter }
+        { provide: Router, useValue: mockRouter },
+        ConfirmationService,
+        MessageService
       ]
     }).compileComponents();
 

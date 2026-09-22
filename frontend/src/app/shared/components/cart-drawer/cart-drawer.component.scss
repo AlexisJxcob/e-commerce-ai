@@ -122,42 +122,9 @@
     padding-top: 0.5rem;
     border-top: 1px solid var(--border-subtle);
 
-    .quantity-stepper {
-      display: inline-flex;
+    .quantity-container {
+      display: flex;
       align-items: center;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-input);
-      background-color: var(--surface-elevated);
-      overflow: hidden;
-
-      .stepper-btn {
-        width: 30px;
-        height: 30px;
-        border: none;
-        background: transparent;
-        color: var(--text-primary);
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.15s ease;
-
-        &:hover {
-          background-color: var(--border-hover);
-        }
-
-        i {
-          font-size: 0.75rem;
-        }
-      }
-
-      .stepper-value {
-        min-width: 32px;
-        text-align: center;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: var(--text-primary);
-      }
     }
 
     .item-subtotal-group {
@@ -168,24 +135,6 @@
       .item-subtotal {
         font-size: 1rem;
         font-weight: 600;
-      }
-
-      .delete-item-btn {
-        background: transparent;
-        border: none;
-        color: var(--text-secondary);
-        cursor: pointer;
-        padding: 0.35rem;
-        border-radius: 4px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: color 0.15s ease, background-color 0.15s ease;
-
-        &:hover {
-          color: var(--status-error);
-          background-color: var(--status-error-bg);
-        }
       }
     }
   }
@@ -261,13 +210,23 @@
       width: 100%;
       height: 36px;
       font-size: 0.8125rem;
-      color: var(--text-secondary) !important;
-      border-color: var(--border-subtle) !important;
+    }
+  }
+}
 
-      &:hover {
-        color: var(--status-error) !important;
-        border-color: var(--status-error) !important;
-      }
+:host ::ng-deep {
+  .cart-inputnumber {
+    .p-inputnumber-input {
+      width: 2.75rem;
+      text-align: center;
+      padding: 0.25rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .p-inputnumber-button {
+      width: 1.75rem;
+      padding: 0;
     }
   }
 }
