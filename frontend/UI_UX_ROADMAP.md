@@ -296,13 +296,13 @@ flowchart LR
 4. Toda la aplicación cumple con las directrices de contraste WCAG AA en modo claro.
 
 #### Checklist de Avance:
-- [ ] Migrar la barra de navegación del panel de administración a `<p-tabs>`.
-- [ ] Sustituir la tabla HTML nativa por `<p-table>` con paginador reactivo, ordenamiento y scroll responsivo.
-- [ ] Estandarizar la edición inline de stock con `<p-inputnumber>`.
-- [ ] Migrar los modales de producto y categoría a `<p-dialog>` con `<p-select>`, `<p-textarea>` e `<p-inputnumber>`.
-- [ ] Conectar `ConfirmationService` a los botones de eliminación de categorías y productos.
-- [ ] Refactorizar la pestaña de Motor de IA con `<p-card>` y métricas visuales atractivas.
-- [ ] Ejecutar auditoría final de contraste cromático, espaciados y navegación por teclado en toda la plataforma.
+- [x] Migrar la barra de navegación del panel de administración a `<p-tabs>`.
+- [x] Sustituir la tabla HTML nativa por `<p-table>` con paginador reactivo, ordenamiento y scroll responsivo.
+- [x] Estandarizar la edición inline de stock con `<p-inputnumber>`.
+- [x] Migrar los modales de producto y categoría a `<p-dialog>` con `<p-select>`, `<p-textarea>` e `<p-inputnumber>`.
+- [x] Conectar `ConfirmationService` a los botones de eliminación de categorías y productos.
+- [x] Refactorizar la pestaña de Motor de IA con `<p-card>` y métricas visuales atractivas.
+- [x] Ejecutar auditoría final de contraste cromático, espaciados y navegación por teclado en toda la plataforma.
 
 ---
 
