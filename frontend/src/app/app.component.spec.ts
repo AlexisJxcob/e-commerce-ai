@@ -3,6 +3,7 @@ import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter } from '@angular/router';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { AppComponent } from './app.component';
 
 describe('AppComponent', () => {
@@ -13,7 +14,9 @@ describe('AppComponent', () => {
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideAnimationsAsync(),
-        provideRouter([])
+        provideRouter([]),
+        MessageService,
+        ConfirmationService
       ]
     }).compileComponents();
   });
