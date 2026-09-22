@@ -7,200 +7,174 @@
   [draggable]="false"
   [resizable]="false"
   styleClass="auth-dialog"
-  [style]="{ width: '100%', maxWidth: '420px' }"
+  [style]="{ width: '100%', maxWidth: '440px' }"
   (onHide)="close()"
 >
   <ng-template pTemplate="header">
-    <div class="auth-header">
-      <div class="brand-badge">Repara.ai</div>
-      <div class="tabs-nav" role="tablist">
-        <button
-          type="button"
-          class="tab-btn"
-          [class.active]="currentMode() === 'login'"
-          (click)="setMode('login')"
-          role="tab"
-          [attr.aria-selected]="currentMode() === 'login'"
-        >
-          Iniciar Sesión
-        </button>
-        <button
-          type="button"
-          class="tab-btn"
-          [class.active]="currentMode() === 'register'"
-          (click)="setMode('register')"
-          role="tab"
-          [attr.aria-selected]="currentMode() === 'register'"
-        >
-          Crear Cuenta
-        </button>
-      </div>
+    <div class="auth-dialog-header">
+      <span class="brand-badge">Repara.ai</span>
+      <h2 class="auth-dialog-title">
+        {{ currentMode() === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta' }}
+      </h2>
     </div>
   </ng-template>
 
   <div class="auth-content">
-    <!-- Inline Feedback Alerts -->
-    @if (errorMessage()) {
-      <div class="alert-box alert-error" role="alert">
-        <i class="pi pi-exclamation-circle"></i>
-        <span>{{ errorMessage() }}</span>
-      </div>
-    }
+    <p-tabs [value]="currentMode()" (valueChange)="onTabChange($event)" styleClass="auth-tabs">
+      <p-tablist>
+        <p-tab value="login">Iniciar Sesión</p-tab>
+        <p-tab value="register">Crear Cuenta</p-tab>
+      </p-tablist>
 
-    @if (successMessage()) {
-      <div class="alert-box alert-success" role="status">
-        <i class="pi pi-check-circle"></i>
-        <span>{{ successMessage() }}</span>
-      </div>
-    }
-
-    <!-- Login Form -->
-    @if (currentMode() === 'login') {
-      <form [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()" class="auth-form" novalidate>
-        <div class="form-group">
-          <label for="login-username" class="form-label">Usuario</label>
-          <input
-            pInputText
-            id="login-username"
-            type="text"
-            formControlName="username"
-            placeholder="ej. alexis"
-            class="w-full"
-            autocomplete="username"
-            [class.input-invalid]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched"
-          />
-          @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
-            <small class="field-error">El usuario es obligatorio</small>
+      <p-tabpanels>
+        <!-- Login Panel -->
+        <p-tabpanel value="login">
+          @if (errorMessage()) {
+            <p-message severity="error" styleClass="w-full mb-3">{{ errorMessage() }}</p-message>
           }
-        </div>
 
-        <div class="form-group">
-          <label for="login-password" class="form-label">Contraseña</label>
-          <input
-            pInputText
-            id="login-password"
-            type="password"
-            formControlName="password"
-            placeholder="••••••••"
-            class="w-full"
-            autocomplete="current-password"
-            [class.input-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
-          />
-          @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
-            <small class="field-error">La contraseña es obligatoria</small>
+          @if (successMessage()) {
+            <p-message severity="success" styleClass="w-full mb-3">{{ successMessage() }}</p-message>
           }
-        </div>
 
-        <button
-          pButton
-          type="submit"
-          class="submit-btn"
-          [disabled]="isLoading()"
-        >
-          @if (isLoading()) {
-            <i class="pi pi-spin pi-spinner mr-2"></i>
-            <span>Iniciando sesión...</span>
-          } @else {
-            <span>Ingresar</span>
-          }
-        </button>
-
-        <p class="auth-footnote">
-          ¿No tienes cuenta?
-          <button type="button" class="link-btn" (click)="setMode('register')">
-            Regístrate aquí
-          </button>
-        </p>
-      </form>
-    }
-
-    <!-- Register Form -->
-    @if (currentMode() === 'register') {
-      <form [formGroup]="registerForm" (ngSubmit)="onRegisterSubmit()" class="auth-form" novalidate>
-        <div class="form-group">
-          <label for="register-username" class="form-label">Nombre de usuario</label>
-          <input
-            pInputText
-            id="register-username"
-            type="text"
-            formControlName="username"
-            placeholder="ej. juanperez"
-            class="w-full"
-            autocomplete="username"
-            [class.input-invalid]="registerForm.get('username')?.invalid && registerForm.get('username')?.touched"
-          />
-          @if (registerForm.get('username')?.invalid && registerForm.get('username')?.touched) {
-            <small class="field-error">
-              @if (registerForm.get('username')?.errors?.['required']) {
-                El nombre de usuario es obligatorio
-              } @else if (registerForm.get('username')?.errors?.['maxlength']) {
-                Máximo 50 caracteres
+          <form [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()" class="auth-form" novalidate>
+            <div class="form-group">
+              <label for="login-username" class="form-label">Usuario</label>
+              <input
+                pInputText
+                id="login-username"
+                type="text"
+                formControlName="username"
+                placeholder="ej. alexis"
+                class="w-full"
+                autocomplete="username"
+              />
+              @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
+                <small class="field-error">El usuario es obligatorio</small>
               }
-            </small>
-          }
-        </div>
+            </div>
 
-        <div class="form-group">
-          <label for="register-email" class="form-label">Correo electrónico (opcional)</label>
-          <input
-            pInputText
-            id="register-email"
-            type="email"
-            formControlName="email"
-            placeholder="ej. contacto@ejemplo.com"
-            class="w-full"
-            autocomplete="email"
-            [class.input-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
-          />
-          @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
-            <small class="field-error">Ingresa un formato de email válido</small>
-          }
-        </div>
-
-        <div class="form-group">
-          <label for="register-password" class="form-label">Contraseña</label>
-          <input
-            pInputText
-            id="register-password"
-            type="password"
-            formControlName="password"
-            placeholder="Mínimo 8 caracteres"
-            class="w-full"
-            autocomplete="new-password"
-            [class.input-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
-          />
-          @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
-            <small class="field-error">
-              @if (registerForm.get('password')?.errors?.['required']) {
-                La contraseña es obligatoria
-              } @else if (registerForm.get('password')?.errors?.['minlength']) {
-                La contraseña debe tener al menos 8 caracteres
+            <div class="form-group">
+              <label for="login-password" class="form-label">Contraseña</label>
+              <p-password
+                id="login-password"
+                formControlName="password"
+                placeholder="••••••••"
+                [feedback]="false"
+                [toggleMask]="true"
+                styleClass="w-full"
+                inputStyleClass="w-full"
+                autocomplete="current-password"
+              ></p-password>
+              @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+                <small class="field-error">La contraseña es obligatoria</small>
               }
-            </small>
-          }
-        </div>
+            </div>
 
-        <button
-          pButton
-          type="submit"
-          class="submit-btn"
-          [disabled]="isLoading()"
-        >
-          @if (isLoading()) {
-            <i class="pi pi-spin pi-spinner mr-2"></i>
-            <span>Creando cuenta...</span>
-          } @else {
-            <span>Crear cuenta gratuita</span>
-          }
-        </button>
+            <p-button
+              type="submit"
+              label="Ingresar"
+              [loading]="isLoading()"
+              styleClass="w-full submit-btn"
+            ></p-button>
 
-        <p class="auth-footnote">
-          ¿Ya tienes cuenta?
-          <button type="button" class="link-btn" (click)="setMode('login')">
-            Inicia sesión
-          </button>
-        </p>
-      </form>
-    }
+            <p class="auth-footnote">
+              ¿No tienes cuenta?
+              <button type="button" class="link-btn" (click)="setMode('register')">
+                Regístrate aquí
+              </button>
+            </p>
+          </form>
+        </p-tabpanel>
+
+        <!-- Register Panel -->
+        <p-tabpanel value="register">
+          @if (errorMessage()) {
+            <p-message severity="error" styleClass="w-full mb-3">{{ errorMessage() }}</p-message>
+          }
+
+          <form [formGroup]="registerForm" (ngSubmit)="onRegisterSubmit()" class="auth-form" novalidate>
+            <div class="form-group">
+              <label for="register-username" class="form-label">Nombre de usuario</label>
+              <input
+                pInputText
+                id="register-username"
+                type="text"
+                formControlName="username"
+                placeholder="ej. juanperez"
+                class="w-full"
+                autocomplete="username"
+              />
+              @if (registerForm.get('username')?.invalid && registerForm.get('username')?.touched) {
+                <small class="field-error">
+                  @if (registerForm.get('username')?.errors?.['required']) {
+                    El nombre de usuario es obligatorio
+                  } @else if (registerForm.get('username')?.errors?.['maxlength']) {
+                    Máximo 50 caracteres
+                  }
+                </small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="register-email" class="form-label">Correo electrónico (opcional)</label>
+              <input
+                pInputText
+                id="register-email"
+                type="email"
+                formControlName="email"
+                placeholder="ej. contacto@ejemplo.com"
+                class="w-full"
+                autocomplete="email"
+              />
+              @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+                <small class="field-error">Ingresa un formato de email válido</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="register-password" class="form-label">Contraseña</label>
+              <p-password
+                id="register-password"
+                formControlName="password"
+                placeholder="Mínimo 8 caracteres"
+                [feedback]="true"
+                promptLabel="Elige una contraseña"
+                weakLabel="Débil"
+                mediumLabel="Media"
+                strongLabel="Fuerte"
+                [toggleMask]="true"
+                styleClass="w-full"
+                inputStyleClass="w-full"
+                autocomplete="new-password"
+              ></p-password>
+              @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+                <small class="field-error">
+                  @if (registerForm.get('password')?.errors?.['required']) {
+                    La contraseña es obligatoria
+                  } @else if (registerForm.get('password')?.errors?.['minlength']) {
+                    La contraseña debe tener al menos 8 caracteres
+                  }
+                </small>
+              }
+            </div>
+
+            <p-button
+              type="submit"
+              label="Crear cuenta gratuita"
+              [loading]="isLoading()"
+              styleClass="w-full submit-btn"
+            ></p-button>
+
+            <p class="auth-footnote">
+              ¿Ya tienes cuenta?
+              <button type="button" class="link-btn" (click)="setMode('login')">
+                Inicia sesión
+              </button>
+            </p>
+          </form>
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
   </div>
 </p-dialog>

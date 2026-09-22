@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 import { AuthModalComponent } from './auth-modal.component';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthModalService } from '../../../core/auth/auth-modal.service';
+import { MessageService } from 'primeng/api';
 
 describe('AuthModalComponent', () => {
   let component: AuthModalComponent;
@@ -18,7 +19,8 @@ describe('AuthModalComponent', () => {
       imports: [AuthModalComponent],
       providers: [
         provideAnimationsAsync(),
-        { provide: AuthService, useValue: authServiceSpy }
+        { provide: AuthService, useValue: authServiceSpy },
+        MessageService
       ]
     }).compileComponents();
 

@@ -1,28 +1,33 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { PasswordModule } from 'primeng/password';
+import { TabsModule } from 'primeng/tabs';
+import { MessageModule } from 'primeng/message';
+import { MessageService } from 'primeng/api';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthModalService, AuthModalMode } from '../../../core/auth/auth-modal.service';
-import { ErrorResponse } from '../../../core/models/error.models';
-import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
-    selector: 'app-auth-modal',
-    imports: [
+  selector: 'app-auth-modal',
+  imports: [
     ReactiveFormsModule,
     DialogModule,
     ButtonModule,
-    InputTextModule
-],
-    templateUrl: './auth-modal.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
-    styleUrl: './auth-modal.component.scss'
+    InputTextModule,
+    PasswordModule,
+    TabsModule,
+    MessageModule
+  ],
+  templateUrl: './auth-modal.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  styleUrl: './auth-modal.component.scss'
 })
 export class AuthModalComponent {
   private readonly fb = inject(FormBuilder);
+  private readonly messageService = inject(MessageService);
   readonly authService = inject(AuthService);
   readonly authModalService = inject(AuthModalService);
 
@@ -48,6 +53,12 @@ export class AuthModalComponent {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     this.authModalService.mode.set(mode);
+  }
+
+  onTabChange(tabValue: unknown): void {
+    if (tabValue === 'login' || tabValue === 'register') {
+      this.setMode(tabValue);
+    }
   }
 
   onVisibleChange(visible: boolean): void {
@@ -80,10 +91,23 @@ export class AuthModalComponent {
         this.isLoading.set(false);
         this.authModalService.close();
         this.authModalService.executePendingAction();
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Sesión iniciada',
+          detail: 'Has ingresado correctamente a Repara.ai',
+          life: 3000
+        });
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.errorMessage.set(this.extractErrorMessage(err, 'Credenciales inválidas. Revisa usuario y contraseña.'));
+        const msg = this.extractErrorMessage(err, 'Credenciales inválidas. Revisa usuario y contraseña.');
+        this.errorMessage.set(msg);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error de autenticación',
+          detail: msg,
+          life: 4000
+        });
       }
     });
   }
@@ -112,18 +136,38 @@ export class AuthModalComponent {
             this.isLoading.set(false);
             this.authModalService.close();
             this.authModalService.executePendingAction();
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Cuenta creada',
+              detail: '¡Bienvenido a Repara.ai!',
+              life: 3000
+            });
           },
           error: () => {
             this.isLoading.set(false);
-            this.successMessage.set('Cuenta creada con éxito. Ahora inicia sesión.');
+            const msg = 'Cuenta creada con éxito. Ahora inicia sesión.';
+            this.successMessage.set(msg);
             this.setMode('login');
             this.loginForm.patchValue({ username });
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Registro exitoso',
+              detail: msg,
+              life: 3000
+            });
           }
         });
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.errorMessage.set(this.extractErrorMessage(err, 'Error al registrar la cuenta. Intenta de nuevo.'));
+        const msg = this.extractErrorMessage(err, 'Error al registrar la cuenta. Intenta de nuevo.');
+        this.errorMessage.set(msg);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error de registro',
+          detail: msg,
+          life: 4000
+        });
       }
     });
   }
