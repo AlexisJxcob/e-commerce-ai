@@ -259,12 +259,12 @@ flowchart LR
 4. El comprobante final (voucher) es limpio, presentable y cuenta con una disposición lista para impresión o captura en dispositivos móviles.
 
 #### Checklist de Avance:
-- [ ] Implementar `<p-stepper>` en `CheckoutComponent` reemplazando la lista manual de pasos.
-- [ ] Modernizar el Paso 1 (Resumen) integrando controles numéricos formales para la modificación de cantidades.
-- [ ] Mejorar los formularios de datos personales (Paso 2) con `<p-inputtext>` y `<p-message>`.
-- [ ] Refactorizar la selección de entrega (Paso 3) con `<p-radiobutton>`, `<p-select>` para regiones/comunas y `<p-checkbox>`.
-- [ ] Estilizar la sección de pago y el sidebar de resumen garantizando posicionamiento sticky en desktop y colapso fluido en mobile.
-- [ ] Rediseñar el comprobante en `CheckoutResultadoComponent` con `<p-card>`, `<p-tag>` y remover `$safeNavigationMigration`.
+- [x] Implementar `<p-stepper>` en `CheckoutComponent` reemplazando la lista manual de pasos.
+- [x] Modernizar el Paso 1 (Resumen) integrando controles numéricos formales para la modificación de cantidades.
+- [x] Mejorar los formularios de datos personales (Paso 2) con `<p-inputtext>` y `<p-message>`.
+- [x] Refactorizar la selección de entrega (Paso 3) con `<p-radiobutton>`, `<p-select>` para regiones/comunas y `<p-checkbox>`.
+- [x] Estilizar la sección de pago y el sidebar de resumen garantizando posicionamiento sticky en desktop y colapso fluido en mobile.
+- [x] Rediseñar el comprobante en `CheckoutResultadoComponent` con `<p-card>`, `<p-tag>` y remover `$safeNavigationMigration`.
 
 ---
 

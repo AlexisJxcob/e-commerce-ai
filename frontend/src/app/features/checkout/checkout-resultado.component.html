@@ -1,11 +1,11 @@
 <main class="checkout-resultado-container">
   @if (status() === 'exito') {
-    <section class="voucher-card repara-card" aria-labelledby="voucher-title">
+    <p-card styleClass="voucher-card" aria-label="Comprobante de compra exitosa">
       <div class="voucher-header">
         <div class="icon-indicator success-indicator">
           <i class="pi pi-check" aria-hidden="true"></i>
         </div>
-        <span class="badge-stock">Transacción Aprobada</span>
+        <p-tag severity="success" value="Transacción Aprobada" icon="pi pi-check-circle"></p-tag>
         <h1 id="voucher-title" class="voucher-headline">¡Gracias por tu compra!</h1>
         <p class="voucher-subtitle">
           El pago fue procesado correctamente a través de Webpay Plus. Tu pedido ya está en preparación.
@@ -37,10 +37,7 @@
 
         <div class="receipt-row">
           <span class="receipt-label">Estado</span>
-          <span class="receipt-value status-approved">
-            <i class="pi pi-circle-fill dot-icon" aria-hidden="true"></i>
-            Aprobado
-          </span>
+          <p-tag severity="success" value="Aprobado" size="small"></p-tag>
         </div>
 
         @if (pedido()) {
@@ -61,26 +58,29 @@
 
             <div class="receipt-total-row">
               <span class="total-label">Total Pagado</span>
-              <span class="total-amount price-text">{{ $safeNavigationMigration(pedido()?.total) | clp }}</span>
+              <span class="total-amount price-text">{{ pedido()?.total | clp }}</span>
             </div>
           </div>
         }
       </div>
 
       <div class="voucher-actions">
-        <a routerLink="/" class="p-button p-button-primary action-btn">
-          <i class="pi pi-arrow-left" aria-hidden="true"></i>
-          <span>Volver a la tienda</span>
-        </a>
+        <p-button
+          routerLink="/"
+          severity="primary"
+          label="Volver a la tienda"
+          icon="pi pi-arrow-left"
+          styleClass="w-full"
+        ></p-button>
       </div>
-    </section>
+    </p-card>
   } @else {
-    <section class="voucher-card repara-card" aria-labelledby="voucher-error-title">
+    <p-card styleClass="voucher-card" aria-label="Comprobante de transacción no completada">
       <div class="voucher-header">
         <div class="icon-indicator error-indicator">
           <i class="pi pi-times" aria-hidden="true"></i>
         </div>
-        <span class="badge-error">Transacción no completada</span>
+        <p-tag severity="danger" value="Transacción no completada" icon="pi pi-times-circle"></p-tag>
 
         <h1 id="voucher-error-title" class="voucher-headline">
           @if (status() === 'rechazado') {
@@ -121,19 +121,23 @@
       </div>
 
       <div class="voucher-actions">
-        <button
+        <p-button
           type="button"
-          class="p-button p-button-primary action-btn"
-          (click)="reintentar()"
-        >
-          <i class="pi pi-refresh" aria-hidden="true"></i>
-          <span>Reintentar compra</span>
-        </button>
+          severity="primary"
+          label="Reintentar compra"
+          icon="pi pi-refresh"
+          styleClass="w-full"
+          (onClick)="reintentar()"
+        ></p-button>
 
-        <a routerLink="/" class="p-button p-button-outlined action-btn secondary-btn">
-          <span>Volver al catálogo</span>
-        </a>
+        <p-button
+          routerLink="/"
+          variant="outlined"
+          severity="secondary"
+          label="Volver al catálogo"
+          styleClass="w-full"
+        ></p-button>
       </div>
-    </section>
+    </p-card>
   }
 </main>

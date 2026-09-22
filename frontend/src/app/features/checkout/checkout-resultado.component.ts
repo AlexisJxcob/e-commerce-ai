@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@ang
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { CardModule } from 'primeng/card';
+import { TagModule } from 'primeng/tag';
 import { PedidoService } from '../../core/services/pedido.service';
 import { CarritoService } from '../../core/services/carrito.service';
 import { Pedido } from '../../core/models/pedido.models';
@@ -11,9 +13,9 @@ export type PaymentStatus = 'exito' | 'rechazado' | 'cancelado' | 'error' | 'inv
 
 @Component({
     selector: 'app-checkout-resultado',
-    imports: [CommonModule, RouterModule, ButtonModule, ClpPipe],
+    imports: [CommonModule, RouterModule, ButtonModule, CardModule, TagModule, ClpPipe],
     templateUrl: './checkout-resultado.component.html',
-    changeDetection: ChangeDetectionStrategy.Eager,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrl: './checkout-resultado.component.scss'
 })
 export class CheckoutResultadoComponent implements OnInit {
