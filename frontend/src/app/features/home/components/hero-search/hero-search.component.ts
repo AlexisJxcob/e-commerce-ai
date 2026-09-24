@@ -6,6 +6,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ChipModule } from 'primeng/chip';
 import { TypewriterDirective } from '../../../../shared/directives/typewriter.directive';
 
+export interface CasoFrecuente {
+  label: string;
+  icon: string;
+  gremio: string;
+}
+
 @Component({
     selector: 'app-hero-search',
     imports: [
@@ -28,11 +34,11 @@ export class HeroSearchComponent {
 
   readonly queryText = signal<string>('');
 
-  readonly quickSuggestions: string[] = [
-    'Fuga de agua en cañería PVC',
-    'Colgar repisa en tabique',
-    'Cerradura trabada de puerta',
-    'Cambiar interruptor de luz'
+  readonly quickSuggestions: CasoFrecuente[] = [
+    { label: 'Fuga de agua en cañería PVC', icon: 'pi-wrench', gremio: 'Plomería' },
+    { label: 'Colgar repisa en tabique', icon: 'pi-hammer', gremio: 'Fijación' },
+    { label: 'Cerradura trabada de puerta', icon: 'pi-lock', gremio: 'Cerrajería' },
+    { label: 'Cambiar interruptor de luz', icon: 'pi-bolt', gremio: 'Electricidad' }
   ];
 
   onSearchSubmit(): void {

@@ -2,14 +2,9 @@
   <div class="hero-container">
     @if (!compact()) {
       <div class="hero-header">
-        <div class="hero-pill">
-          <i class="pi pi-sparkles pill-icon" aria-hidden="true"></i>
-          <span>Asistente Técnico Especializado</span>
-        </div>
-        <h1 class="hero-title">¿Qué vas a reparar hoy?</h1>
+        <h1 class="hero-title">Diagnóstico y repuestos para tu reparación</h1>
         <p class="hero-subtitle">
-          Describe tu problema en lenguaje cotidiano. Nuestra inteligencia artificial identifica los repuestos exactos,
-          herramientas necesarias y productos recomendados al instante.
+          Describí la falla o trabajo en lenguaje cotidiano. El asistente analiza la avería, calcula repuestos compatibles y herramientas necesarias de nuestro inventario.
         </p>
       </div>
     }
@@ -32,7 +27,7 @@
         <p-button
           type="submit"
           label="Diagnosticar"
-          icon="pi pi-sparkles"
+          icon="pi pi-wrench"
           [disabled]="!queryText().trim() || loading()"
           [loading]="loading()"
           styleClass="hero-submit-button"
@@ -42,18 +37,26 @@
 
     @if (!compact()) {
       <div class="quick-suggestions">
-        <span class="suggestions-label">Casos frecuentes:</span>
-        <div class="suggestions-chips">
-          @for (item of quickSuggestions; track item) {
-            <p-chip
-              [label]="item"
-              styleClass="suggestion-chip"
+        <span class="suggestions-label">Casos frecuentes de reparación:</span>
+        <div class="suggestions-chips" role="list">
+          @for (item of quickSuggestions; track item.label) {
+            <button
+              type="button"
+              class="suggestion-chip"
+              role="listitem"
               [class.is-disabled]="loading()"
-              (click)="!loading() && selectSuggestion(item)"
-              tabindex="0"
-              (keydown.enter)="!loading() && selectSuggestion(item)"
-              [attr.aria-disabled]="loading()"
-            ></p-chip>
+              [disabled]="loading()"
+              (click)="selectSuggestion(item.label)"
+              [attr.aria-label]="item.label + ' - ' + item.gremio"
+            >
+              <span class="chip-icon-box" aria-hidden="true">
+                <i [class]="'pi ' + item.icon"></i>
+              </span>
+              <span class="chip-content">
+                <span class="chip-label">{{ item.label }}</span>
+                <span class="chip-gremio">{{ item.gremio }}</span>
+              </span>
+            </button>
           }
         </div>
       </div>
