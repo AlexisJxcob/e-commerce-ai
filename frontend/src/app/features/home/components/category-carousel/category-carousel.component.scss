@@ -1,52 +1,41 @@
 .category-carousel-section {
   width: 100%;
-  margin-bottom: 3rem;
-  background-color: var(--bg-primary, #FFFFFF);
-  border: 1px solid var(--border-subtle, #E2E8F0);
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  margin-bottom: var(--space-6);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
 
   &:last-of-type {
-    margin-bottom: 2rem;
+    margin-bottom: var(--space-6);
   }
 }
 
 .section-header {
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-subtle, #E2E8F0);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
 
   .title-row {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--space-3);
     flex-wrap: wrap;
   }
 
   .category-title {
-    font-size: 1.35rem;
-    font-weight: 700;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: 800;
     color: var(--text-primary);
     margin: 0;
     letter-spacing: var(--tracking-tight);
   }
 
-  .product-count-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.2rem 0.6rem;
-    border-radius: 9999px;
-    background-color: var(--surface-elevated);
-    border: 1px solid var(--border-subtle);
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-  }
-
   .category-desc {
-    margin: 0.35rem 0 0;
-    font-size: 0.875rem;
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-sm);
     color: var(--text-secondary);
   }
 }
@@ -54,71 +43,81 @@
 .carousel-wrapper {
   position: relative;
   margin: 0 -0.5rem;
+}
 
-  :host ::ng-deep {
-    .p-carousel {
-      width: 100%;
+/*
+ * `:host ::ng-deep` sólo es válido en primer nivel: anidarlo dentro de otra
+ * regla impedía que estos estilos compilaran.
+ */
+:host ::ng-deep .carousel-wrapper {
+  .p-carousel {
+    width: 100%;
+  }
+
+  .p-carousel-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  /* P1-9: los controles de navegación son icon-only y miden ≥44 px. */
+  .p-carousel-prev,
+  .p-carousel-next {
+    width: var(--touch-target);
+    height: var(--touch-target);
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 50%;
+    color: var(--text-primary);
+    transition: background-color var(--ease-standard), border-color var(--ease-standard), color var(--ease-standard);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 2;
+
+    &:not(:disabled):hover {
+      background-color: var(--surface-elevated);
+      border-color: var(--border-hover);
+      color: var(--accent-industrial);
     }
 
-    .p-carousel-content {
-      position: relative;
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
     }
+  }
 
-    .p-carousel-prev,
-    .p-carousel-next {
-      width: 2.5rem;
-      height: 2.5rem;
-      background-color: var(--bg-primary);
-      border: 1px solid var(--border-subtle);
-      border-radius: 50%;
-      color: var(--text-primary);
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  .p-carousel-items-content {
+    overflow: hidden;
+    width: 100%;
+  }
 
-      &:not(:disabled):hover {
-        background-color: var(--surface-elevated);
-        border-color: var(--border-hover);
-        color: var(--accent-electric);
-        transform: scale(1.05);
+  .p-carousel-indicators {
+    padding: var(--space-3) 0 0;
+    gap: var(--space-1);
+
+    .p-carousel-indicator {
+      button {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--border-subtle);
+        border: none;
+        transition: background-color var(--ease-standard);
       }
 
-      &:disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
-      }
-    }
-
-    .p-carousel-items-content {
-      overflow: hidden;
-      width: 100%;
-    }
-
-    .p-carousel-indicators {
-      padding: 0.75rem 0 0;
-      gap: 0.35rem;
-
-      .p-carousel-indicator {
-        button {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: var(--border-subtle);
-          border: none;
-          transition: all 0.2s ease;
-        }
-
-        &.p-carousel-indicator-active button {
-          background-color: var(--accent-electric);
-          width: 20px;
-          border-radius: 4px;
-        }
+      &.p-carousel-indicator-active button {
+        background-color: var(--accent-industrial);
+        width: 20px;
+        border-radius: var(--radius-input);
       }
     }
   }
 }
 
 .carousel-card-item {
-  padding: 0.5rem;
+  padding: var(--space-2);
   height: 100%;
   display: flex;
   flex-direction: column;
