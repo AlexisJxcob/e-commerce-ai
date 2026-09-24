@@ -1,10 +1,10 @@
-<p-card styleClass="diagnosis-card" aria-label="Diagnóstico técnico del asistente">
+<p-card aria-label="Diagnóstico técnico del asistente">
   <div class="diagnosis-panel">
     <header class="diagnosis-header">
       <div class="diagnosis-badge">
-        <p-tag severity="info" value="Diagnóstico Técnico IA" icon="pi pi-sparkles"></p-tag>
+        <p-tag severity="info" value="Despiece técnico sugerido" icon="pi pi-wrench"></p-tag>
       </div>
-      <h2 class="diagnosis-title">Solución recomendada</h2>
+      <h2 class="diagnosis-title">Solución y despiece recomendado</h2>
       @if (query()) {
         <p class="diagnosis-summary">
           Análisis generado para tu problema:
@@ -27,13 +27,12 @@
         </div>
 
         @if (herramientas().length > 0) {
-          <div class="chips-container" role="list">
+          <div class="chips-container tool-chips" role="list">
             @for (tool of herramientas(); track tool) {
               <p-tag
                 severity="info"
                 [value]="tool"
                 icon="pi pi-wrench"
-                styleClass="tool-tag"
                 role="listitem"
               ></p-tag>
             }
@@ -51,13 +50,12 @@
         </div>
 
         @if (repuestos().length > 0) {
-          <div class="chips-container" role="list">
+          <div class="chips-container part-chips" role="list">
             @for (part of repuestos(); track part) {
               <p-tag
                 severity="secondary"
                 [value]="part"
                 icon="pi pi-cog"
-                styleClass="part-tag"
                 role="listitem"
               ></p-tag>
             }
@@ -74,13 +72,12 @@
             <i class="pi pi-tag section-icon" aria-hidden="true"></i>
             <h3 id="keywords-title" class="section-title">Términos técnicos indexados</h3>
           </div>
-          <div class="chips-container" role="list">
+          <div class="chips-container kw-chips" role="list">
             @for (kw of palabrasClave(); track kw) {
               <p-tag
                 severity="warn"
                 [value]="kw"
                 icon="pi pi-tag"
-                styleClass="kw-tag"
                 role="listitem"
               ></p-tag>
             }
@@ -94,7 +91,7 @@
         type="button"
         severity="primary"
         icon="pi pi-shopping-bag"
-        [label]="productCount() > 0 ? 'Agregar kit completo al carrito (' + productCount() + ')' : 'Agregar kit completo al carrito'"
+        [label]="kitLabel()"
         [disabled]="productCount() === 0"
         (onClick)="onAddKitClick()"
         styleClass="w-full kit-button"

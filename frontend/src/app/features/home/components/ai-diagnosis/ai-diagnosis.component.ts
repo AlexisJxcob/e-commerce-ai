@@ -31,6 +31,13 @@ export class AiDiagnosisComponent {
     );
   });
 
+  /** Etiqueta estable del CTA: evita recomputar la expresión en cada ciclo. */
+  readonly kitLabel = computed(() =>
+    this.productCount() > 0
+      ? `Agregar kit completo al carrito (${this.productCount()})`
+      : 'Agregar kit completo al carrito'
+  );
+
   onAddKitClick(): void {
     if (this.productCount() > 0) {
       this.addKit.emit();
