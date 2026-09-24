@@ -26,28 +26,28 @@
   --p-focus-ring-style: solid;
   --p-focus-ring-offset: 1px;
 
-  /* --- Technical industrial palette --- */
-  --bg-primary: #F4F5F7;          /* clean engineering concrete */
-  --bg-surface: #FFFFFF;          /* crisp white working panel */
-  --bg-inset: #EDF1F5;            /* recessed bay / machined well */
-  --text-primary: #090D16;        /* high-contrast carbon ink */
-  --text-secondary: #334155;      /* slate 700, readable and sharp */
-  --text-muted: #5A6B80;          /* slate for data labels (AA on concrete) */
-  --surface-elevated: #EAEDF2;    /* matte aluminium */
-  --border-subtle: #CBD5E1;       /* millimetre rule line */
-  --border-strong: #94A3B8;       /* calibrated border */
+  /* --- Ferretería Técnica Industrial Palette --- */
+  --bg-primary: #F5F3EF;          /* warm workshop concrete / technical paper */
+  --bg-surface: #FFFFFF;          /* clean working panel */
+  --bg-inset: #EBE8E1;            /* machined metal tray / durable bench surface */
+  --text-primary: #15181E;        /* deep graphite ink */
+  --text-secondary: #3D4450;      /* heavy-duty steel / slate */
+  --text-muted: #606875;          /* workshop specification slate */
+  --surface-elevated: #ECE9E2;    /* sturdy neutral surface */
+  --border-subtle: #D5D1C7;       /* mechanical gauge line */
+  --border-strong: #8A8377;       /* calibrated structural rule */
   --border-hover: var(--border-strong); /* alias heredado */
 
-  /* --- Workshop accents: exactly two signals --- */
-  --accent-industrial: #E05A1B;   /* action / warning orange */
-  --accent-industrial-hover: #C24810;
-  --accent-tech-blue: #0284C7;    /* calibration / measurement blue */
-  --accent-tech-blue-bg: rgba(2, 132, 199, 0.08);
-  --accent-focus-ring: rgba(224, 90, 27, 0.28);
+  /* --- Workshop accents: industrial tools & safety signals --- */
+  --accent-industrial: #D65110;   /* heavy-duty tool orange (Stanley/DeWalt) */
+  --accent-industrial-hover: #B54109;
+  --accent-tech-blue: #0F5E9C;    /* precision plumbing/measuring blue */
+  --accent-tech-blue-bg: rgba(15, 94, 156, 0.08);
+  --accent-focus-ring: rgba(214, 81, 16, 0.28);
 
-  --status-success: #047857;      /* stock verification green (AA on white) */
-  --status-success-bg: rgba(5, 150, 105, 0.08);
-  --status-success-border: rgba(5, 150, 105, 0.28);
+  --status-success: #15803D;      /* stock verification green (AA on white) */
+  --status-success-bg: rgba(21, 128, 61, 0.08);
+  --status-success-border: rgba(21, 128, 61, 0.28);
   --status-error: #B91C1C;        /* critical fault red (AA on white) */
   --status-error-bg: rgba(185, 28, 28, 0.07);
   --status-error-border: rgba(185, 28, 28, 0.28);
@@ -69,8 +69,9 @@
 
   /* --- Type family --- */
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Barlow', 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, Menlo, monospace;
-  --tracking-tight: -0.03em;
+  --tracking-tight: -0.02em;
   --line-height-body: 1.55;
 
   /* --- Type scale (the only sizes components may use) --- */
@@ -176,6 +177,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
   color: var(--text-primary);
   font-weight: 700;
   letter-spacing: var(--tracking-tight);
@@ -296,8 +298,6 @@ img {
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--text-secondary);
 }
 
@@ -311,9 +311,7 @@ img {
   border-radius: var(--radius-chip);
   font-family: var(--font-mono);
   font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-weight: 600;
   color: var(--status-success);
 }
 
