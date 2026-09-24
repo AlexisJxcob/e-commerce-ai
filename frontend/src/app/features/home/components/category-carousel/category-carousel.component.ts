@@ -1,4 +1,4 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input, output, ChangeDetectionStrategy } from '@angular/core';
 
 import { CarouselModule, CarouselResponsiveOptions } from 'primeng/carousel';
 import { TagModule } from 'primeng/tag';
@@ -17,6 +17,13 @@ export class CategoryCarouselComponent {
   readonly categoria = input.required<Categoria>();
   readonly productos = input.required<Producto[]>();
   readonly addToCart = output<Producto>();
+
+  readonly contadorProductos = computed(() => {
+    const total = this.productos().length;
+    return `${total} ${total === 1 ? 'producto' : 'productos'}`;
+  });
+
+  readonly mostrarIndicadores = computed(() => this.productos().length > 5);
 
   readonly responsiveOptions: CarouselResponsiveOptions[] = [
     {

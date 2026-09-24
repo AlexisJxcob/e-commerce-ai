@@ -5,7 +5,7 @@
         <h3 class="category-title">{{ categoria().nombre }}</h3>
         <p-tag
           severity="secondary"
-          [value]="productos().length + (productos().length === 1 ? ' producto' : ' productos')"
+          [value]="contadorProductos()"
         ></p-tag>
       </div>
       @if (categoria().descripcion) {
@@ -21,7 +21,7 @@
       [numScroll]="1"
       [circular]="false"
       [responsiveOptions]="responsiveOptions"
-      [showIndicators]="productos().length > 5"
+      [showIndicators]="mostrarIndicadores()"
       indicatorsContentClass="custom-indicators"
     >
       <ng-template #item let-producto>

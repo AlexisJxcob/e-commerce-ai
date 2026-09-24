@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { HomeComponent } from './home.component';
 import { AsistenteService } from '../../core/services/asistente.service';
 import { CatalogoService } from '../../core/services/catalogo.service';
+import { provideRouter } from '@angular/router';
 import { BusquedaInteligenteResponse } from '../../core/models/asistente.models';
 import { Producto } from '../../core/models/producto.models';
 import { CategoriaConProductos } from '../../core/models/categoria.models';
@@ -52,7 +53,8 @@ describe('HomeComponent', () => {
         AsistenteService,
         { provide: CatalogoService, useValue: catalogoSpy },
         provideHttpClient(withXhr()),
-        provideHttpClientTesting()
+        provideHttpClientTesting(),
+        provideRouter([])
       ]
     }).compileComponents();
 

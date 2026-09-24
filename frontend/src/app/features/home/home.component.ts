@@ -41,6 +41,22 @@ export class HomeComponent implements OnInit {
     return this.asistente.isLoading() || this.asistente.hasResult() || !!this.asistente.error();
   });
 
+  /**
+   * Región `aria-live` que anuncia la transición cargando → listo y el
+   * resultado del diagnóstico. Los errores se anuncian aparte con `role="alert"`.
+   */
+  readonly anuncio = computed(() => {
+    if (this.asistente.isLoading()) {
+      return `Analizando "${this.asistente.currentQuery()}" con el asistente técnico...`;
+    }
+    if (this.asistente.hasResult()) {
+      const total = this.asistente.productos().length;
+      const detalle = total === 1 ? '1 producto compatible' : `${total} productos compatibles`;
+      return `Diagnóstico completado para "${this.asistente.currentQuery()}". ${detalle} en catálogo.`;
+    }
+    return '';
+  });
+
   ngOnInit(): void {
     this.cargarCatalogo();
   }
