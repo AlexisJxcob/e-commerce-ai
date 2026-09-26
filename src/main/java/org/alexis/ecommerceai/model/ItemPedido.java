@@ -40,6 +40,10 @@ public class ItemPedido {
     @Column(name = "producto_id", nullable = false)
     private Long productoId;
 
+    /** Snapshot del nombre: el comprobante no depende del catálogo actual. */
+    @Column(name = "producto_nombre", length = 100)
+    private String productoNombre;
+
     @Column(nullable = false)
     private Integer cantidad;
 

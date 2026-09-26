@@ -1,11 +1,10 @@
 <main class="detail-page-container">
-  <!-- Breadcrumbs & Navegación -->
   <nav class="breadcrumb-bar" aria-label="Navegación secundaria">
     <button
       type="button"
       class="back-btn"
       (click)="volverAlCatalogo()"
-      aria-label="Volver a la página principal"
+      aria-label="Volver al catálogo"
     >
       <i class="pi pi-arrow-left" aria-hidden="true"></i>
       <span>Volver al catálogo</span>
@@ -16,85 +15,57 @@
     </span>
   </nav>
 
-  <!-- Estado de Carga (Skeleton con p-skeleton para CLS = 0) -->
+  <!-- Anuncio para lectores de pantalla: cubre carga, error y resultado -->
+  <p class="sr-only" role="status" aria-live="polite">{{ estadoAnunciado() }}</p>
+
   @if (isLoading()) {
-    <section class="loading-container" aria-busy="true" aria-label="Cargando detalles del producto">
+    <section class="loading-container" aria-busy="true" aria-label="Cargando ficha del producto">
       <div class="detail-grid">
-        <!-- Columna Izquierda: Showcase Visual Skeleton -->
         <div class="visual-column">
-          <div class="visual-showcase repara-card skeleton-card">
-            <p-skeleton width="140px" height="24px" borderRadius="12px" styleClass="mb-3"></p-skeleton>
-            <div class="product-hero-image-wrap skeleton-hero-wrap">
-              <p-skeleton width="100%" height="100%" borderRadius="8px"></p-skeleton>
-            </div>
-            <div class="visual-features mt-3">
-              <p-skeleton width="130px" height="20px" borderRadius="4px"></p-skeleton>
-              <p-skeleton width="150px" height="20px" borderRadius="4px"></p-skeleton>
+          <div class="visual-showcase skeleton-card">
+            <p-skeleton width="120px" height="22px" borderRadius="3px"></p-skeleton>
+            <div class="product-hero-image-wrap">
+              <p-skeleton width="100%" height="100%" borderRadius="6px"></p-skeleton>
             </div>
           </div>
         </div>
 
-        <!-- Columna Derecha: Información, Precios y Compra Skeleton -->
         <div class="info-column">
-          <div class="product-metadata mb-3">
-            <p-skeleton width="80px" height="22px" borderRadius="4px"></p-skeleton>
-            <p-skeleton width="90px" height="22px" borderRadius="4px"></p-skeleton>
-            <p-skeleton width="120px" height="22px" borderRadius="4px"></p-skeleton>
+          <div class="product-metadata">
+            <p-skeleton width="110px" height="22px" borderRadius="3px"></p-skeleton>
+            <p-skeleton width="120px" height="22px" borderRadius="3px"></p-skeleton>
           </div>
-
-          <p-skeleton width="85%" height="36px" borderRadius="6px" styleClass="mb-3"></p-skeleton>
-
-          <div class="rating-bar-summary mb-4">
-            <p-skeleton width="120px" height="20px" borderRadius="4px"></p-skeleton>
-            <p-skeleton width="40px" height="20px" borderRadius="4px"></p-skeleton>
-            <p-skeleton width="80px" height="20px" borderRadius="4px"></p-skeleton>
-          </div>
-
-          <div class="price-section mb-4">
-            <p-skeleton width="160px" height="14px" styleClass="mb-2"></p-skeleton>
-            <p-skeleton width="140px" height="38px" borderRadius="6px" styleClass="mb-2"></p-skeleton>
-            <p-skeleton width="180px" height="20px" borderRadius="4px"></p-skeleton>
-          </div>
-
-          <div class="shipping-info-card mb-4">
-            <p-skeleton width="100%" height="45px" borderRadius="6px" styleClass="mb-2"></p-skeleton>
-            <p-skeleton width="100%" height="45px" borderRadius="6px"></p-skeleton>
-          </div>
-
+          <p-skeleton width="85%" height="38px" borderRadius="6px"></p-skeleton>
+          <p-skeleton width="180px" height="44px" borderRadius="4px"></p-skeleton>
           <div class="purchase-box">
-            <p-skeleton width="130px" height="42px" borderRadius="8px"></p-skeleton>
-            <p-skeleton width="200px" height="42px" borderRadius="8px"></p-skeleton>
+            <p-skeleton width="130px" height="42px" borderRadius="4px"></p-skeleton>
+            <p-skeleton width="200px" height="42px" borderRadius="4px"></p-skeleton>
           </div>
         </div>
       </div>
     </section>
   }
 
-  <!-- Estado de Error -->
   @if (!isLoading() && error()) {
-    <section class="error-container repara-card" role="alert">
-      <div class="error-icon-wrap">
-        <i class="pi pi-exclamation-circle error-icon" aria-hidden="true"></i>
-      </div>
-      <h2 class="error-title">No pudimos cargar el producto</h2>
+    <section class="error-container" role="alert">
+      <i class="pi pi-exclamation-circle error-icon" aria-hidden="true"></i>
+      <h1 class="error-title">No pudimos cargar el producto</h1>
       <p class="error-message">{{ error() }}</p>
       <p-button
         type="button"
         variant="outlined"
         icon="pi pi-home"
-        label="Ir a la tienda"
+        label="Ir al catálogo"
         (onClick)="volverAlCatalogo()"
       ></p-button>
     </section>
   }
 
-  <!-- Detalle del Producto -->
   @if (!isLoading() && producto(); as prod) {
-    <!-- Panel Principal de Producto -->
     <article class="detail-grid">
-      <!-- Columna Izquierda: Showcase Visual Contextual -->
+      <!-- Columna izquierda: placa técnica del producto -->
       <div class="visual-column">
-        <div class="visual-showcase repara-card">
+        <div class="visual-showcase">
           <div class="visual-badge">
             <i [class]="visualInfo().icono" aria-hidden="true"></i>
             <span>{{ visualInfo().etiqueta }}</span>
@@ -102,103 +73,71 @@
 
           <div class="product-hero-image-wrap">
             <img
-              [src]="currentHeroImage()"
-              [alt]="prod.nombre"
+              [src]="imagen()"
+              [alt]="'Vista técnica de ' + prod.nombre"
               class="product-hero-image"
+              width="320"
+              height="320"
+              decoding="async"
               (error)="onHeroImageError()"
             />
           </div>
 
-          <div class="visual-features">
-            <div class="feature-tag">
-              <i class="pi pi-check-circle" aria-hidden="true"></i>
-              <span>Repuesto certificado</span>
+          <dl class="plate-readout">
+            <div>
+              <dt>SKU</dt>
+              <dd class="data-mono">{{ prod.sku }}</dd>
             </div>
-            <div class="feature-tag">
-              <i class="pi pi-shield" aria-hidden="true"></i>
-              <span>Garantía de compatibilidad</span>
+            <div>
+              <dt>Unidades</dt>
+              <dd class="data-mono">{{ prod.stock }}</dd>
             </div>
-          </div>
+          </dl>
         </div>
       </div>
 
-      <!-- Columna Derecha: Información, Precios y Compra -->
+      <!-- Columna derecha: datos, entrega y compra -->
       <div class="info-column">
         <div class="product-metadata">
-          @if (presentation()?.marca; as marca) {
-            <span class="product-brand-chip">{{ marca }}</span>
-          }
-          <span class="product-sku">SKU: {{ prod.sku }}</span>
-          <p-tag
-            [severity]="hasStock() ? 'success' : 'danger'"
-            [value]="hasStock() ? 'En stock (' + prod.stock + ' unidades)' : 'Sin stock'"
-            [icon]="hasStock() ? 'pi pi-check' : 'pi pi-times'"
-            styleClass="stock-tag"
-          ></p-tag>
+          <span class="product-sku">SKU {{ prod.sku }}</span>
+          <span class="stock-flag" [class.is-out]="!hasStock()">
+            <i [class]="hasStock() ? 'pi pi-check' : 'pi pi-times'" aria-hidden="true"></i>
+            {{ hasStock() ? 'En stock' : 'Sin stock' }}
+          </span>
         </div>
 
         <h1 class="product-title">{{ prod.nombre }}</h1>
 
-        <!-- Calificación Promedio -->
-        @if (resumenCalificaciones(); as resumen) {
-          <div class="rating-bar-summary" aria-label="Calificación promedio">
-            <p-rating
-              [ngModel]="resumen.promedio"
-              [readonly]="true"
-              styleClass="detail-rating"
-            ></p-rating>
-            <span class="rating-score">{{ resumen.promedio }}</span>
-            <span class="rating-count">({{ resumen.totalResenas }} opiniones)</span>
-          </div>
-        }
-
-        <!-- Precios Sodimac Style -->
         <div class="price-section">
-          <span class="price-caption">Precio por unidad (IVA incluido)</span>
+          <span class="price-caption">Precio unitario</span>
           <div class="detail-price-row">
-            <div class="price-value">{{ prod.precio | clp }}</div>
-            @if (presentation()?.descuentoPorcentaje; as desc) {
-              @if (desc > 0) {
-                <span class="discount-pill">-{{ desc }}%</span>
-              }
-            }
-          </div>
-          @if (presentation()?.precioAnterior; as anterior) {
-            @if (anterior > prod.precio) {
-              <div class="previous-price-row">
-                <span class="previous-price">Normal: {{ anterior | clp }}</span>
-              </div>
-            }
-          }
-          <div class="financing-tag">
-            <span class="card-type-chip">CMR</span>
-            <span class="financing-text">Hasta {{ presentation()?.cuotasSinInteres ?? 6 }} cuotas sin interés</span>
+            <span class="price-value price-text">{{ prod.precio | clp }}</span>
+            <span class="price-note">IVA incluido</span>
           </div>
         </div>
 
-        <!-- Opciones de Entrega / Despacho estilo Sodimac -->
         <div class="shipping-info-card">
           <div class="shipping-item">
             <i class="pi pi-building shipping-icon" aria-hidden="true"></i>
             <div class="shipping-details">
-              <span class="shipping-title">Retiro en tienda GRATIS</span>
-              <span class="shipping-subtitle">Disponible en sucursal principal</span>
+              <span class="shipping-title">Retiro en tienda sin costo</span>
+              <span class="shipping-subtitle">Coordinas el retiro al confirmar el pedido.</span>
             </div>
           </div>
           <div class="shipping-item">
             <i class="pi pi-truck shipping-icon" aria-hidden="true"></i>
             <div class="shipping-details">
               <span class="shipping-title">Despacho a domicilio</span>
-              <span class="shipping-subtitle">Envío prioritario en 24-48 hrs</span>
+              <span class="shipping-subtitle">La tarifa exacta se calcula en el checkout según tu carro.</span>
             </div>
           </div>
         </div>
 
-        <!-- Acciones de Compra -->
         <div class="purchase-box">
           <div class="quantity-selector" [class.is-disabled]="!hasStock()">
-            <span class="quantity-label">Cantidad</span>
+            <label class="quantity-label" for="cantidadDetalle">Cantidad</label>
             <p-inputnumber
+              inputId="cantidadDetalle"
               [ngModel]="cantidad()"
               (ngModelChange)="cantidad.set($event ?? 1)"
               [showButtons]="true"
@@ -221,14 +160,20 @@
               [loading]="isAddingToCart()"
               (onClick)="addToCart()"
               icon="pi pi-cart-plus"
-              label="Agregar al carrito"
+              label="Agregar al carro"
               styleClass="add-to-cart-btn"
             ></p-button>
 
             @if (addedSuccess()) {
               <div class="added-feedback" role="status">
                 <i class="pi pi-check" aria-hidden="true"></i>
-                <span>¡Producto agregado al carrito!</span>
+                <span>Agregado al carro</span>
+              </div>
+            }
+            @if (addError()) {
+              <div class="added-feedback is-error" role="alert">
+                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                <span>{{ addError() }}</span>
               </div>
             }
           </div>
@@ -236,148 +181,68 @@
       </div>
     </article>
 
-    <!-- Ficha Técnica y Descripción de Uso -->
-    <section class="details-section" aria-label="Descripciones y especificaciones">
+    <section class="details-section" aria-labelledby="ficha-tecnica">
       <div class="specs-grid">
-        <!-- Especificaciones Técnicas -->
-        <div class="spec-card repara-card">
+        <div class="spec-card">
           <header class="spec-header">
             <i class="pi pi-sliders-h spec-icon" aria-hidden="true"></i>
-            <h2 class="spec-title">Especificaciones Técnicas</h2>
+            <h2 class="spec-title" id="ficha-tecnica">Ficha técnica</h2>
           </header>
           <div class="spec-content">
             @if (prod.descripcionTecnica) {
               <p class="spec-text">{{ prod.descripcionTecnica }}</p>
             } @else {
-              <p class="spec-empty">No se han registrado especificaciones adicionales para este artículo.</p>
+              <p class="spec-empty">Este artículo no tiene especificaciones técnicas registradas.</p>
             }
 
             <dl class="meta-list">
               <div class="meta-item">
                 <dt>Código SKU</dt>
-                <dd>{{ prod.sku }}</dd>
+                <dd class="data-mono">{{ prod.sku }}</dd>
               </div>
               <div class="meta-item">
                 <dt>Disponibilidad</dt>
-                <dd>{{ prod.stock > 0 ? prod.stock + ' en bodega' : 'Agotado' }}</dd>
+                <dd class="data-mono">{{ prod.stock > 0 ? prod.stock + ' unidades' : 'Agotado' }}</dd>
               </div>
               <div class="meta-item">
-                <dt>Garantía</dt>
-                <dd>6 meses legal</dd>
+                <dt>Categoría</dt>
+                <dd>{{ visualInfo().etiqueta }}</dd>
               </div>
             </dl>
           </div>
         </div>
 
-        <!-- Recomendación de Uso Coloquial / Reparación -->
-        <div class="spec-card repara-card advice-card">
+        <div class="spec-card advice-card">
           <header class="spec-header">
             <i class="pi pi-bolt spec-icon advice-icon" aria-hidden="true"></i>
-            <h2 class="spec-title">¿Cómo y cuándo usarlo?</h2>
+            <h2 class="spec-title">Cómo y cuándo usarlo</h2>
           </header>
           <div class="spec-content">
             @if (prod.descripcionColoquial) {
               <p class="advice-text">{{ prod.descripcionColoquial }}</p>
             } @else {
-              <p class="advice-text">Producto apto para uso residencial y proyectos de mantención general en el hogar o taller.</p>
+              <p class="advice-text">Producto para mantención y reparación general en el hogar o taller.</p>
             }
             <div class="ai-tip-box">
-              <i class="pi pi-sparkles" aria-hidden="true"></i>
-              <span>Recomendación Repara.ai: asegúrate de cortar el suministro antes de intervenir líneas de agua o luz.</span>
+              <i class="pi pi-info-circle" aria-hidden="true"></i>
+              <span>Corta el suministro de agua o electricidad antes de intervenir la instalación.</span>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Sección de Reseñas y Calificaciones -->
-    <section class="reviews-section" aria-label="Opiniones de clientes">
-      <header class="section-heading">
-        <h2 class="section-title">Opiniones y experiencia de uso</h2>
-        <span class="section-subtitle">Testimonios y evaluaciones de compradores que realizaron esta reparación</span>
-      </header>
-
-      @if (resumenCalificaciones(); as resumen) {
-        <div class="reviews-layout">
-          <!-- Columna Resumen Gráfico -->
-          <div class="ratings-overview repara-card">
-            <div class="overview-score">{{ resumen.promedio }}</div>
-            <div class="overview-stars" aria-hidden="true">
-              <p-rating
-                [ngModel]="resumen.promedio"
-                [readonly]="true"
-                styleClass="overview-rating"
-              ></p-rating>
-            </div>
-            <div class="overview-count">{{ resumen.totalResenas }} evaluaciones verificadas</div>
-
-            <div class="distribution-bars">
-              @for (dist of resumen.distribucion; track dist.estrellas) {
-                <div class="dist-row">
-                  <span class="dist-stars">{{ dist.estrellas }} <i class="pi pi-star-fill"></i></span>
-                  <div class="dist-progress-wrap">
-                    <p-progressbar
-                      [value]="dist.porcentaje"
-                      [showValue]="false"
-                      styleClass="dist-progressbar"
-                    ></p-progressbar>
-                  </div>
-                  <span class="dist-pct">{{ dist.porcentaje }}%</span>
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Columna Lista de Reseñas -->
-          <div class="reviews-list">
-            @for (res of resenas(); track res.id) {
-              <div class="review-item repara-card">
-                <div class="review-header">
-                  <div class="author-info">
-                    <span class="author-name">{{ res.autor }}</span>
-                    @if (res.compraVerificada) {
-                      <p-tag
-                        severity="success"
-                        value="Compra verificada"
-                        icon="pi pi-check-circle"
-                        styleClass="verified-tag"
-                      ></p-tag>
-                    }
-                  </div>
-                  <span class="review-date">{{ res.fecha }}</span>
-                </div>
-
-                <div class="review-stars" aria-hidden="true">
-                  <p-rating
-                    [ngModel]="res.calificacion"
-                    [readonly]="true"
-                    styleClass="review-item-rating"
-                  ></p-rating>
-                </div>
-
-                <p class="review-comment">{{ res.comentario }}</p>
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </section>
-
-    <!-- Sección de Productos Relacionados de la Misma Categoría -->
     @if (productosRelacionados().length > 0) {
-      <section class="related-section" aria-label="Productos relacionados">
+      <section class="related-section" aria-labelledby="relacionados">
         <header class="section-heading">
-          <h2 class="section-title">Productos compatibles de la misma categoría</h2>
-          <span class="section-subtitle">Repuestos y herramientas complementarias para completar este trabajo</span>
+          <h2 class="section-title" id="relacionados">Completa la reparación</h2>
+          <span class="section-subtitle">Otros artículos de la misma categoría.</span>
         </header>
 
         <div class="related-grid" role="list">
           @for (rel of productosRelacionados(); track rel.id) {
             <div class="grid-item" role="listitem">
-              <app-product-card
-                [producto]="rel"
-                (addToCart)="onAddToCartRelacionado($event)"
-              ></app-product-card>
+              <app-product-card [producto]="rel" (addToCart)="onAddToCartRelacionado($event)"></app-product-card>
             </div>
           }
         </div>

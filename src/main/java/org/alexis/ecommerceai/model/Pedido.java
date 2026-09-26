@@ -49,6 +49,61 @@ public class Pedido {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
 
+    /** Suma de las líneas, sin costo de entrega. */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal subtotal;
+
+    /** Costo de entrega aplicado por {@code EnvioService} al crear el pedido. */
+    @Column(name = "costo_despacho", nullable = false, precision = 10, scale = 2)
+    private BigDecimal costoDespacho = BigDecimal.ZERO;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "metodo_entrega", length = 20)
+    private MetodoEntrega metodoEntrega;
+
+    // --- Datos del comprador (recolectados en el checkout) ---
+
+    @Column(name = "comprador_nombre", length = 70)
+    private String compradorNombre;
+
+    @Column(name = "comprador_apellidos", length = 70)
+    private String compradorApellidos;
+
+    @Column(name = "comprador_rut", length = 20)
+    private String compradorRut;
+
+    @Column(name = "comprador_email", length = 120)
+    private String compradorEmail;
+
+    @Column(name = "comprador_telefono", length = 25)
+    private String compradorTelefono;
+
+    // --- Datos de entrega ---
+
+    @Column(name = "despacho_region", length = 100)
+    private String despachoRegion;
+
+    @Column(name = "despacho_comuna", length = 100)
+    private String despachoComuna;
+
+    @Column(name = "despacho_direccion", length = 200)
+    private String despachoDireccion;
+
+    @Column(name = "despacho_depto", length = 100)
+    private String despachoDepto;
+
+    @Column(name = "despacho_referencias", length = 300)
+    private String despachoReferencias;
+
+    @Column(name = "retira_tercero", nullable = false)
+    private Boolean retiraTercero = false;
+
+    @Column(name = "tercero_nombre", length = 150)
+    private String terceroNombre;
+
+    @Column(name = "tercero_rut", length = 20)
+    private String terceroRut;
+
     @Column(name = "webpay_token", unique = true)
     private String webpayToken;
 
