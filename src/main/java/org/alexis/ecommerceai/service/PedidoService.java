@@ -185,6 +185,7 @@ public class PedidoService {
                 var item = new ItemPedido();
                 item.setPedido(pedido);
                 item.setProductoId(producto.getId());
+                item.setProductoNombre(producto.getNombre());
                 item.setCantidad(linea.cantidad());
                 item.setPrecioUnitario(producto.getPrecio());
                 items.add(item);
@@ -339,6 +340,7 @@ public class PedidoService {
         List<ItemPedidoResponseDTO> items = pedido.getItems() == null ? List.of() : pedido.getItems().stream()
                 .map(item -> new ItemPedidoResponseDTO(
                         item.getProductoId(),
+                        item.getProductoNombre(),
                         item.getCantidad(),
                         item.getPrecioUnitario(),
                         item.getPrecioUnitario().multiply(BigDecimal.valueOf(item.getCantidad()))
