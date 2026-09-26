@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProductGridComponent } from './product-grid.component';
 import { Producto } from '../../../../core/models/producto.models';
 
+import { provideRouter } from '@angular/router';
+
 describe('ProductGridComponent', () => {
   let component: ProductGridComponent;
   let fixture: ComponentFixture<ProductGridComponent>;
@@ -31,7 +33,8 @@ describe('ProductGridComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ProductGridComponent]
+      imports: [ProductGridComponent],
+      providers: [provideRouter([])]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProductGridComponent);

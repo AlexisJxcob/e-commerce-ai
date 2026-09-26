@@ -3,6 +3,8 @@ import { CategoryCarouselComponent } from './category-carousel.component';
 import { Categoria } from '../../../../core/models/categoria.models';
 import { Producto } from '../../../../core/models/producto.models';
 
+import { provideRouter } from '@angular/router';
+
 describe('CategoryCarouselComponent', () => {
   let component: CategoryCarouselComponent;
   let fixture: ComponentFixture<CategoryCarouselComponent>;
@@ -39,7 +41,8 @@ describe('CategoryCarouselComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CategoryCarouselComponent]
+      imports: [CategoryCarouselComponent],
+      providers: [provideRouter([])]
     }).compileComponents();
 
     fixture = TestBed.createComponent(CategoryCarouselComponent);
@@ -58,7 +61,7 @@ describe('CategoryCarouselComponent', () => {
   it('should render the category name and product count in header', () => {
     const el: HTMLElement = fixture.nativeElement;
     const titleEl = el.querySelector('.category-title');
-    const badgeEl = el.querySelector('.product-count-badge');
+    const badgeEl = el.querySelector('.title-row .p-tag');
     const descEl = el.querySelector('.category-desc');
 
     expect(titleEl?.textContent?.trim()).toBe('Herramientas Manuales');

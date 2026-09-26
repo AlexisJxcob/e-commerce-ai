@@ -1,4 +1,6 @@
 <main class="home-container">
+  <p class="sr-only" role="status" aria-live="polite">{{ anuncio() }}</p>
+
   <app-hero-search
     [loading]="asistente.isLoading()"
     [compact]="isCompact()"
@@ -11,7 +13,7 @@
 
   @if (asistente.error()) {
     <section class="error-section">
-      <div class="error-card">
+      <div class="error-card" role="alert">
         <div class="error-header">
           <i class="pi pi-exclamation-circle error-icon" aria-hidden="true"></i>
           <div>
@@ -117,15 +119,30 @@
           }
         </div>
       } @else if (catalogoError()) {
-        <div class="catalog-error-box">
-          <p>{{ catalogoError() }}</p>
-          <p-button
-            type="button"
-            label="Reintentar catálogo"
-            variant="outlined"
-            size="small"
-            (onClick)="cargarCatalogo()"
-          ></p-button>
+        <div class="catalog-error-station" role="alert">
+          <div class="error-station-badge" aria-hidden="true">
+            <i class="pi pi-exclamation-triangle"></i>
+          </div>
+          <div class="error-station-body">
+            <h3 class="error-station-title">No pudimos conectar con el inventario de la ferretería</h3>
+            <p class="error-station-desc">
+              El catálogo de herramientas y repuestos no respondió a tiempo. El servicio de diagnóstico técnico sigue activo en el buscador superior.
+            </p>
+            <div class="error-station-detail">
+              <span class="detail-label">Reporte técnico:</span>
+              <code class="detail-code">{{ catalogoError() }}</code>
+            </div>
+            <div class="error-station-actions">
+              <p-button
+                type="button"
+                label="Reintentar conexión al catálogo"
+                icon="pi pi-refresh"
+                severity="primary"
+                size="small"
+                (onClick)="cargarCatalogo()"
+              ></p-button>
+            </div>
+          </div>
         </div>
       } @else {
         <div class="catalog-carousels">
